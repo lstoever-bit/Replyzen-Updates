@@ -1,0 +1,41 @@
+name: Build Replyzen Update
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Replyzen-source.zip'
+      - '.github/workflows/build-update.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare source
+        run: |
+          rm -rf buildsrc
+          mkdir buildsrc
+          ditto -x -k Replyzen-source.zip buildsrc
+      - name: Build update package
+        run: |
+          cd buildsrc
+          chmod +x Build-CI.sh
+          ./Build-CI.sh
+      - name: Publish update files
+        run: |
+          cp buildsrc/Replyzen-update.zip ./Replyzen-update.zip
+          cp buildsrc/update.json ./update.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f Replyzen-update.zip update.json
+          if git diff --cached --quiet; then
+            echo "No update artifact changes"
+            exit 0
+          fi
+          git commit -m "Build Replyzen update"
+          git push
