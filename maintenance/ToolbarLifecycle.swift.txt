@@ -1,0 +1,112 @@
+    // Observe activation changes; poll geometry only while the toolbar can be used.
+    func start() {
+        guard !isStarted else {
+            refreshPollingState()
+            return
+        }
+        isStarted = true
+        let center = NSWorkspace.shared.notificationCenter
+        let notifications: [Notification.Name] = [
+            NSWorkspace.didActivateApplicationNotification,
+            NSWorkspace.didDeactivateApplicationNotification,
+            NSWorkspace.didHideApplicationNotification,
+            NSWorkspace.didUnhideApplicationNotification,
+            NSWorkspace.activeSpaceDidChangeNotification,
+            NSWorkspace.didWakeNotification
+        ]
+        workspaceObservers = notifications.map { name in
+            center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                self?.refreshPollingState()
+            }
+        }
+        refreshPollingState()
+    }
+
+    func stop() {
+        isStarted = false
+        removeWorkspaceObservers()
+        pausePolling()
+        hideOverlay()
+    }
+
+    deinit {
+        timer?.invalidate()
+        let center = NSWorkspace.shared.notificationCenter
+        workspaceObservers.forEach { center.removeObserver($0) }
+    }
+
+    func setSuppressed(_ suppressed: Bool) {
+        isSuppressed = suppressed
+        refreshPollingState()
+    }
+
+    private var shouldPoll: Bool {
+        isStarted && !isSuppressed &&
+            NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.microsoft.Outlook"
+    }
+
+    private func refreshPollingState() {
+        guard shouldPoll else {
+            pausePolling()
+            hideOverlay()
+            return
+        }
+        if timer == nil {
+            let newTimer = Timer(timeInterval: 0.35, repeats: true) { [weak self] _ in
+                self?.update()
+            }
+            newTimer.tolerance = 0.07
+            timer = newTimer
+            RunLoop.main.add(newTimer, forMode: .common)
+        }
+        update()
+    }
+
+    private func pausePolling() {
+        timer?.invalidate()
+        timer = nil
+    }
+
+    private func removeWorkspaceObservers() {
+        let center = NSWorkspace.shared.notificationCenter
+        workspaceObservers.forEach { center.removeObserver($0) }
+        workspaceObservers.removeAll()
+    }
+
+    private func hideOverlay() {
+        hideAllTooltips()
+        if panel.isVisible { panel.orderOut(nil) }
+    }
+
+    @objc private func newClicked() { newAction?() }
+    @objc private func replyClicked() { replyAction?() }
+    @objc private func replyAllClicked() { replyAllAction?() }
+    @objc private func forwardClicked() { forwardAction?() }
+    @objc private func cancelClicked() { cancelAction?() }
+    @objc private func calendarClicked() { calendarAction?() }
+    @objc private func paymentClicked() { paymentAction?() }
+
+    private func hideAllTooltips() {
+        [newButton, replyButton, replyAllButton, forwardButton, cancelButton, calendarButton, paymentButton]
+            .forEach { $0.hideDelayedTooltip() }
+    }
+
+    private func update() {
+        guard shouldPoll else {
+            pausePolling()
+            hideOverlay()
+            return
+        }
+        guard outlook.isTrusted(),
+              let frame = outlook.focusedWindowFrameInAppKitCoordinates() else {
+            hideOverlay()
+            return
+        }
+
+        let size = panel.frame.size
+        let origin = NSPoint(x: frame.maxX - size.width - 122,
+                             y: frame.maxY - size.height - 38)
+        if panel.frame.origin != origin { panel.setFrameOrigin(origin) }
+        if !panel.isVisible { panel.orderFrontRegardless() }
+    }
+}

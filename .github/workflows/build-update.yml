@@ -1,55 +1,75 @@
-name: Build Replyzen Update
+name: Build ReplyZen Update
 
 on:
   push:
-    branches: [main]
+    branches: [main, codex/replyzen-cleanup-1.43]
     paths:
-      - 'v55/**'
+      - 'source-current/**'
+      - 'maintenance/**'
+      - 'tests/**'
       - '.github/workflows/build-update.yml'
   workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: replyzen-build-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: macos-14
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Prepare current Replyzen source
+      - name: Restore legacy resources once
+        shell: bash
         run: |
-          rm -rf buildsrc Replyzen-source.zip
-          (cat sourcefix/part-*.b64; cat source2/part-02.b64 source2/part-03.b64) | tr -d '\n\r ' | /usr/bin/base64 -D > Replyzen-source.zip
-          unzip -t Replyzen-source.zip
-          mkdir buildsrc
-          ditto -x -k Replyzen-source.zip buildsrc
-          cp source-current/Build-CI.sh buildsrc/Build-CI.sh
-          cp source-current/app/*.swift buildsrc/app/
-          cp source-current/app/Info.plist buildsrc/app/Info.plist
-      - name: Apply Replyzen 1.42 payment fixes
+          set -euo pipefail
+          if [ ! -f source-current/app/Resources/ReplyzenLogo.png ]; then
+            LEGACY="$(mktemp -d)"
+            trap 'rm -rf "$LEGACY"' EXIT
+            (cat sourcefix/part-*.b64; cat source2/part-02.b64 source2/part-03.b64) | tr -d '\n\r ' | /usr/bin/base64 -D > "$LEGACY/source.zip"
+            unzip -t "$LEGACY/source.zip"
+            ditto -x -k "$LEGACY/source.zip" "$LEGACY/source"
+            mkdir -p source-current/app/Resources
+            cp -R "$LEGACY/source/app/Resources/." source-current/app/Resources/
+          fi
+      - name: Apply checked 1.43 source cleanup if needed
+        run: python3 maintenance/refactor_1_43.py source-current
+      - name: Run regression checks without API access
+        run: bash tests/run-tests.sh source-current
+      - name: Build and verify native app
+        run: bash source-current/Build-CI.sh
+      - name: Verify updater archive and manifest
+        run: python3 tests/verify_update.py source-current
+      - name: Save canonical source and publish main update only
+        env:
+          BRANCH: ${{ github.ref_name }}
+        shell: bash
         run: |
-          python3 v55/patch.py buildsrc
-      - name: Build update package
-        run: |
-          cd buildsrc
-          chmod +x Build-CI.sh
-          ./Build-CI.sh
-      - name: Publish Replyzen 1.42 update and source snapshot
-        run: |
-          cp buildsrc/Replyzen-update-1.42.zip ./Replyzen-update-1.42.zip
-          cp buildsrc/update.json ./update.json
-          cp buildsrc/update.json ./update-1.42.json
-          rm -rf source-current
-          mkdir -p source-current/app
-          cp buildsrc/Build-CI.sh source-current/Build-CI.sh
-          cp buildsrc/app/*.swift source-current/app/
-          cp buildsrc/app/Info.plist source-current/app/Info.plist
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f Replyzen-update-1.42.zip update.json update-1.42.json source-current
-          if git diff --cached --quiet; then
-            echo "No update artifact changes"
-            exit 0
+          git add -f source-current/app source-current/Build-CI.sh source-current/Release-notes.txt
+          if [ "$BRANCH" = main ]; then
+            PACKAGE="$(python3 -c 'import json; print(json.load(open("source-current/update.json"))["download_url"])')"
+            VERSION="$(python3 -c 'import json; print(json.load(open("source-current/update.json"))["version"])')"
+            cp "source-current/$PACKAGE" "$PACKAGE"
+            cp source-current/update.json update.json
+            cp source-current/update.json "update-${VERSION%.0}.json"
+            git add -f "$PACKAGE" update.json "update-${VERSION%.0}.json"
           fi
-          git commit -m "Build Replyzen 1.42 payment fixes"
-          git push
+          if ! git diff --cached --quiet; then
+            git commit -m "Build ReplyZen 1.43 and preserve tested source"
+            git push origin "HEAD:$BRANCH"
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ReplyZen-1.43-build
+          path: |
+            source-current/Replyzen-update-*.zip
+            source-current/update.json
+          if-no-files-found: error
+          retention-days: 7

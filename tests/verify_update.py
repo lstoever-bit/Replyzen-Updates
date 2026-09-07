@@ -1,0 +1,27 @@
+#!/usr/bin/env python3
+"""Check the exact archive/manifest consumed by the existing in-app updater."""
+import hashlib
+import json
+from pathlib import Path
+import plistlib
+import sys
+import zipfile
+
+root = Path(sys.argv[1])
+manifest = json.loads((root / "update.json").read_text())
+assert manifest["version"] == "1.43.0" and manifest["build"] == 44
+assert manifest["download_url"] == "Replyzen-update-1.43.zip"
+archive = root / manifest["download_url"]
+assert hashlib.sha256(archive.read_bytes()).hexdigest() == manifest["sha256"]
+with zipfile.ZipFile(archive) as package:
+    assert package.testzip() is None
+    info = plistlib.loads(package.read("Replyzen.app/Contents/Info.plist"))
+    assert info["CFBundleIdentifier"] == "com.lstoever.replyzen"
+    assert info["CFBundleShortVersionString"] == manifest["version"]
+    assert int(info["CFBundleVersion"]) == manifest["build"]
+    assert info["CFBundleDisplayName"] == "ReplyZen"
+    binary = package.read("Replyzen.app/Contents/MacOS/Replyzen")
+    assert binary[:4] == b"\xcf\xfa\xed\xfe", "Expected a 64-bit Mach-O executable"
+    assert package.read("Replyzen.app/Contents/Resources/ReplyzenLogo.png")[:8] == b"\x89PNG\r\n\x1a\n"
+    assert package.read("Replyzen.app/Contents/Resources/Replyzen.icns")[:4] == b"icns"
+print("PASS: version, build, bundle identity, archive integrity, SHA-256, binary and icons")
