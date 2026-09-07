@@ -222,6 +222,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         toolbarButton.forwardAction = { [weak self] in self?.openForwardWorkspace() }
         toolbarButton.cancelAction = { [weak self] in self?.quickDecline() }
         toolbarButton.calendarAction = { [weak self] in self?.createCalendarFromOverlay() }
+        toolbarButton.paymentAction = { [weak self] in self?.createPaymentFromOverlay() }
         toolbarButton.start()
     }
 
@@ -291,6 +292,60 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self.toolbarButton.setSuppressed(false)
                     self.showSimpleAlert(
                         title: "Termin nicht erstellt",
+                        message: "Die geöffnete Outlook-Mail konnte nicht gelesen werden."
+                    )
+                }
+            }
+        }
+    }
+
+    private func createPaymentFromOverlay() {
+        guard !isRunningFlow else { return }
+        // Warm/load the API key before starting the hidden flow. KeychainStore caches
+        // it for the rest of the app session, so the extractor can reuse it.
+        guard keychain.loadAPIKey() != nil else {
+            toolbarButton.setSuppressed(true)
+            state.apiKeyDraft = ""
+            state.stage = .apiKey
+            panel.show()
+            return
+        }
+        guard outlook.isTrusted() else {
+            outlook.requestTrustPrompt()
+            return
+        }
+
+        isRunningFlow = true
+        toolbarButton.setSuppressed(true)
+
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self else { return }
+
+            do {
+                var snapshot = try self.outlook.captureSnapshot(includeAllWindows: false)
+                var mail: String
+                do {
+                    mail = try self.outlook.readMail(from: snapshot)
+                } catch OutlookAccessibility.OutlookError.noMailText {
+                    snapshot = try self.outlook.captureSnapshot(includeAllWindows: true)
+                    mail = try self.outlook.readMail(from: snapshot)
+                }
+
+                DispatchQueue.main.async {
+                    self.activeSnapshot = snapshot
+                    self.state.mailText = mail
+                    self.state.mailStatus = .available
+                    self.state.outputMode = .payment
+                    // Do not show the normal Replyzen form. The existing extractor
+                    // opens only the editable payment result window when finished.
+                    self.generatePaymentSuggestion()
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.isRunningFlow = false
+                    self.toolbarButton.setSuppressed(false)
+                    self.showSimpleAlert(
+                        title: "Überweisung nicht erkannt",
                         message: "Die geöffnete Outlook-Mail konnte nicht gelesen werden."
                     )
                 }
@@ -1339,6 +1394,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self.copyMailToPasteboard(plainText: plain, html: rich)
                     self.keyboard.sendCommandV()
                     self.finishNewMailInsertion()
+                }
+                return
+            }
+
+            // Legacy Outlook may not expose its HTML compose body through AX at all.
+            // The subject field is exposed reliably, and one Tab from Subject enters
+            // the native message body. Use that as a robust fallback.
+            if self.outlook.focusComposeSubjectField() {
+                self.keyboard.sendTab()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) { [weak self] in
+                    guard let self else { return }
+                    self.keyboard.sendCommandUp()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
+                        guard let self else { return }
+                        let plain = body + "\n\n"
+                        let rich = html.isEmpty ? "" : html + "<br><br>"
+                        self.copyMailToPasteboard(plainText: plain, html: rich)
+                        self.keyboard.sendCommandV()
+                        self.finishNewMailInsertion()
+                    }
                 }
                 return
             }

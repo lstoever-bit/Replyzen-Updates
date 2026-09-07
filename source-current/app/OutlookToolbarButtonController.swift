@@ -10,6 +10,7 @@ final class OutlookToolbarButtonController: NSObject {
     private let forwardButton: NSButton
     private let cancelButton: NSButton
     private let calendarButton: NSButton
+    private let paymentButton: NSButton
     private var timer: Timer?
     private var isSuppressed = false
 
@@ -19,11 +20,12 @@ final class OutlookToolbarButtonController: NSObject {
     var forwardAction: (() -> Void)?
     var cancelAction: (() -> Void)?
     var calendarAction: (() -> Void)?
+    var paymentAction: (() -> Void)?
 
     init(outlook: OutlookAccessibility) {
         self.outlook = outlook
 
-        let size = NSSize(width: 540, height: 34)
+        let size = NSSize(width: 646, height: 34)
         panel = NSPanel(
             contentRect: NSRect(origin: .zero, size: size),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -63,6 +65,7 @@ final class OutlookToolbarButtonController: NSObject {
         forwardButton = makeButton(title: "Forward", symbol: "arrowshape.turn.up.right", x: 252, width: 88, help: "Aktuelle Mail mit Replyzen weiterleiten")
         cancelButton = makeButton(title: "Cancel", symbol: "xmark.circle", x: 344, width: 96, help: "Freundliche kurze Absage direkt als Antwort einsetzen")
         calendarButton = makeButton(title: "Termin", symbol: "calendar.badge.plus", x: 444, width: 92, help: "Termin aus der aktuellen Mail mit Replyzen erstellen")
+        paymentButton = makeButton(title: "Überweisung", symbol: "banknote", x: 540, width: 102, help: "Überweisungsdaten aus der aktuellen Mail und PDF extrahieren")
 
         effect.addSubview(newButton)
         effect.addSubview(replyButton)
@@ -70,6 +73,7 @@ final class OutlookToolbarButtonController: NSObject {
         effect.addSubview(forwardButton)
         effect.addSubview(cancelButton)
         effect.addSubview(calendarButton)
+        effect.addSubview(paymentButton)
 
         panel.contentView = effect
         panel.isOpaque = false
@@ -95,6 +99,8 @@ final class OutlookToolbarButtonController: NSObject {
         cancelButton.action = #selector(cancelClicked)
         calendarButton.target = self
         calendarButton.action = #selector(calendarClicked)
+        paymentButton.target = self
+        paymentButton.action = #selector(paymentClicked)
     }
 
     func start() {
@@ -121,6 +127,7 @@ final class OutlookToolbarButtonController: NSObject {
     @objc private func forwardClicked() { forwardAction?() }
     @objc private func cancelClicked() { cancelAction?() }
     @objc private func calendarClicked() { calendarAction?() }
+    @objc private func paymentClicked() { paymentAction?() }
 
     private func update() {
         guard !isSuppressed,

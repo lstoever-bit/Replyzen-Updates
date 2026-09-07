@@ -189,8 +189,6 @@ struct OverlayView: View {
                 Spacer()
             }
 
-            modeSelector
-
             if state.outputMode == .reply || state.outputMode == .newMail || state.outputMode == .forward {
                 mailTypeSelector
             } else {
