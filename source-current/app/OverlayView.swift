@@ -25,6 +25,8 @@ struct OverlayView: View {
         switch state.stage {
         case .idle:
             readyView
+        case .startup:
+            startupView
         case .instruction:
             instructionView
         case .generating:
@@ -48,6 +50,44 @@ struct OverlayView: View {
             apiKeyView
         case .error:
             errorView
+        }
+    }
+
+    private var startupView: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(spacing: 12) {
+                replyzenLogo(size: 46)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Replyzen läuft")
+                        .font(.title2.bold())
+                    Text("Bereit in Outlook · ⌃⌥R oder ✨ AI")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(.secondary)
+            }
+
+            VStack(alignment: .leading, spacing: 7) {
+                Text("Witz zum Start")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(state.startupJoke)
+                    .font(.title3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.background.opacity(0.55), in: RoundedRectangle(cornerRadius: 12))
+
+            HStack {
+                Button("Schließen") { state.closeAction?() }
+                Spacer()
+                Button("Replyzen öffnen") { state.retryAction?() }
+                    .keyboardShortcut(.defaultAction)
+            }
         }
     }
 

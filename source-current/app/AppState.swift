@@ -39,6 +39,7 @@ final class AppState: ObservableObject {
 
     enum Stage: Equatable {
         case idle
+        case startup
         case instruction
         case generating
         case updating
@@ -57,6 +58,7 @@ final class AppState: ObservableObject {
     @Published var errorMessage: String = ""
     @Published var apiKeyDraft: String = ""
     @Published var statusText: String = ""
+    @Published var startupJoke: String = ""
     @Published var replyLanguage: ReplyLanguage = .german
     @Published var replyTone: ReplyTone = .friendly
     @Published var selectedCommandName: String = "Custom"

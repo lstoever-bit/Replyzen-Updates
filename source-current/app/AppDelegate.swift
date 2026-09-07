@@ -24,6 +24,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        UserDefaults.standard.set(false, forKey: "NSQuitAlwaysKeepsWindows")
+        suppressLegacySettingsWindows()
+        DispatchQueue.main.async { [weak self] in self?.suppressLegacySettingsWindows() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in self?.suppressLegacySettingsWindows() }
 
         migrateExistingAPIKeyIfPossible()
         configureStateActions()
@@ -39,12 +43,48 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             state.stage = .apiKey
             panel.show()
         } else {
-            state.stage = .idle
+            state.startupJoke = startupJoke()
+            state.stage = .startup
+            panel.show(activate: true)
         }
 
         if !outlook.isTrusted() {
             outlook.requestTrustPrompt()
         }
+    }
+
+    func applicationShouldSaveSecureApplicationState(_ app: NSApplication) -> Bool {
+        false
+    }
+
+    func applicationShouldRestoreSecureApplicationState(_ app: NSApplication) -> Bool {
+        false
+    }
+
+    private func suppressLegacySettingsWindows() {
+        for window in NSApp.windows {
+            let title = window.title.lowercased()
+            if title.contains("replyzen-einstellungen") || title.contains("replyzen settings") {
+                window.orderOut(nil)
+                window.close()
+            }
+        }
+    }
+
+    private func startupJoke() -> String {
+        let jokes = [
+            "Warum sind E-Mails schlechte Geheimnisträger? Weil am Ende doch jemand auf ‚Allen antworten‘ klickt.",
+            "Mein Kalender wollte spontan sein. Ich habe ihm dafür einen Termin eingetragen.",
+            "CC ist die höfliche Art zu sagen: Jetzt weißt du es auch.",
+            "Warum war die Mail so entspannt? Sie hatte keinen Anhang zu tragen.",
+            "Der kürzeste Büro-Witz? ‚Kurze Abstimmung‘.",
+            "Ich wollte meinem Posteingang Urlaub geben. Er hat die Abwesenheitsnotiz abgelehnt.",
+            "Warum mag Replyzen Montagmorgen? Weil selbst eine kurze Antwort schon wie Fortschritt aussieht.",
+            "Mein Kalender und ich haben eine gute Beziehung: Er sagt mir ständig, wo ich sein soll.",
+            "Eine E-Mail ohne Betreff ist wie ein Termin ohne Uhrzeit: spannend, aber unnötig.",
+            "Warum hat der Termin nicht zurückgerufen? Er war schon vergeben."
+        ]
+        return jokes.randomElement() ?? "Replyzen läuft. Das ist heute schon die halbe Miete."
     }
 
     private func configureStateActions() {
