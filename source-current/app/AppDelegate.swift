@@ -221,6 +221,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         toolbarButton.replyAllAction = { [weak self] in self?.openReplyWorkspace(replyAll: true) }
         toolbarButton.forwardAction = { [weak self] in self?.openForwardWorkspace() }
         toolbarButton.cancelAction = { [weak self] in self?.quickDecline() }
+        toolbarButton.calendarAction = { [weak self] in self?.openCalendarWorkspace() }
         toolbarButton.start()
     }
 
@@ -238,6 +239,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func openForwardWorkspace() {
         requestedMailMode = .forward
+        replyAllForCurrentDraft = true
+        openWorkspace()
+    }
+
+    private func openCalendarWorkspace() {
+        requestedMailMode = .calendar
         replyAllForCurrentDraft = true
         openWorkspace()
     }
@@ -498,6 +505,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else if requestedMailMode == .forward {
             state.outputMode = .forward
             state.instruction = ""
+        } else if requestedMailMode == .calendar {
+            state.outputMode = .calendar
+            state.instruction = ""
         } else {
             state.outputMode = .newMail
             state.instruction = ""
@@ -599,6 +609,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         self.state.outputMode = .reply
                     } else if self.requestedMailMode == .forward {
                         self.state.outputMode = .forward
+                    } else if self.requestedMailMode == .calendar {
+                        self.state.outputMode = .calendar
                     } else if self.requestedMailMode == .newMail {
                         self.state.outputMode = .newMail
                     } else if self.state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -753,16 +765,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func forwardWithNote() {
-        let body = state.instruction.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !body.isEmpty else { return }
+        guard let apiKey = keychain.loadAPIKey() else {
+            state.stage = .apiKey
+            return
+        }
+
+        let instruction = state.instruction.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !instruction.isEmpty else { return }
         guard !state.mailText.isEmpty, activeSnapshot != nil else {
             state.mailStatus = .unavailable("Keine lesbare Outlook-Mail erkannt. Für Forward bitte eine Mail öffnen und erneut versuchen.")
             return
         }
 
-        state.reply = body
-        state.replyHTML = state.instructionHTML
-        insertForwardDraft()
+        isRunningFlow = true
+        toolbarButton.setSuppressed(true)
+        state.stage = .generating
+        state.statusText = "OpenAI formuliert den Forward Text"
+
+        openAI.generateForwardNote(
+            apiKey: apiKey,
+            mailText: state.mailText,
+            instruction: instruction,
+            instructionHTML: state.instructionHTML,
+            tone: state.replyTone,
+            language: state.replyLanguage,
+            compact: state.newMailCompact
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.isRunningFlow = false
+
+                switch result {
+                case .success(let draft):
+                    self.state.reply = draft.body.trimmingCharacters(in: .whitespacesAndNewlines)
+                    self.state.replyHTML = draft.html?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                    self.insertForwardDraft()
+                case .failure(let error):
+                    self.showError(error.localizedDescription)
+                }
+            }
+        }
     }
 
     private func generateCalendarSuggestion() {

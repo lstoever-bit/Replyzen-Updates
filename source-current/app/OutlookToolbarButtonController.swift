@@ -9,6 +9,7 @@ final class OutlookToolbarButtonController: NSObject {
     private let replyAllButton: NSButton
     private let forwardButton: NSButton
     private let cancelButton: NSButton
+    private let calendarButton: NSButton
     private var timer: Timer?
     private var isSuppressed = false
 
@@ -17,11 +18,12 @@ final class OutlookToolbarButtonController: NSObject {
     var replyAllAction: (() -> Void)?
     var forwardAction: (() -> Void)?
     var cancelAction: (() -> Void)?
+    var calendarAction: (() -> Void)?
 
     init(outlook: OutlookAccessibility) {
         self.outlook = outlook
 
-        let size = NSSize(width: 448, height: 34)
+        let size = NSSize(width: 540, height: 34)
         panel = NSPanel(
             contentRect: NSRect(origin: .zero, size: size),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -57,12 +59,14 @@ final class OutlookToolbarButtonController: NSObject {
         replyAllButton = makeButton(title: "Reply All", symbol: "arrowshape.turn.up.left.2", x: 154, width: 94, help: "Allen Empfängern antworten")
         forwardButton = makeButton(title: "Forward", symbol: "arrowshape.turn.up.right", x: 252, width: 88, help: "Aktuelle Mail mit Replyzen weiterleiten")
         cancelButton = makeButton(title: "Cancel", symbol: "xmark.circle", x: 344, width: 96, help: "Freundliche kurze Absage direkt als Antwort einsetzen")
+        calendarButton = makeButton(title: "Termin", symbol: "calendar.badge.plus", x: 444, width: 92, help: "Termin aus der aktuellen Mail mit Replyzen erstellen")
 
         effect.addSubview(newButton)
         effect.addSubview(replyButton)
         effect.addSubview(replyAllButton)
         effect.addSubview(forwardButton)
         effect.addSubview(cancelButton)
+        effect.addSubview(calendarButton)
 
         panel.contentView = effect
         panel.isOpaque = false
@@ -86,6 +90,8 @@ final class OutlookToolbarButtonController: NSObject {
         forwardButton.action = #selector(forwardClicked)
         cancelButton.target = self
         cancelButton.action = #selector(cancelClicked)
+        calendarButton.target = self
+        calendarButton.action = #selector(calendarClicked)
     }
 
     func start() {
@@ -111,6 +117,7 @@ final class OutlookToolbarButtonController: NSObject {
     @objc private func replyAllClicked() { replyAllAction?() }
     @objc private func forwardClicked() { forwardAction?() }
     @objc private func cancelClicked() { cancelAction?() }
+    @objc private func calendarClicked() { calendarAction?() }
 
     private func update() {
         guard !isSuppressed,

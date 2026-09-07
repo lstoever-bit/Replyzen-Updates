@@ -62,6 +62,58 @@ final class OpenAIClient {
         }
     }
 
+    func generateForwardNote(
+        apiKey: String,
+        mailText: String,
+        instruction: String,
+        instructionHTML: String,
+        tone: ReplyTone,
+        language: AppState.ReplyLanguage,
+        compact: Bool,
+        completion: @escaping (Result<ReplyDraft, Error>) -> Void
+    ) {
+        var systemInstructions = [
+            "Draft the short note that the user will place above an existing forwarded email thread.",
+            "Return ONLY valid JSON with exactly these keys: body, html.",
+            "body is the plain text forwarding note only.",
+            "html is the same note as a clean email safe HTML fragment. Use only p, br, strong, em, ul, ol and li. Do not use CSS, script, html or body tags.",
+            "If the user's rich text instruction intentionally uses bold, italic, bullets or numbering, preserve that formatting in the final note where it makes sense.",
+            "The original email thread and attachments will be preserved by Outlook below this note. Do not reproduce or summarize the whole forwarded thread unless the user explicitly asks for that.",
+            "Do not invent a recipient. Do not add To, CC, BCC or a subject line.",
+            "Do not add a signature or the user's name unless explicitly requested.",
+            "Be concise, natural, and appropriate for email.",
+            tone.apiInstruction,
+            restrainedDashInstruction,
+            languageInstruction(for: language, purpose: "forwarding note"),
+            "Follow the user's instruction precisely. The language of the instruction is input only and must never override the selected output language.",
+            "Do not invent facts, promises, dates, attachments, or commitments."
+        ]
+        if compact {
+            systemInstructions.append("COMPACT MODE IS ON: make the forwarding note as short as possible while preserving the requested meaning. Prefer 1 to 3 short sentences and normally stay under 70 words.")
+        }
+
+        let richInstruction = instructionHTML.trimmingCharacters(in: .whitespacesAndNewlines)
+        let input = "USER INSTRUCTION PLAIN:\n\(instruction)" +
+            (richInstruction.isEmpty ? "" : "\n\nUSER INSTRUCTION HTML FORMATTING CUES:\n\(richInstruction)") +
+            "\n\nEMAIL BEING FORWARDED:\n\(String(mailText.prefix(30_000)))"
+
+        performRequest(
+            apiKey: apiKey,
+            instructions: systemInstructions.joined(separator: "\n"),
+            input: input,
+            maxOutputTokens: compact ? 340 : 700,
+            lowVerbosity: true
+        ) { result in
+            switch result {
+            case .success(let text):
+                do { completion(.success(try Self.decodeReplyDraft(text))) }
+                catch { completion(.failure(error)) }
+            case .failure(let error):
+                completion(.failure(error))
+            }
+        }
+    }
+
     func generateQuickDecline(
         apiKey: String,
         mailText: String,

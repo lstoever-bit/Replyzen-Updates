@@ -235,7 +235,7 @@ struct OverlayView: View {
             }
 
             HStack(spacing: 10) {
-                if state.outputMode == .reply || state.outputMode == .newMail {
+                if state.outputMode == .reply || state.outputMode == .newMail || state.outputMode == .forward {
                     HStack(spacing: 7) {
                         Text("Mood")
                             .font(.caption)
@@ -257,7 +257,7 @@ struct OverlayView: View {
 
                 Spacer()
 
-                if state.outputMode != .payment && state.outputMode != .forward {
+                if state.outputMode != .payment {
                     languageButton("🇩🇪", language: .german, help: "Ausgabe auf Deutsch")
                     languageButton("🇺🇸", language: .usEnglish, help: "Ausgabe in US English")
                 }
@@ -385,7 +385,6 @@ struct OverlayView: View {
     private var modeSelector: some View {
         HStack(spacing: 8) {
             modeButton(.reply, title: "Mail", systemImage: "envelope.fill")
-            modeButton(.calendar, title: "Termin", systemImage: "calendar.badge.plus")
             modeButton(.payment, title: "Überweisung", systemImage: "banknote")
         }
     }
@@ -505,7 +504,7 @@ struct OverlayView: View {
         switch state.outputMode {
         case .reply: return "Antwort erstellen"
         case .newMail: return "Mail erstellen"
-        case .forward: return "In Outlook weiterleiten"
+        case .forward: return "Forward erstellen"
         case .calendar: return "Termin erstellen"
         case .payment: return "Überweisung extrahieren"
         }
