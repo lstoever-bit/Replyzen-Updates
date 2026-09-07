@@ -1,0 +1,85 @@
+import Foundation
+import Combine
+
+final class AppState: ObservableObject {
+    enum OutputMode: String, CaseIterable, Identifiable, Equatable {
+        case reply
+        case newMail
+        case calendar
+
+        var id: String { rawValue }
+
+        var displayName: String {
+            switch self {
+            case .reply: return "Reply"
+            case .newMail: return "New Mail"
+            case .calendar: return "Termin"
+            }
+        }
+    }
+
+    enum ReplyLanguage: Equatable {
+        case german
+        case usEnglish
+
+        var displayName: String {
+            switch self {
+            case .german: return "Deutsch"
+            case .usEnglish: return "US English"
+            }
+        }
+    }
+
+    enum MailStatus: Equatable {
+        case notChecked
+        case loading
+        case available
+        case unavailable(String)
+    }
+
+    enum Stage: Equatable {
+        case idle
+        case instruction
+        case generating
+        case updating
+        case preview
+        case calendarPreview
+        case inserting
+        case success
+        case needsAccessibility
+        case apiKey
+        case error
+    }
+
+    @Published var stage: Stage = .idle
+    @Published var instruction: String = ""
+    @Published var reply: String = ""
+    @Published var errorMessage: String = ""
+    @Published var apiKeyDraft: String = ""
+    @Published var statusText: String = ""
+    @Published var replyLanguage: ReplyLanguage = .german
+    @Published var replyTone: ReplyTone = .friendly
+    @Published var selectedCommandName: String = "Custom"
+    @Published var outputMode: OutputMode = .reply
+    @Published var mailStatus: MailStatus = .notChecked
+    @Published var calendarTitle: String = ""
+    @Published var calendarNotes: String = ""
+    @Published var calendarStart: Date = Date()
+    @Published var calendarEnd: Date = Date().addingTimeInterval(30 * 60)
+    @Published var calendarWarning: String = ""
+    @Published var calendarOptions: [CalendarOption] = []
+    @Published var selectedCalendarID: String = ""
+    @Published var calendarListStatus: String = "Kalender werden geladen …"
+    @Published var successMessage: String = ""
+
+    var mailText: String = ""
+
+    var generateAction: (() -> Void)?
+    var insertAction: (() -> Void)?
+    var createCalendarAction: (() -> Void)?
+    var retryAction: (() -> Void)?
+    var refreshMailAction: (() -> Void)?
+    var closeAction: (() -> Void)?
+    var saveAPIKeyAction: (() -> Void)?
+    var openAccessibilityAction: (() -> Void)?
+}
