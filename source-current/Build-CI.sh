@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 SRC="$ROOT/app"
 WORK="$ROOT/.build-ci"
 APP="$WORK/Replyzen.app"
-UPDATE_ZIP="$ROOT/Replyzen-update-1.20.zip"
+UPDATE_ZIP="$ROOT/Replyzen-update-1.21.zip"
 UPDATE_JSON="$ROOT/update.json"
 SWIFTC="$(xcrun --find swiftc)"
 SDK="$(xcrun --sdk macosx --show-sdk-path)"
@@ -54,8 +54,8 @@ cat > "$UPDATE_JSON" <<EOF
 {
   "version": "$APP_VERSION",
   "build": $APP_BUILD,
-  "download_url": "Replyzen-update-1.20.zip",
+  "download_url": "Replyzen-update-1.21.zip",
   "sha256": "$UPDATE_SHA",
-  "notes": "Replyzen 1.20: vier einheitliche Funktionsbuttons; GPT-5.6 Luna ohne Reasoning für schnelle Antworten; Überweisung liest PDF-Rechnungen direkt mit OpenAI und löscht temporär hochgeladene Dateien nach der Extraktion."
+  "notes": "Replyzen 1.21: robustere PDF-Übernahme aus Outlook über direkte AX-Datei-URLs und automatisches Materialisieren des Anhangs; erweiterte Outlook-Temp-Suche."
 }
 EOF

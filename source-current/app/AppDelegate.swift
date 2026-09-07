@@ -576,9 +576,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let self else { return }
 
             let filenames = self.outlook.attachmentFilenames(from: snapshot)
-            let resolvedFiles = self.attachmentExtractor.resolveFiles(filenames: filenames)
-            let pdfFiles = resolvedFiles.filter { $0.pathExtension.lowercased() == "pdf" }
-            let selectedPDFs = Array(pdfFiles.prefix(3))
+            let mentionedPDF = filenames.first { $0.lowercased().hasSuffix(".pdf") }
+
+            var directFiles = self.outlook.attachmentFileURLs(from: snapshot)
+            var resolvedFiles = directFiles + self.attachmentExtractor.resolveFiles(filenames: filenames)
+            var selectedPDFs = Array(resolvedFiles.filter { $0.pathExtension.lowercased() == "pdf" }.prefix(3))
+
+            if selectedPDFs.isEmpty, let pdfName = mentionedPDF {
+                DispatchQueue.main.sync {
+                    self.state.statusText = "PDF wird aus Outlook geladen …"
+                    self.outlook.activateOutlook(pid: snapshot.pid)
+                    _ = self.outlook.activateAttachment(named: pdfName, from: snapshot)
+                }
+
+                Thread.sleep(forTimeInterval: 1.4)
+                let retrySnapshot = (try? self.outlook.captureSnapshot(includeAllWindows: true)) ?? snapshot
+                directFiles = self.outlook.attachmentFileURLs(from: retrySnapshot)
+                resolvedFiles = directFiles + self.attachmentExtractor.resolveFiles(filenames: filenames)
+                selectedPDFs = Array(resolvedFiles.filter { $0.pathExtension.lowercased() == "pdf" }.prefix(3))
+            }
 
             var fallbackText = ""
             var sourceStatus: String
@@ -596,7 +612,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 if !fallback.usedFiles.isEmpty {
                     sourceStatus = "Kein direkt zugängliches PDF; lokal gelesen: " + fallback.usedFiles.joined(separator: ", ")
                 } else if pdfMentioned {
-                    sourceStatus = "PDF-Anhang in Outlook erkannt, aber die lokale PDF-Datei war nicht zugänglich. Extraktion nur aus dem Mailtext."
+                    sourceStatus = "PDF-Anhang erkannt, aber Outlook hat keine lokale Datei bereitgestellt. Bitte den PDF-Anhang einmal in Outlook öffnen und erneut auf Überweisung klicken."
                 } else {
                     sourceStatus = "Kein PDF-Anhang erkannt. Extraktion aus dem Mailtext."
                 }

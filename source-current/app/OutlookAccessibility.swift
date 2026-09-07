@@ -115,6 +115,108 @@ final class OutlookAccessibility {
         return Array(names.prefix(6))
     }
 
+    func attachmentFileURLs(from snapshot: Snapshot) -> [URL] {
+        let attributes: [CFString] = [
+            "AXURL" as CFString,
+            "AXFilename" as CFString,
+            kAXValueAttribute as CFString,
+            kAXTitleAttribute as CFString,
+            kAXDescriptionAttribute as CFString,
+            kAXHelpAttribute as CFString
+        ]
+        var urls: [URL] = []
+        var seen = Set<String>()
+        let fm = FileManager.default
+
+        for window in snapshot.windows {
+            var stack: [AXUIElement] = [window]
+            var visited = 0
+            while let element = stack.popLast(), visited < 20_000 {
+                visited += 1
+                for attribute in attributes {
+                    guard let raw = stringLikeAttribute(attribute, from: element), !raw.isEmpty else { continue }
+                    for url in localAttachmentURLs(from: raw) {
+                        let ext = url.pathExtension.lowercased()
+                        guard ["pdf", "png", "jpg", "jpeg", "tif", "tiff"].contains(ext),
+                              fm.fileExists(atPath: url.path) else { continue }
+                        let key = url.standardizedFileURL.path.lowercased()
+                        if seen.insert(key).inserted {
+                            urls.append(url.standardizedFileURL)
+                        }
+                    }
+                }
+                for child in children(of: element).reversed() { stack.append(child) }
+            }
+        }
+        return Array(urls.prefix(8))
+    }
+
+    func activateAttachment(named filename: String, from snapshot: Snapshot) -> Bool {
+        let needle = filename.lowercased()
+        guard !needle.isEmpty else { return false }
+        let attributes: [CFString] = [
+            kAXTitleAttribute as CFString,
+            kAXDescriptionAttribute as CFString,
+            kAXHelpAttribute as CFString,
+            kAXValueAttribute as CFString,
+            "AXFilename" as CFString
+        ]
+
+        for window in snapshot.windows {
+            var stack: [AXUIElement] = [window]
+            var visited = 0
+            while let element = stack.popLast(), visited < 20_000 {
+                visited += 1
+                let meta = attributes.compactMap { stringLikeAttribute($0, from: element) }
+                    .joined(separator: " ")
+                    .lowercased()
+                if meta.contains(needle) {
+                    if AXUIElementPerformAction(element, kAXPressAction as CFString) == .success {
+                        return true
+                    }
+                    if let parent = axElementAttribute(kAXParentAttribute as CFString, from: element),
+                       AXUIElementPerformAction(parent, kAXPressAction as CFString) == .success {
+                        return true
+                    }
+                }
+                for child in children(of: element).reversed() { stack.append(child) }
+            }
+        }
+        return false
+    }
+
+    private func localAttachmentURLs(from raw: String) -> [URL] {
+        var result: [URL] = []
+        var seen = Set<String>()
+
+        func append(_ url: URL?) {
+            guard let url, url.isFileURL else { return }
+            let standardized = url.standardizedFileURL
+            let key = standardized.path.lowercased()
+            if seen.insert(key).inserted { result.append(standardized) }
+        }
+
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let direct = URL(string: trimmed), direct.isFileURL {
+            append(direct)
+        }
+
+        let decoded = trimmed.removingPercentEncoding ?? trimmed
+        if decoded.hasPrefix("/") {
+            append(URL(fileURLWithPath: decoded))
+        }
+
+        let pattern = #"file://[^\s\"'<>]+\.(?:pdf|png|jpe?g|tiff?)"#
+        if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) {
+            let range = NSRange(trimmed.startIndex..<trimmed.endIndex, in: trimmed)
+            for match in regex.matches(in: trimmed, range: range) {
+                guard let r = Range(match.range, in: trimmed) else { continue }
+                append(URL(string: String(trimmed[r])))
+            }
+        }
+        return result
+    }
+
     func runningPID() -> pid_t? {
         NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == "com.microsoft.Outlook" })?.processIdentifier
     }

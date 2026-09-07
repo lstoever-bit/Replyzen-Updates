@@ -50,6 +50,15 @@ final class AttachmentTextExtractor {
 
     private func findFile(named filename: String) -> URL? {
         let fm = FileManager.default
+        let cleaned = filename.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if let fileURL = URL(string: cleaned), fileURL.isFileURL, fm.fileExists(atPath: fileURL.path) {
+            return fileURL.standardizedFileURL
+        }
+        if cleaned.hasPrefix("/"), fm.fileExists(atPath: cleaned) {
+            return URL(fileURLWithPath: cleaned).standardizedFileURL
+        }
+
         let base = URL(fileURLWithPath: filename).lastPathComponent
         guard !base.isEmpty else { return nil }
 
@@ -60,7 +69,10 @@ final class AttachmentTextExtractor {
 
         let home = fm.homeDirectoryForCurrentUser
         let roots = [
+            home.appendingPathComponent("Library/Containers/com.microsoft.Outlook/Data/tmp", isDirectory: true),
             home.appendingPathComponent("Library/Containers/com.microsoft.Outlook/Data/Library/Caches", isDirectory: true),
+            home.appendingPathComponent("Library/Containers/com.microsoft.Outlook/Data/Library/Application Support", isDirectory: true),
+            home.appendingPathComponent("Library/Group Containers/UBF8T346G9.Office/TemporaryItems", isDirectory: true),
             home.appendingPathComponent("Library/Group Containers/UBF8T346G9.Office/Outlook", isDirectory: true),
             home.appendingPathComponent("Library/Caches/com.microsoft.Outlook", isDirectory: true),
             home.appendingPathComponent("Downloads", isDirectory: true),
@@ -79,14 +91,14 @@ final class AttachmentTextExtractor {
 
             for case let url as URL in enumerator {
                 visited += 1
-                if visited > 80_000 { break }
+                if visited > 140_000 { break }
                 guard url.lastPathComponent.caseInsensitiveCompare(base) == .orderedSame else { continue }
                 let values = try? url.resourceValues(forKeys: [.contentModificationDateKey, .isRegularFileKey])
                 guard values?.isRegularFile == true else { continue }
                 let date = values?.contentModificationDate ?? .distantPast
                 if best == nil || date > best!.1 { best = (url, date) }
             }
-            if visited > 80_000 { break }
+            if visited > 140_000 { break }
         }
         return best?.0
     }
