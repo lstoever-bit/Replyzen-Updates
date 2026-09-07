@@ -1,5 +1,4 @@
 import AppKit
-import ApplicationServices
 
 private final class DelayedTooltipButton: NSButton {
     private let delayedTooltipText: String
@@ -115,6 +114,8 @@ final class OutlookToolbarButtonController: NSObject {
     private let paymentButton: DelayedTooltipButton
     private var timer: Timer?
     private var isSuppressed = false
+    private var isStarted = false
+    private var workspaceObservers: [NSObjectProtocol] = []
 
     var newAction: (() -> Void)?
     var replyAction: (() -> Void)?
@@ -222,28 +223,84 @@ final class OutlookToolbarButtonController: NSObject {
         paymentButton.action = #selector(paymentClicked)
     }
 
+    // Observe activation changes; poll geometry only while the toolbar can be used.
     func start() {
-        timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 0.35, repeats: true) { [weak self] _ in self?.update() }
-        RunLoop.main.add(timer!, forMode: .common)
-        update()
+        guard !isStarted else {
+            refreshPollingState()
+            return
+        }
+        isStarted = true
+        let center = NSWorkspace.shared.notificationCenter
+        let notifications: [Notification.Name] = [
+            NSWorkspace.didActivateApplicationNotification,
+            NSWorkspace.didDeactivateApplicationNotification,
+            NSWorkspace.didHideApplicationNotification,
+            NSWorkspace.didUnhideApplicationNotification,
+            NSWorkspace.activeSpaceDidChangeNotification,
+            NSWorkspace.didWakeNotification
+        ]
+        workspaceObservers = notifications.map { name in
+            center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                self?.refreshPollingState()
+            }
+        }
+        refreshPollingState()
     }
 
     func stop() {
+        isStarted = false
+        removeWorkspaceObservers()
+        pausePolling()
+        hideOverlay()
+    }
+
+    deinit {
         timer?.invalidate()
-        timer = nil
-        hideAllTooltips()
-        panel.orderOut(nil)
+        let center = NSWorkspace.shared.notificationCenter
+        workspaceObservers.forEach { center.removeObserver($0) }
     }
 
     func setSuppressed(_ suppressed: Bool) {
         isSuppressed = suppressed
-        if suppressed {
-            hideAllTooltips()
-            panel.orderOut(nil)
-        } else {
-            update()
+        refreshPollingState()
+    }
+
+    private var shouldPoll: Bool {
+        isStarted && !isSuppressed &&
+            NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.microsoft.Outlook"
+    }
+
+    private func refreshPollingState() {
+        guard shouldPoll else {
+            pausePolling()
+            hideOverlay()
+            return
         }
+        if timer == nil {
+            let newTimer = Timer(timeInterval: 0.35, repeats: true) { [weak self] _ in
+                self?.update()
+            }
+            newTimer.tolerance = 0.07
+            timer = newTimer
+            RunLoop.main.add(newTimer, forMode: .common)
+        }
+        update()
+    }
+
+    private func pausePolling() {
+        timer?.invalidate()
+        timer = nil
+    }
+
+    private func removeWorkspaceObservers() {
+        let center = NSWorkspace.shared.notificationCenter
+        workspaceObservers.forEach { center.removeObserver($0) }
+        workspaceObservers.removeAll()
+    }
+
+    private func hideOverlay() {
+        hideAllTooltips()
+        if panel.isVisible { panel.orderOut(nil) }
     }
 
     @objc private func newClicked() { newAction?() }
@@ -260,20 +317,21 @@ final class OutlookToolbarButtonController: NSObject {
     }
 
     private func update() {
-        guard !isSuppressed,
-              outlook.isTrusted(),
-              let running = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == "com.microsoft.Outlook" }),
-              running.isActive,
+        guard shouldPoll else {
+            pausePolling()
+            hideOverlay()
+            return
+        }
+        guard outlook.isTrusted(),
               let frame = outlook.focusedWindowFrameInAppKitCoordinates() else {
-            hideAllTooltips()
-            panel.orderOut(nil)
+            hideOverlay()
             return
         }
 
         let size = panel.frame.size
-        let x = frame.maxX - size.width - 122
-        let y = frame.maxY - size.height - 38
-        panel.setFrameOrigin(NSPoint(x: x, y: y))
-        panel.orderFrontRegardless()
+        let origin = NSPoint(x: frame.maxX - size.width - 122,
+                             y: frame.maxY - size.height - 38)
+        if panel.frame.origin != origin { panel.setFrameOrigin(origin) }
+        if !panel.isVisible { panel.orderFrontRegardless() }
     }
 }

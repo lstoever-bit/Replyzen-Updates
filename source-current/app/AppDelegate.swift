@@ -115,21 +115,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func configureStatusItem() {
         guard statusItem == nil else { return }
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        if let url = Bundle.main.url(forResource: "ReplyzenLogo", withExtension: "png"),
-           let source = NSImage(contentsOf: url),
-           let image = makeMenuBarTemplateIcon(from: source) {
+        if let image = ReplyZenBrand.menuBarIcon {
             item.button?.image = image
-        } else if let fallback = NSImage(systemSymbolName: "envelope.badge", accessibilityDescription: "Replyzen") {
+        } else if let fallback = NSImage(systemSymbolName: "envelope.badge", accessibilityDescription: ReplyZenBrand.displayName) {
             fallback.isTemplate = true
             item.button?.image = fallback
         }
         item.button?.title = ""
         item.button?.imagePosition = .imageOnly
-        item.button?.toolTip = "Replyzen"
+        item.button?.toolTip = ReplyZenBrand.displayName
 
         let menu = NSMenu()
 
-        let reply = NSMenuItem(title: "Replyzen öffnen   ⌃⌥R", action: #selector(menuReply), keyEquivalent: "")
+        let reply = NSMenuItem(title: "ReplyZen öffnen   ⌃⌥R", action: #selector(menuReply), keyEquivalent: "")
         reply.target = self
         menu.addItem(reply)
 
@@ -160,61 +158,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         item.menu = menu
         statusItem = item
-    }
-
-    private func makeMenuBarTemplateIcon(from source: NSImage) -> NSImage? {
-        let pixels = 36
-        guard let rep = NSBitmapImageRep(
-            bitmapDataPlanes: nil,
-            pixelsWide: pixels,
-            pixelsHigh: pixels,
-            bitsPerSample: 8,
-            samplesPerPixel: 4,
-            hasAlpha: true,
-            isPlanar: false,
-            colorSpaceName: .deviceRGB,
-            bytesPerRow: 0,
-            bitsPerPixel: 0
-        ) else { return nil }
-
-        NSGraphicsContext.saveGraphicsState()
-        if let context = NSGraphicsContext(bitmapImageRep: rep) {
-            NSGraphicsContext.current = context
-            context.imageInterpolation = .high
-            NSColor.white.setFill()
-            NSRect(x: 0, y: 0, width: pixels, height: pixels).fill()
-            source.draw(
-                in: NSRect(x: 1, y: 1, width: pixels - 2, height: pixels - 2),
-                from: .zero,
-                operation: .sourceOver,
-                fraction: 1
-            )
-        }
-        NSGraphicsContext.restoreGraphicsState()
-
-        guard let data = rep.bitmapData else { return nil }
-        let rowBytes = rep.bytesPerRow
-        for y in 0..<pixels {
-            for x in 0..<pixels {
-                let i = y * rowBytes + x * 4
-                let r = Int(data[i])
-                let g = Int(data[i + 1])
-                let b = Int(data[i + 2])
-                let originalAlpha = Int(data[i + 3])
-                let luminance = (r * 30 + g * 59 + b * 11) / 100
-                let darkness = max(0, 255 - luminance)
-                let alpha = darkness * originalAlpha / 255
-                data[i] = 0
-                data[i + 1] = 0
-                data[i + 2] = 0
-                data[i + 3] = UInt8(alpha)
-            }
-        }
-
-        let image = NSImage(size: NSSize(width: 18, height: 18))
-        image.addRepresentation(rep)
-        image.isTemplate = true
-        return image
     }
 
     private func configureHotKey() {

@@ -63,7 +63,7 @@ struct OverlayView: View {
             HStack(spacing: 12) {
                 replyzenLogo(size: 46)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Replyzen läuft")
+                    Text("ReplyZen läuft")
                         .font(.title2.bold())
                     Text("Bereit in Outlook · ⌃⌥R oder ✨ AI")
                         .font(.callout)
@@ -90,7 +90,7 @@ struct OverlayView: View {
             HStack {
                 Button("Schließen") { state.closeAction?() }
                 Spacer()
-                Button("Replyzen öffnen") { state.retryAction?() }
+                Button("ReplyZen öffnen") { state.retryAction?() }
                     .keyboardShortcut(.defaultAction)
             }
         }
@@ -99,11 +99,11 @@ struct OverlayView: View {
     private var readyView: some View {
         VStack(spacing: 16) {
             replyzenLogo(size: 72)
-            Text("Replyzen")
+            Text(ReplyZenBrand.displayName)
                 .font(.title2.bold())
             Text("Mail, Termin oder Überweisung, direkt aus Outlook.")
                 .foregroundStyle(.secondary)
-            Button("Replyzen öffnen") {
+            Button("ReplyZen öffnen") {
                 state.retryAction?()
             }
             .keyboardShortcut(.defaultAction)
@@ -112,8 +112,7 @@ struct OverlayView: View {
 
     private func replyzenLogo(size: CGFloat) -> some View {
         Group {
-            if let url = Bundle.main.url(forResource: "ReplyzenLogo", withExtension: "png"),
-               let image = NSImage(contentsOf: url) {
+            if let image = ReplyZenBrand.logo {
                 Image(nsImage: image)
                     .resizable()
                     .scaledToFit()
@@ -180,7 +179,7 @@ struct OverlayView: View {
             HStack(spacing: 8) {
                 replyzenLogo(size: 34)
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("Replyzen")
+                    Text(ReplyZenBrand.displayName)
                         .font(.headline)
                     Text("Mail AI")
                         .font(.caption2)
@@ -203,7 +202,7 @@ struct OverlayView: View {
                         Text("Termin aus Mail erstellen")
                             .font(.title3.bold())
                     }
-                    Text("Replyzen erstellt aus dem Mailverlauf einen möglichst kurzen Titel, einen extrem kompakten Termintext und übernimmt einen eindeutig erkennbaren Terminzeitpunkt. Den Zielkalender wählst du vor dem Anlegen aus.")
+                    Text("ReplyZen erstellt aus dem Mailverlauf einen möglichst kurzen Titel, einen extrem kompakten Termintext und übernimmt einen eindeutig erkennbaren Terminzeitpunkt. Den Zielkalender wählst du vor dem Anlegen aus.")
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)
@@ -217,7 +216,7 @@ struct OverlayView: View {
                         Text("Überweisung aus Mail + PDF")
                             .font(.title3.bold())
                     }
-                    Text("Replyzen liest den PDF-Anhang standardmäßig direkt mit OpenAI und extrahiert daraus Empfänger, IBAN, BIC, Betrag, Währung und Verwendungszweck. Der Mailtext dient nur als zusätzlicher Kontext.")
+                    Text("ReplyZen liest den PDF-Anhang standardmäßig direkt mit OpenAI und extrahiert daraus Empfänger, IBAN, BIC, Betrag, Währung und Verwendungszweck. Der Mailtext dient nur als zusätzlicher Kontext.")
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)

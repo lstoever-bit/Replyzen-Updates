@@ -1,6 +1,8 @@
 import Foundation
 
 final class OpenAIClient {
+    private let fileIOQueue = DispatchQueue(label: "com.lstoever.replyzen.file-io", qos: .userInitiated)
+
     struct APIError: LocalizedError {
         let message: String
         var errorDescription: String? { message }
@@ -202,16 +204,7 @@ final class OpenAIClient {
     }
 
     private static func decodeReplyDraft(_ text: String) throws -> ReplyDraft {
-        var cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        if cleaned.hasPrefix("```") {
-            let lines = cleaned.split(separator: "\n", omittingEmptySubsequences: false)
-            if lines.count >= 3 {
-                cleaned = lines.dropFirst().dropLast().joined(separator: "\n")
-                if cleaned.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("json") {
-                    cleaned = String(cleaned.dropFirst(4)).trimmingCharacters(in: .whitespacesAndNewlines)
-                }
-            }
-        }
+        let cleaned = ResponseJSON.cleanedText(text)
         guard let data = cleaned.data(using: .utf8) else {
             throw APIError(message: "OpenAI hat keinen gültigen Antwortentwurf geliefert.")
         }
@@ -229,16 +222,7 @@ final class OpenAIClient {
     }
 
     private static func decodeNewMailDraft(_ text: String) throws -> NewMailDraft {
-        var cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        if cleaned.hasPrefix("```") {
-            let lines = cleaned.split(separator: "\n", omittingEmptySubsequences: false)
-            if lines.count >= 3 {
-                cleaned = lines.dropFirst().dropLast().joined(separator: "\n")
-                if cleaned.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("json") {
-                    cleaned = String(cleaned.dropFirst(4)).trimmingCharacters(in: .whitespacesAndNewlines)
-                }
-            }
-        }
+        let cleaned = ResponseJSON.cleanedText(text)
         guard let data = cleaned.data(using: .utf8) else {
             throw APIError(message: "OpenAI hat keinen gültigen Mailentwurf geliefert.")
         }
@@ -344,16 +328,7 @@ final class OpenAIClient {
     }
 
     private static func decodeCalendarSuggestion(_ text: String) throws -> CalendarSuggestion {
-        var cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        if cleaned.hasPrefix("```") {
-            let lines = cleaned.split(separator: "\n", omittingEmptySubsequences: false)
-            if lines.count >= 3 {
-                cleaned = lines.dropFirst().dropLast().joined(separator: "\n")
-                if cleaned.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("json") {
-                    cleaned = String(cleaned.dropFirst(4)).trimmingCharacters(in: .whitespacesAndNewlines)
-                }
-            }
-        }
+        let cleaned = ResponseJSON.cleanedText(text)
         guard let data = cleaned.data(using: .utf8) else {
             throw APIError(message: "OpenAI hat keinen gültigen Terminvorschlag geliefert.")
         }
@@ -491,6 +466,17 @@ final class OpenAIClient {
         url: URL,
         completion: @escaping (Result<String, Error>) -> Void
     ) {
+        // Preparing a PDF/multipart body must never block the UI thread.
+        fileIOQueue.async {
+            self.prepareAndUploadFile(apiKey: apiKey, url: url, completion: completion)
+        }
+    }
+
+    private func prepareAndUploadFile(
+        apiKey: String,
+        url: URL,
+        completion: @escaping (Result<String, Error>) -> Void
+    ) {
         guard let endpoint = URL(string: "https://api.openai.com/v1/files") else {
             completion(.failure(APIError(message: "Ungültige OpenAI-Datei-URL.")))
             return
@@ -514,6 +500,7 @@ final class OpenAIClient {
             safeFilename = originalFilename
         }
         var body = Data()
+        body.reserveCapacity(fileData.count + 1024)
 
         func append(_ string: String) {
             if let data = string.data(using: .utf8) {
@@ -576,16 +563,7 @@ final class OpenAIClient {
     }
 
     private static func decodePaymentSuggestion(_ text: String) throws -> PaymentSuggestion {
-        var cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        if cleaned.hasPrefix("```") {
-            let lines = cleaned.split(separator: "\n", omittingEmptySubsequences: false)
-            if lines.count >= 3 {
-                cleaned = lines.dropFirst().dropLast().joined(separator: "\n")
-                if cleaned.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("json") {
-                    cleaned = String(cleaned.dropFirst(4)).trimmingCharacters(in: .whitespacesAndNewlines)
-                }
-            }
-        }
+        let cleaned = ResponseJSON.cleanedText(text)
         guard let data = cleaned.data(using: .utf8) else {
             throw APIError(message: "OpenAI hat keine gültigen Überweisungsdaten geliefert.")
         }
