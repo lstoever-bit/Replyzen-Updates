@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'Replyzen-source.zip'
+      - 'source2/part-*.b64'
       - '.github/workflows/build-update.yml'
   workflow_dispatch:
 
@@ -16,9 +16,11 @@ jobs:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
-      - name: Prepare source
+      - name: Reassemble source
         run: |
-          rm -rf buildsrc
+          rm -rf buildsrc Replyzen-source.zip
+          cat source2/part-*.b64 | tr -d '\n\r ' | /usr/bin/base64 -D > Replyzen-source.zip
+          unzip -t Replyzen-source.zip
           mkdir buildsrc
           ditto -x -k Replyzen-source.zip buildsrc
       - name: Build update package
