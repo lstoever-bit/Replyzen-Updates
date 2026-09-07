@@ -1,7 +1,7 @@
 {
-  "version": "1.14.0",
-  "build": 15,
-  "download_url": "Replyzen-update-1.14.zip",
-  "sha256": "a4e9af2144ef859eb2e8e65a7c3d69a8cf086f98a82bfc1237051d0d9d9bfa60",
-  "notes": "Replyzen 1.14: schnellere Terminextraktion mit einem kleinen Extraction-Modell; Replyzen schwebt nur im Outlook-Kontext und verschwindet bei Wechsel zu anderen Apps."
+  "version": "1.15.0",
+  "build": 16,
+  "download_url": "Replyzen-update-1.15.zip",
+  "sha256": "561113b8c0a139c4a7ef97c07ed6deec90ecfd372f6c6d6875f43c7601bd6c8b",
+  "notes": "Replyzen 1.15: Termintitel und -text folgen strikt der gewählten Sprache; New Mail hat Mood plus Compact statt Commands; native Dialoge verwenden Replyzen-Name und Replyzen-Logo."
 }

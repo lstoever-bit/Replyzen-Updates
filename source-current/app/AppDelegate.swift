@@ -191,7 +191,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func configureUpdateSource(showSuccess: Bool) {
         let alert = NSAlert()
-        alert.messageText = "Update-Quelle"
+        brandAlert(alert)
+        alert.messageText = "Replyzen · Update-Quelle"
         alert.informativeText = "Replyzen nutzt standardmäßig den offiziellen Update-Kanal. Hier kannst du die HTTPS-Adresse zu update.json bei Bedarf ändern."
         alert.addButton(withTitle: "Speichern")
         alert.addButton(withTitle: "Abbrechen")
@@ -253,6 +254,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func offerUpdate(_ update: UpdateManager.AvailableUpdate) {
         let alert = NSAlert()
+        brandAlert(alert)
         alert.messageText = "Replyzen \(update.manifest.version) ist verfügbar"
         alert.informativeText = update.manifest.notes?.isEmpty == false
             ? update.manifest.notes!
@@ -289,11 +291,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func showSimpleAlert(title: String, message: String) {
         let alert = NSAlert()
-        alert.messageText = title
+        brandAlert(alert)
+        alert.messageText = title == "Replyzen" ? "Replyzen" : "Replyzen · \(title)"
         alert.informativeText = message
         alert.addButton(withTitle: "OK")
         NSApp.activate(ignoringOtherApps: true)
         alert.runModal()
+    }
+
+    private func brandAlert(_ alert: NSAlert) {
+        if let url = Bundle.main.url(forResource: "ReplyzenLogo", withExtension: "png"),
+           let image = NSImage(contentsOf: url) {
+            image.size = NSSize(width: 64, height: 64)
+            alert.icon = image
+        } else {
+            alert.icon = NSApp.applicationIconImage
+        }
     }
 
     private func openWorkspace() {
@@ -463,7 +476,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             apiKey: apiKey,
             instruction: instruction,
             tone: state.replyTone,
-            language: state.replyLanguage
+            language: state.replyLanguage,
+            compact: state.newMailCompact
         ) { [weak self] result in
             DispatchQueue.main.async {
                 guard let self else { return }

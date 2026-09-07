@@ -39,9 +39,10 @@ final class OpenAIClient {
         instruction: String,
         tone: ReplyTone,
         language: AppState.ReplyLanguage,
+        compact: Bool,
         completion: @escaping (Result<String, Error>) -> Void
     ) {
-        let systemInstructions = [
+        var systemInstructions = [
             "Draft a new email for the user based only on the user's instruction.",
             "Be concise, natural, and appropriate for email.",
             tone.apiInstruction,
@@ -51,12 +52,17 @@ final class OpenAIClient {
             "Do not add a subject line unless the user explicitly asks for one.",
             "Do not add a signature or the user's name unless the user explicitly asks for it.",
             "Return only the email text."
-        ].joined(separator: "\n")
+        ]
+        if compact {
+            systemInstructions.append("COMPACT MODE IS ON: make the email as short as possible while preserving the requested meaning. Prefer 2-4 short sentences and normally stay under 80 words.")
+        }
 
         performRequest(
             apiKey: apiKey,
-            instructions: systemInstructions,
+            instructions: systemInstructions.joined(separator: "\n"),
             input: "USER INSTRUCTION:\n\(instruction)",
+            maxOutputTokens: compact ? 220 : nil,
+            lowVerbosity: compact,
             completion: completion
         )
     }
@@ -105,13 +111,17 @@ final class OpenAIClient {
         let now = nowFormatter.string(from: Date())
         let timezone = CalendarManager.eventTimeZoneIdentifier
         let titleLanguage = language == .german ? "German" : "US English"
+        let strictLanguageInstruction = language == .german
+            ? "OUTPUT LANGUAGE IS GERMAN. The title and description MUST be written in German, regardless of the language used in the email thread."
+            : "OUTPUT LANGUAGE IS US ENGLISH. The title and description MUST be written in natural US English, regardless of the language used in the email thread. Translate ordinary descriptive words; preserve only true proper names such as people, companies, products, and projects."
 
         let systemInstructions = [
             "Create a calendar event suggestion from the email thread.",
             "Return ONLY valid JSON with exactly these keys: title, description, start, end, confidence.",
             "title: the shortest useful calendar title possible, ideally 1-4 words, maximum 6 words. No filler such as Meeting, Call, Appointment, Termin unless it is necessary to understand the event.",
             "description: an extremely compact description of what the appointment is about. Prefer one short sentence or a few compact phrases, maximum 180 characters. No greeting, no sign-off, no generic filler, no repeated title. Include only information useful when opening the calendar event later.",
-            "Write title and description in \(titleLanguage). Preserve important project or person names.",
+            strictLanguageInstruction,
+            "Write title and description in \(titleLanguage). Preserve important project or person names, but never copy the source language merely because the thread uses it.",
             "start and end: ISO-8601 timestamps with timezone offset, or null.",
             "Use a date/time only if one future appointment time is clearly agreed or clearly proposed in the thread. If several dates/times are possible or the timing is ambiguous, set start and end to null.",
             "If a start time is clear but no end time or duration is given, set end to 30 minutes after start.",
@@ -124,7 +134,7 @@ final class OpenAIClient {
         performRequest(
             apiKey: apiKey,
             instructions: systemInstructions,
-            input: "EMAIL THREAD:\n\(String(mailText.prefix(30_000)))",
+            input: "SELECTED OUTPUT LANGUAGE: \(titleLanguage)\n\nEMAIL THREAD:\n\(String(mailText.prefix(30_000)))",
             model: "gpt-5.4-nano",
             reasoningEffort: "none",
             maxOutputTokens: 320,

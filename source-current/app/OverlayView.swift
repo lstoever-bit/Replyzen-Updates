@@ -233,8 +233,8 @@ struct OverlayView: View {
                     }
             }
 
-            HStack(spacing: 8) {
-                if state.outputMode != .calendar {
+            HStack(spacing: 10) {
+                if state.outputMode == .reply {
                     Menu {
                         ForEach(commands.commands) { command in
                             Button(command.name) {
@@ -258,6 +258,24 @@ struct OverlayView: View {
                     }
                     .controlSize(.small)
                     .help("Eigene Replyzen-Befehle auswählen oder verwalten")
+                } else if state.outputMode == .newMail {
+                    HStack(spacing: 7) {
+                        Text("Mood")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Picker("Mood", selection: $state.replyTone) {
+                            ForEach(ReplyTone.allCases) { tone in
+                                Text(tone.displayName).tag(tone)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .frame(minWidth: 130)
+
+                        Toggle("Compact", isOn: $state.newMailCompact)
+                            .toggleStyle(.checkbox)
+                            .help("Erstellt eine möglichst kurze Mail")
+                    }
                 }
 
                 Spacer()
@@ -266,11 +284,21 @@ struct OverlayView: View {
                 languageButton("🇺🇸", language: .usEnglish, help: "Ausgabe in US English")
             }
 
-            if state.outputMode != .calendar {
+            if state.outputMode == .reply {
                 HStack(spacing: 6) {
                     Text("Command: \(state.selectedCommandName)")
                     Text("·")
                     Text("Tone: \(state.replyTone.displayName)")
+                    Text("·")
+                    Text("Sprache: \(state.replyLanguage.displayName)")
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            } else if state.outputMode == .newMail {
+                HStack(spacing: 6) {
+                    Text("Mood: \(state.replyTone.displayName)")
+                    Text("·")
+                    Text(state.newMailCompact ? "Compact" : "Normal")
                     Text("·")
                     Text("Sprache: \(state.replyLanguage.displayName)")
                 }
