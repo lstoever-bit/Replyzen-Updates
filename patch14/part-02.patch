@@ -1,0 +1,201 @@
+4/app/OverlayView.swift	2026-09-07 04:21:04.473790032 +0000
+@@ -33,6 +33,8 @@
+             loadingView(title: "Update wird installiert", subtitle: "Neue Version wird geladen und eingerichtet …")
+         case .preview:
+             previewView
++        case .calendarPreview:
++            calendarPreviewView
+         case .inserting:
+             loadingView(title: "Fast fertig", subtitle: insertingSubtitle)
+         case .success:
+@@ -51,7 +53,7 @@
+             replyzenLogo(size: 72)
+             Text("Replyzen")
+                 .font(.title2.bold())
+-            Text("Reply, New Mail oder Summary – direkt aus Outlook.")
++            Text("Reply, New Mail oder Termin – direkt aus Outlook.")
+                 .foregroundStyle(.secondary)
+             Button("Replyzen öffnen") {
+                 state.retryAction?()
+@@ -82,7 +84,7 @@
+         switch state.outputMode {
+         case .reply: return "Ich erstelle deine Antwort …"
+         case .newMail: return "Ich formuliere deine neue Mail …"
+-        case .summary: return "Ich fasse den E-Mail-Verlauf zusammen …"
++        case .calendar: return "Ich erstelle einen kurzen Termintitel und erkenne den Zeitpunkt …"
+         }
+     }
+ 
+@@ -144,11 +146,15 @@
+                 mailContextBanner
+             }
+ 
+-            if state.outputMode == .summary {
++            if state.outputMode == .calendar {
+                 VStack(alignment: .leading, spacing: 8) {
+-                    Text("E-Mail-Verlauf zusammenfassen")
+-                        .font(.title3.bold())
+-                    Text("Replyzen fasst den aktuell erkannten Outlook-Verlauf kompakt zusammen – inklusive wichtiger Punkte, Entscheidungen, offener Fragen und nächster Schritte.")
++                    HStack(spacing: 8) {
++                        Image(systemName: "calendar.badge.plus")
++                            .font(.title2)
++                        Text("Termin aus Mail erstellen")
++                            .font(.title3.bold())
++                    }
++                    Text("Replyzen erstellt aus dem Mailverlauf einen möglichst kurzen Titel und übernimmt einen eindeutig erkennbaren Terminzeitpunkt. Der Termin wird in lennard@minubo.com angelegt.")
+                         .foregroundStyle(.secondary)
+                 }
+                 .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)
+@@ -177,7 +183,7 @@
+             }
+ 
+             HStack(spacing: 8) {
+-                if state.outputMode != .summary {
++                if state.outputMode != .calendar {
+                     Menu {
+                         ForEach(commands.commands) { command in
+                             Button(command.name) {
+@@ -209,7 +215,7 @@
+                 languageButton("🇺🇸", language: .usEnglish, help: "Ausgabe in US English")
+             }
+ 
+-            if state.outputMode != .summary {
++            if state.outputMode != .calendar {
+                 HStack(spacing: 6) {
+                     Text("Command: \(state.selectedCommandName)")
+                     Text("·")
+@@ -280,7 +286,7 @@
+         switch state.outputMode {
+         case .reply: return "Antwort erstellen"
+         case .newMail: return "Mail erstellen"
+-        case .summary: return "Summary erstellen"
++        case .calendar: return "Termin erstellen"
+         }
+     }
+ 
+@@ -290,7 +296,7 @@
+             return !mailAvailable || state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+         case .newMail:
+             return state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+-        case .summary:
++        case .calendar:
+             return !mailAvailable
+         }
+     }
+@@ -311,7 +317,7 @@
+                let first = commands.commands.first {
+                 applyCommand(first)
+             }
+-        case .summary:
++        case .calendar:
+             break
+         }
+     }
+@@ -354,21 +360,69 @@
+                 }
+                 Spacer()
+ 
+-                if state.outputMode == .summary {
+-                    Button("Kopieren") {
+-                        NSPasteboard.general.clearContents()
+-                        NSPasteboard.general.setString(state.reply, forType: .string)
+-                    }
+-                    Button("Schließen") {
+-                        state.closeAction?()
+-                    }
+-                    .keyboardShortcut(.defaultAction)
+-                } else {
+-                    Button(state.outputMode == .newMail ? "Neue Mail in Outlook" : "In Outlook einsetzen") {
+-                        state.insertAction?()
+-                    }
+-                    .keyboardShortcut(.defaultAction)
++                Button(state.outputMode == .newMail ? "Neue Mail in Outlook" : "In Outlook einsetzen") {
++                    state.insertAction?()
++                }
++                .keyboardShortcut(.defaultAction)
++            }
++        }
++    }
++
++    private var calendarPreviewView: some View {
++        VStack(alignment: .leading, spacing: 14) {
++            HStack(spacing: 10) {
++                Image(systemName: "calendar.badge.plus")
++                    .font(.title2)
++                Text("Termin prüfen")
++                    .font(.title2.bold())
++            }
++
++            if !state.calendarWarning.isEmpty {
++                HStack(alignment: .top, spacing: 8) {
++                    Image(systemName: "exclamationmark.triangle.fill")
++                    Text(state.calendarWarning)
++                        .font(.callout)
+                 }
++                .foregroundStyle(.secondary)
++                .padding(10)
++                .background(.background.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
++            }
++
++            VStack(alignment: .leading, spacing: 6) {
++                Text("Titel").font(.caption).foregroundStyle(.secondary)
++                TextField("Kurzer Termintitel", text: $state.calendarTitle)
++                    .textFieldStyle(.roundedBorder)
++            }
++
++            HStack(spacing: 14) {
++                VStack(alignment: .leading, spacing: 6) {
++                    Text("Start").font(.caption).foregroundStyle(.secondary)
++                    DatePicker("", selection: $state.calendarStart, displayedComponents: [.date, .hourAndMinute])
++                        .labelsHidden()
++                }
++                VStack(alignment: .leading, spacing: 6) {
++                    Text("Ende").font(.caption).foregroundStyle(.secondary)
++                    DatePicker("", selection: $state.calendarEnd, displayedComponents: [.date, .hourAndMinute])
++                        .labelsHidden()
++                }
++                Spacer()
++            }
++
++            HStack(spacing: 7) {
++                Image(systemName: "calendar")
++                Text("Google Calendar: minubo · lennard@minubo.com")
++                    .font(.callout)
++                    .foregroundStyle(.secondary)
++            }
++
++            Spacer()
++
++            HStack {
++                Button("Zurück") { state.stage = .instruction }
++                Spacer()
++                Button("Im Kalender anlegen") { state.createCalendarAction?() }
++                    .keyboardShortcut(.defaultAction)
++                    .disabled(state.calendarTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || state.calendarEnd <= state.calendarStart)
+             }
+         }
+     }
+@@ -377,7 +431,7 @@
+         switch state.outputMode {
+         case .reply: return "Antwortvorschlag"
+         case .newMail: return "Neue Mail"
+-        case .summary: return "E-Mail Summary"
++        case .calendar: return "Termin"
+         }
+     }
+ 
+@@ -387,9 +441,11 @@
+                 .font(.system(size: 42))
+             Text("Fertig")
+                 .font(.title2.bold())
+-            Text(state.outputMode == .newMail
+-                 ? "Der Text wurde in eine neue Outlook-Mail eingesetzt. Bitte Empfänger und Betreff ergänzen, prüfen und selbst senden."
+-                 : "Die Antwort ist in Outlook eingesetzt. Bitte noch kurz prüfen und selbst senden.")
++            Text(state.outputMode == .calendar
++                 ? state.successMessage
++                 : (state.outputMode == .newMail
++                    ? "Der Text wurde in eine neue Outlook-Mail eingesetzt. Bitte Empfänger und Betreff ergänzen, prüfen und selbst senden."
++                    : "Die Antwort ist in Outlook eingesetzt. Bitte noch kurz prüfen und selbst senden."))
+                 .multilineTextAlignment(.center)
+                 .foregroundStyle(.secondary)
+             Button("Schließen") { state.closeAction?() }
