@@ -2,10 +2,9 @@ name: Build ReplyZen Update
 
 on:
   push:
-    branches: [main, codex/replyzen-font-1.44]
+    branches: [main, codex/replyzen-editor-zoom-1.45]
     paths:
       - 'source-current/**'
-      - 'maintenance/**'
       - 'tests/**'
       - '.github/workflows/build-update.yml'
   workflow_dispatch:
@@ -23,38 +22,32 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Apply checked 1.44 typography wiring if needed
-        run: python3 maintenance/font_1_44.py source-current
-      - name: Run regression and typography checks without API access
+      - name: Run regression, typography and editor zoom checks
         run: bash tests/run-tests.sh source-current
       - name: Build and verify native app
         run: bash source-current/Build-CI.sh
       - name: Verify updater archive and manifest
         run: python3 tests/verify_update.py source-current
-      - name: Save tested source and publish main update only
-        env:
-          BRANCH: ${{ github.ref_name }}
+      - name: Publish main update
+        if: github.ref_name == 'main'
         shell: bash
         run: |
           set -euo pipefail
+          PACKAGE="$(python3 -c 'import json; print(json.load(open("source-current/update.json"))["download_url"])')"
+          VERSION="$(python3 -c 'import json; print(json.load(open("source-current/update.json"))["version"])')"
+          cp "source-current/$PACKAGE" "$PACKAGE"
+          cp source-current/update.json update.json
+          cp source-current/update.json "update-${VERSION%.0}.json"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f source-current/app source-current/Build-CI.sh source-current/Release-notes.txt
-          if [ "$BRANCH" = main ]; then
-            PACKAGE="$(python3 -c 'import json; print(json.load(open("source-current/update.json"))["download_url"])')"
-            VERSION="$(python3 -c 'import json; print(json.load(open("source-current/update.json"))["version"])')"
-            cp "source-current/$PACKAGE" "$PACKAGE"
-            cp source-current/update.json update.json
-            cp source-current/update.json "update-${VERSION%.0}.json"
-            git add -f "$PACKAGE" update.json "update-${VERSION%.0}.json"
-          fi
+          git add -f "$PACKAGE" update.json "update-${VERSION%.0}.json"
           if ! git diff --cached --quiet; then
-            git commit -m "Build ReplyZen 1.44 Calibri Light typography"
-            git push origin "HEAD:$BRANCH"
+            git commit -m "Build ReplyZen 1.45 editor zoom"
+            git push origin HEAD:main
           fi
       - uses: actions/upload-artifact@v4
         with:
-          name: ReplyZen-1.44-build
+          name: ReplyZen-1.45-build
           path: |
             source-current/Replyzen-update-*.zip
             source-current/update.json

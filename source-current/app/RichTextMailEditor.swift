@@ -245,6 +245,8 @@ private final class RichTextEditorTextView: NSTextView {
 }
 
 private struct RichTextEditorBridge: NSViewRepresentable {
+    private static let editorMagnification: CGFloat = 1.30
+
     @Binding var plainText: String
     @Binding var html: String
     let controller: RichTextEditorController
@@ -258,6 +260,12 @@ private struct RichTextEditorBridge: NSViewRepresentable {
         scrollView.hasVerticalScroller = true
         scrollView.borderType = .noBorder
         scrollView.drawsBackground = false
+        // Visual editor zoom only. The attributed text itself remains Calibri Light 10.5 pt,
+        // so Outlook receives exactly the same mail formatting as before.
+        scrollView.allowsMagnification = true
+        scrollView.minMagnification = 1.0
+        scrollView.maxMagnification = 1.8
+        scrollView.magnification = Self.editorMagnification
 
         let textView = RichTextEditorTextView()
         textView.isRichText = true

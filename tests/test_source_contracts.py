@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression guards for app identity, feature paths and outgoing typography."""
+"""Regression guards for app identity, feature paths, outgoing typography and editor zoom."""
 from pathlib import Path
 import plistlib
 import sys
@@ -19,8 +19,8 @@ class SourceContracts(unittest.TestCase):
         self.assertEqual(info['CFBundleExecutable'], 'Replyzen')
         self.assertEqual(info['CFBundleName'], 'Replyzen')
         self.assertEqual(info['CFBundleDisplayName'], 'ReplyZen')
-        self.assertEqual(info['CFBundleShortVersionString'], '1.44.0')
-        self.assertEqual(info['CFBundleVersion'], '45')
+        self.assertEqual(info['CFBundleShortVersionString'], '1.45.0')
+        self.assertEqual(info['CFBundleVersion'], '46')
 
     def test_visible_header_and_cached_logo(self):
         view = self.read('OverlayView.swift')
@@ -70,7 +70,7 @@ class SourceContracts(unittest.TestCase):
         app = self.read('AppDelegate.swift')
         self.assertIn('MailTypography.write(plainText: plainText, html: html)', app)
         self.assertNotIn('copyToPasteboard(reply)', app)
-        self.assertIn('copyToPasteboard(lines.joined', app)  # payment export remains plain text
+        self.assertIn('copyToPasteboard(lines.joined', app)
         for start, end in [('insertReply()', 'insertForwardDraft()'), ('insertForwardDraft()', 'insertNewMail()'), ('insertNewMail()', 'finishNewMailInsertion()')]:
             section = app.split('private func ' + start, 1)[1].split('private func ' + end, 1)[0]
             self.assertIn('copyMailToPasteboard', section)
@@ -79,6 +79,17 @@ class SourceContracts(unittest.TestCase):
         self.assertIn('MailTypography.baseFont', editor)
         self.assertIn('MailTypography.normalizeFonts', editor)
         self.assertIn('MailTypography.attributedString', editor)
+
+    def test_editor_zoom_is_visual_only(self):
+        editor = self.read('RichTextMailEditor.swift')
+        self.assertIn('editorMagnification: CGFloat = 1.30', editor)
+        self.assertIn('scrollView.allowsMagnification = true', editor)
+        self.assertIn('scrollView.minMagnification = 1.0', editor)
+        self.assertIn('scrollView.maxMagnification = 1.8', editor)
+        self.assertIn('scrollView.magnification = Self.editorMagnification', editor)
+        self.assertIn('textView.font = MailTypography.baseFont', editor)
+        typography = self.read('MailTypography.swift')
+        self.assertIn('static let pointSize: CGFloat = 10.5', typography)
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
