@@ -163,7 +163,7 @@ final class OutlookToolbarButtonController: NSObject {
             button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: tooltip)
             button.imagePosition = .imageOnly
             button.imageScaling = .scaleProportionallyDown
-            button.accessibilityLabel = tooltip
+            button.setAccessibilityLabel(tooltip)
             return button
         }
 
