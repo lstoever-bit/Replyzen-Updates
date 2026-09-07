@@ -1,7 +1,7 @@
 {
-  "version": "1.9.0",
-  "build": 10,
-  "download_url": "Replyzen-update.zip",
-  "sha256": "80c92f3cf8319ead36eb6224d9d17ea6179fdac9849d3bf059d7b6cce99310eb",
-  "notes": "Replyzen 1.9: altes leeres Einstellungsfenster wird unterdrückt; beim Start erscheint eine Bestätigung mit lokalem Zufallswitz."
+  "version": "1.10.0",
+  "build": 11,
+  "download_url": "Replyzen-update-1.10.zip",
+  "sha256": "0292445990c555376cb43c46640b74a636ae8f65e11acc57485243a6fb3ea5c1",
+  "notes": "Replyzen 1.10: Update-Cache behoben; Versionsprüfung und Download nutzen Cache-Busting, plus versionsspezifisches Update-Paket."
 }

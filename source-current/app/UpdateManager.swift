@@ -110,9 +110,12 @@ final class UpdateManager {
             return
         }
 
-        var request = URLRequest(url: url)
-        request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+        let fetchURL = cacheBustedURL(url, token: String(Int(Date().timeIntervalSince1970)))
+        var request = URLRequest(url: fetchURL)
+        request.cachePolicy = .reloadIgnoringLocalCacheData
         request.timeoutInterval = 15
+        request.setValue("no-cache, no-store, max-age=0", forHTTPHeaderField: "Cache-Control")
+        request.setValue("no-cache", forHTTPHeaderField: "Pragma")
 
         URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             guard let self else { return }
@@ -217,13 +220,25 @@ final class UpdateManager {
     }
 
     private func resolvedDownloadURL(_ update: AvailableUpdate) -> URL? {
+        let resolved: URL?
         if let absolute = URL(string: update.manifest.downloadURL), absolute.scheme != nil {
             guard absolute.scheme?.lowercased() == "https" else { return nil }
-            return absolute
+            resolved = absolute
+        } else {
+            let base = update.feedURL.deletingLastPathComponent()
+            resolved = URL(string: update.manifest.downloadURL, relativeTo: base)?.absoluteURL
         }
+        guard let resolved else { return nil }
+        return cacheBustedURL(resolved, token: "build-\(update.manifest.build)")
+    }
 
-        let base = update.feedURL.deletingLastPathComponent()
-        return URL(string: update.manifest.downloadURL, relativeTo: base)?.absoluteURL
+    private func cacheBustedURL(_ url: URL, token: String) -> URL {
+        guard var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return url }
+        var items = components.queryItems ?? []
+        items.removeAll { $0.name == "replyzen_cb" }
+        items.append(URLQueryItem(name: "replyzen_cb", value: token))
+        components.queryItems = items
+        return components.url ?? url
     }
 
     private func sha256(of url: URL) throws -> String {

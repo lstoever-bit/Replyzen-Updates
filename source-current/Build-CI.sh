@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 SRC="$ROOT/app"
 WORK="$ROOT/.build-ci"
 APP="$WORK/Replyzen.app"
-UPDATE_ZIP="$ROOT/Replyzen-update.zip"
+UPDATE_ZIP="$ROOT/Replyzen-update-1.10.zip"
 UPDATE_JSON="$ROOT/update.json"
 SWIFTC="$(xcrun --find swiftc)"
 SDK="$(xcrun --sdk macosx --show-sdk-path)"
@@ -53,8 +53,8 @@ cat > "$UPDATE_JSON" <<EOF
 {
   "version": "$APP_VERSION",
   "build": $APP_BUILD,
-  "download_url": "Replyzen-update.zip",
+  "download_url": "Replyzen-update-1.10.zip",
   "sha256": "$UPDATE_SHA",
-  "notes": "Replyzen 1.9: altes leeres Einstellungsfenster wird unterdrückt; beim Start erscheint eine Bestätigung mit lokalem Zufallswitz."
+  "notes": "Replyzen 1.10: Update-Cache behoben; Versionsprüfung und Download nutzen Cache-Busting, plus versionsspezifisches Update-Paket."
 }
 EOF
