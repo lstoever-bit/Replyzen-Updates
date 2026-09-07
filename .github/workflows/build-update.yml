@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'v16/**'
+      - 'v17/**'
       - '.github/workflows/build-update.yml'
   workflow_dispatch:
 
@@ -26,16 +26,18 @@ jobs:
           cp source-current/Build-CI.sh buildsrc/Build-CI.sh
           cp source-current/app/*.swift buildsrc/app/
           cp source-current/app/Info.plist buildsrc/app/Info.plist
-      - name: Apply Replyzen 1.6 Google OAuth changes
+      - name: Apply Replyzen 1.7 window fixes
         run: |
-          cp v16/CalendarManager.swift buildsrc/app/CalendarManager.swift
-          python3 v16/patch.py buildsrc
+          cp v17/FloatingPanelController.swift buildsrc/app/FloatingPanelController.swift
+          cp v17/ReplyzenApp.swift buildsrc/app/ReplyzenApp.swift
+          cp v17/Info.plist buildsrc/app/Info.plist
+          cp v17/Build-CI.sh buildsrc/Build-CI.sh
       - name: Build update package
         run: |
           cd buildsrc
           chmod +x Build-CI.sh
           ./Build-CI.sh
-      - name: Publish Replyzen 1.6 update and source snapshot
+      - name: Publish Replyzen 1.7 update and source snapshot
         run: |
           cp buildsrc/Replyzen-update.zip ./Replyzen-update.zip
           cp buildsrc/update.json ./update.json
@@ -51,5 +53,5 @@ jobs:
             echo "No update artifact changes"
             exit 0
           fi
-          git commit -m "Build Replyzen 1.6 Google Calendar OAuth update"
+          git commit -m "Build Replyzen 1.7 window fix update"
           git push
