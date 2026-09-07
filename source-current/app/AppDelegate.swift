@@ -13,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let loginItem = LoginItemManager()
     private let updateManager = UpdateManager()
     private let calendarManager = CalendarManager()
+    private let attachmentExtractor = AttachmentTextExtractor()
     private lazy var toolbarButton = OutlookToolbarButtonController(outlook: outlook)
 
     private var statusItem: NSStatusItem?
@@ -91,6 +92,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         state.generateAction = { [weak self] in self?.generateCurrentOutput() }
         state.insertAction = { [weak self] in self?.insertGeneratedText() }
         state.createCalendarAction = { [weak self] in self?.createCalendarEvent() }
+        state.extractPaymentAction = { [weak self] in self?.generatePaymentSuggestion() }
+        state.copyPaymentAction = { [weak self] in self?.copyPaymentDetails() }
         state.connectGoogleCalendarAction = { [weak self] in self?.connectGoogleCalendar() }
         state.disconnectGoogleCalendarAction = { [weak self] in self?.disconnectGoogleCalendar() }
         state.openGoogleCloudAction = { [weak self] in self?.openGoogleCloudCredentials() }
@@ -551,6 +554,81 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+
+    private func generatePaymentSuggestion() {
+        guard let apiKey = keychain.loadAPIKey() else {
+            state.stage = .apiKey
+            return
+        }
+        guard !state.mailText.isEmpty, let snapshot = activeSnapshot else {
+            state.mailStatus = .unavailable("Keine lesbare Outlook-Mail erkannt. Für Überweisungsdaten bitte eine Mail öffnen und erneut versuchen.")
+            return
+        }
+
+        isRunningFlow = true
+        toolbarButton.setSuppressed(true)
+        state.stage = .generating
+        state.statusText = "Replyzen liest Mail und versucht PDF/Bild-Anhänge lokal auszulesen"
+
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self else { return }
+            let filenames = self.outlook.attachmentFilenames(from: snapshot)
+            let attachment = self.attachmentExtractor.extract(filenames: filenames)
+            let sourceStatus: String
+            if !attachment.usedFiles.isEmpty {
+                sourceStatus = "Anhang gelesen: " + attachment.usedFiles.joined(separator: ", ")
+            } else if filenames.isEmpty {
+                sourceStatus = "Kein lesbarer PDF/Bild-Anhang erkannt – Extraktion aus dem Mailtext."
+            } else {
+                sourceStatus = "Anhang erkannt, aber nicht automatisch lesbar – Extraktion aus dem Mailtext."
+            }
+
+            self.openAI.createPaymentSuggestion(
+                apiKey: apiKey,
+                mailText: self.state.mailText,
+                attachmentText: attachment.text
+            ) { [weak self] result in
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    self.isRunningFlow = false
+                    switch result {
+                    case .success(let suggestion):
+                        self.state.paymentRecipient = suggestion.recipient ?? ""
+                        self.state.paymentIBAN = (suggestion.iban ?? "").replacingOccurrences(of: " ", with: "").uppercased()
+                        self.state.paymentBIC = (suggestion.bic ?? "").replacingOccurrences(of: " ", with: "").uppercased()
+                        self.state.paymentAmount = suggestion.amount ?? ""
+                        self.state.paymentCurrency = (suggestion.currency ?? "EUR").uppercased()
+                        self.state.paymentPurpose = suggestion.purpose ?? ""
+                        self.state.paymentSourceStatus = sourceStatus
+                        self.state.paymentWarning = "Bitte Empfänger, IBAN, Betrag und Verwendungszweck vor jeder Überweisung prüfen. Replyzen führt keine Zahlung aus."
+                        if suggestion.confidence == "low" {
+                            self.state.paymentWarning = "Unsichere oder widersprüchliche Daten erkannt. Bitte alle Felder besonders sorgfältig prüfen. Replyzen führt keine Zahlung aus."
+                        }
+                        self.state.stage = .paymentPreview
+                        self.panel.show()
+                    case .failure(let error):
+                        self.showError(error.localizedDescription)
+                    }
+                }
+            }
+        }
+    }
+
+    private func copyPaymentDetails() {
+        let lines = [
+            state.paymentRecipient.isEmpty ? nil : "Empfänger: \(state.paymentRecipient)",
+            state.paymentIBAN.isEmpty ? nil : "IBAN: \(state.paymentIBAN)",
+            state.paymentBIC.isEmpty ? nil : "BIC: \(state.paymentBIC)",
+            state.paymentAmount.isEmpty ? nil : "Betrag: \(state.paymentAmount) \(state.paymentCurrency)",
+            state.paymentPurpose.isEmpty ? nil : "Verwendungszweck: \(state.paymentPurpose)"
+        ].compactMap { $0 }
+        guard !lines.isEmpty else { return }
+        copyToPasteboard(lines.joined(separator: "\n"))
+        state.successMessage = "Überweisungsdaten wurden in die Zwischenablage kopiert. Bitte vor der Zahlung im Banking prüfen."
+        state.stage = .success
+        panel.show()
+    }
+
     private func createCalendarEvent() {
         let title = state.calendarTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty else { return }
@@ -807,24 +885,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func populateNewMailDraft(subject: String, body: String, attempt: Int) {
-        let delay = attempt == 0 ? 0.85 : 0.25
+        let delay = attempt == 0 ? 0.8 : 0.22
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             guard let self else { return }
 
             let subjectDone = subject.isEmpty || self.outlook.setComposeSubjectValue(subject)
-            let bodyDone = self.outlook.setComposeBodyValue(body)
-
-            if subjectDone && bodyDone {
+            if self.outlook.setComposeBodyValue(body) {
                 self.finishNewMailInsertion()
                 return
             }
 
-            if attempt < 8 {
+            // Give Outlook a short moment to finish constructing the compose window, but do not wait for many retries.
+            if attempt < 2 {
                 self.populateNewMailDraft(subject: subject, body: body, attempt: attempt + 1)
                 return
             }
 
-            // Fallback for Outlook builds where the web editor is focusable but AXValue is not directly settable.
             var subjectReady = subjectDone
             if !subjectReady, self.outlook.focusComposeSubjectField() {
                 self.copyToPasteboard(subject)
@@ -832,18 +908,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 subjectReady = true
             }
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) { [weak self] in
-                guard let self else { return }
-                if self.outlook.focusComposeBodyField() {
+            // Classic Outlook exposes the subject reliably but often does not expose the HTML body as a settable AXTextArea.
+            // From the subject field, one Tab moves the caret into the message body much more reliably.
+            if subjectReady, self.outlook.focusComposeSubjectField() {
+                self.keyboard.sendTab()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) { [weak self] in
+                    guard let self else { return }
                     self.copyToPasteboard(body)
                     self.keyboard.sendCommandV()
                     self.finishNewMailInsertion()
-                } else {
-                    self.copyToPasteboard(body)
-                    self.isRunningFlow = false
-                    let subjectInfo = subjectReady ? "Der Betreff wurde eingesetzt. " : ""
-                    self.showError("\(subjectInfo)Der Outlook-Mailtext konnte nicht automatisch fokussiert werden. Der Mailtext liegt in der Zwischenablage.")
                 }
+                return
+            }
+
+            if self.outlook.focusComposeBodyField() {
+                self.copyToPasteboard(body)
+                self.keyboard.sendCommandV()
+                self.finishNewMailInsertion()
+            } else {
+                self.copyToPasteboard(body)
+                self.isRunningFlow = false
+                self.showError("Der Mailtext konnte nicht automatisch eingesetzt werden. Er liegt in der Zwischenablage.")
             }
         }
     }

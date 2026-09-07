@@ -217,6 +217,82 @@ final class OpenAIClient {
         }
     }
 
+
+    struct PaymentSuggestion: Decodable {
+        let recipient: String?
+        let iban: String?
+        let bic: String?
+        let amount: String?
+        let currency: String?
+        let purpose: String?
+        let confidence: String?
+    }
+
+    func createPaymentSuggestion(
+        apiKey: String,
+        mailText: String,
+        attachmentText: String,
+        completion: @escaping (Result<PaymentSuggestion, Error>) -> Void
+    ) {
+        let systemInstructions = [
+            "Extract bank transfer details from the supplied email and readable attachment text.",
+            "Return ONLY valid JSON with exactly these keys: recipient, iban, bic, amount, currency, purpose, confidence.",
+            "Never invent or guess banking details. If a field is not clearly supported, return null for that field.",
+            "recipient: exact payee/account holder name if stated.",
+            "iban: exact IBAN, preferably without spaces. Preserve every character accurately.",
+            "bic: exact BIC/SWIFT if stated, otherwise null.",
+            "amount: exact payment amount using digits and decimal separator only, without currency symbol.",
+            "currency: ISO currency code such as EUR only when supported by the source.",
+            "purpose: the shortest useful payment reference, prioritizing invoice number, customer number, reference number, or explicitly requested Verwendungszweck.",
+            "confidence must be one of high, medium, low.",
+            "If email and attachment conflict on IBAN, recipient, or amount, set the conflicting field to null and confidence to low.",
+            "This is extraction only; do not suggest or initiate a payment."
+        ].joined(separator: "\n")
+
+        let input = "EMAIL:\n\(String(mailText.prefix(24_000)))\n\nREADABLE ATTACHMENT TEXT:\n\(String(attachmentText.prefix(24_000)))"
+        performRequest(
+            apiKey: apiKey,
+            instructions: systemInstructions,
+            input: input,
+            model: "gpt-5.4-nano",
+            reasoningEffort: "none",
+            maxOutputTokens: 280,
+            lowVerbosity: true
+        ) { result in
+            switch result {
+            case .success(let text):
+                do {
+                    completion(.success(try Self.decodePaymentSuggestion(text)))
+                } catch {
+                    completion(.failure(error))
+                }
+            case .failure(let error):
+                completion(.failure(error))
+            }
+        }
+    }
+
+    private static func decodePaymentSuggestion(_ text: String) throws -> PaymentSuggestion {
+        var cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if cleaned.hasPrefix("```") {
+            let lines = cleaned.split(separator: "\n", omittingEmptySubsequences: false)
+            if lines.count >= 3 {
+                cleaned = lines.dropFirst().dropLast().joined(separator: "\n")
+                if cleaned.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("json") {
+                    cleaned = String(cleaned.dropFirst(4)).trimmingCharacters(in: .whitespacesAndNewlines)
+                }
+            }
+        }
+        guard let data = cleaned.data(using: .utf8) else {
+            throw APIError(message: "OpenAI hat keine gültigen Überweisungsdaten geliefert.")
+        }
+        do {
+            return try JSONDecoder().decode(PaymentSuggestion.self, from: data)
+        } catch {
+            throw APIError(message: "OpenAI hat die Überweisungsdaten nicht im erwarteten Format geliefert.")
+        }
+    }
+
     private func languageInstruction(for language: AppState.ReplyLanguage, purpose: String) -> String {
         switch language {
         case .german:
@@ -230,8 +306,8 @@ final class OpenAIClient {
         apiKey: String,
         instructions: String,
         input: String,
-        model: String = "gpt-5-mini",
-        reasoningEffort: String? = nil,
+        model: String = "gpt-5.4-mini",
+        reasoningEffort: String? = "none",
         maxOutputTokens: Int? = nil,
         lowVerbosity: Bool = false,
         completion: @escaping (Result<String, Error>) -> Void

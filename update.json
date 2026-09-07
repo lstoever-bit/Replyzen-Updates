@@ -1,7 +1,7 @@
 {
-  "version": "1.17.0",
-  "build": 18,
-  "download_url": "Replyzen-update-1.17.zip",
-  "sha256": "b520011b6c23e8605bb36c5c10821fb1881c8d20b3cf56e51d8ea0529395acc6",
-  "notes": "Replyzen 1.17: New Mail erzeugt immer einen eigenen Betreff und Mailtext und befüllt beide Outlook-Felder automatisch; Preview zeigt beide Felder separat."
+  "version": "1.18.0",
+  "build": 19,
+  "download_url": "Replyzen-update-1.18.zip",
+  "sha256": "f99d0d264cd22bff1fb5a58a7ec8c5543fa9f8fb24a00176b42a36140800749a",
+  "notes": "Replyzen 1.18: schnellere Antworten mit GPT-5.4 Mini ohne Reasoning; robuster New-Mail-Body via Tab-Fallback; neue Überweisungsdaten-Extraktion aus Mail und lesbaren PDF/Bild-Anhängen."
 }

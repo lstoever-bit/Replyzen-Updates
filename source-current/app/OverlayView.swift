@@ -48,6 +48,11 @@ struct OverlayView: View {
                 calendarPreviewView
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
+        case .paymentPreview:
+            ScrollView {
+                paymentPreviewView
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         case .inserting:
             loadingView(title: "Fast fertig", subtitle: insertingSubtitle)
         case .success:
@@ -104,7 +109,7 @@ struct OverlayView: View {
             replyzenLogo(size: 72)
             Text("Replyzen")
                 .font(.title2.bold())
-            Text("Reply, New Mail oder Termin – direkt aus Outlook.")
+            Text("Reply, New Mail, Termin oder Überweisung – direkt aus Outlook.")
                 .foregroundStyle(.secondary)
             Button("Replyzen öffnen") {
                 state.retryAction?()
@@ -191,6 +196,18 @@ struct OverlayView: View {
             .pickerStyle(.segmented)
             .onChange(of: state.outputMode) { mode in
                 handleModeChange(mode)
+            }
+
+            HStack {
+                Spacer()
+                Button {
+                    state.extractPaymentAction?()
+                } label: {
+                    Label("Überweisung aus Mail + Anhang", systemImage: "banknote")
+                }
+                .controlSize(.small)
+                .disabled(!mailAvailable)
+                .help("Versucht Empfänger, IBAN, Betrag und Verwendungszweck aus Mail und lesbarem PDF/Bild-Anhang zu extrahieren")
             }
 
             if state.outputMode != .newMail {
@@ -461,6 +478,83 @@ struct OverlayView: View {
                     state.insertAction?()
                 }
                 .keyboardShortcut(.defaultAction)
+            }
+        }
+    }
+
+
+    private var paymentPreviewView: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 10) {
+                Image(systemName: "banknote")
+                    .font(.title2)
+                Text("Überweisung prüfen")
+                    .font(.title2.bold())
+            }
+
+            if !state.paymentWarning.isEmpty {
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                    Text(state.paymentWarning)
+                        .font(.callout)
+                }
+                .foregroundStyle(.secondary)
+                .padding(10)
+                .background(.background.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Empfänger").font(.caption).foregroundStyle(.secondary)
+                TextField("Empfänger", text: $state.paymentRecipient)
+                    .textFieldStyle(.roundedBorder)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("IBAN").font(.caption).foregroundStyle(.secondary)
+                TextField("IBAN", text: $state.paymentIBAN)
+                    .textFieldStyle(.roundedBorder)
+            }
+
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Betrag").font(.caption).foregroundStyle(.secondary)
+                    TextField("0,00", text: $state.paymentAmount)
+                        .textFieldStyle(.roundedBorder)
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Währung").font(.caption).foregroundStyle(.secondary)
+                    TextField("EUR", text: $state.paymentCurrency)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 90)
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("BIC (optional)").font(.caption).foregroundStyle(.secondary)
+                    TextField("BIC", text: $state.paymentBIC)
+                        .textFieldStyle(.roundedBorder)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Verwendungszweck").font(.caption).foregroundStyle(.secondary)
+                TextEditor(text: $state.paymentPurpose)
+                    .font(.body)
+                    .frame(height: 70)
+                    .padding(6)
+                    .background(.background.opacity(0.7), in: RoundedRectangle(cornerRadius: 8))
+            }
+
+            if !state.paymentSourceStatus.isEmpty {
+                Text(state.paymentSourceStatus)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack {
+                Button("Zurück") { state.stage = .instruction }
+                Spacer()
+                Button("Überweisungsdaten kopieren") { state.copyPaymentAction?() }
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(state.paymentRecipient.isEmpty && state.paymentIBAN.isEmpty && state.paymentAmount.isEmpty)
             }
         }
     }

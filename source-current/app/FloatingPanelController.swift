@@ -203,6 +203,8 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
             let extraOAuthHeight = state.googleNeedsOAuthCredentials ? 130.0 : 0.0
             let warningHeight = state.calendarWarning.isEmpty ? 0.0 : 50.0
             return NSSize(width: 880, height: 760 + extraOAuthHeight + warningHeight)
+        case .paymentPreview:
+            return NSSize(width: 840, height: 690)
         case .preview:
             return NSSize(width: 780, height: 560)
         case .apiKey, .needsAccessibility, .error:

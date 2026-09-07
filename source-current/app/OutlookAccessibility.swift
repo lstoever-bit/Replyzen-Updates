@@ -75,6 +75,46 @@ final class OutlookAccessibility {
         return cleaned
     }
 
+
+    func attachmentFilenames(from snapshot: Snapshot) -> [String] {
+        let pattern = #"(?i)([^/\\\n\r\t<>:\"|?*]{1,180}\.(?:pdf|png|jpe?g|tiff?))"#
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
+        let attributes: [CFString] = [
+            kAXTitleAttribute as CFString,
+            kAXDescriptionAttribute as CFString,
+            kAXHelpAttribute as CFString,
+            kAXValueAttribute as CFString,
+            "AXFilename" as CFString,
+            "AXURL" as CFString
+        ]
+        var names: [String] = []
+        var seen = Set<String>()
+
+        for window in snapshot.windows {
+            var stack: [AXUIElement] = [window]
+            var visited = 0
+            while let element = stack.popLast(), visited < 18_000 {
+                visited += 1
+                for attribute in attributes {
+                    guard let raw = stringLikeAttribute(attribute, from: element), !raw.isEmpty else { continue }
+                    let range = NSRange(raw.startIndex..<raw.endIndex, in: raw)
+                    for match in regex.matches(in: raw, range: range) {
+                        guard match.numberOfRanges > 1,
+                              let matchRange = Range(match.range(at: 1), in: raw) else { continue }
+                        let name = String(raw[matchRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                        let key = name.lowercased()
+                        if !name.isEmpty && !seen.contains(key) {
+                            seen.insert(key)
+                            names.append(name)
+                        }
+                    }
+                }
+                for child in children(of: element).reversed() { stack.append(child) }
+            }
+        }
+        return Array(names.prefix(6))
+    }
+
     func runningPID() -> pid_t? {
         NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == "com.microsoft.Outlook" })?.processIdentifier
     }
@@ -311,6 +351,16 @@ final class OutlookAccessibility {
         return value as? String
     }
 
+
+
+    private func stringLikeAttribute(_ attribute: CFString, from element: AXUIElement) -> String? {
+        var value: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(element, attribute, &value) == .success, let value else { return nil }
+        if let string = value as? String { return string }
+        if let url = value as? URL { return url.absoluteString }
+        if let url = value as? NSURL { return url.absoluteString }
+        return nil
+    }
 
     private func pointAttribute(_ attribute: CFString, from element: AXUIElement) -> CGPoint? {
         var value: CFTypeRef?

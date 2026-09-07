@@ -13,6 +13,10 @@ final class KeyboardController {
         sendKey(code: 9, flags: .maskCommand)
     }
 
+    func sendTab() {
+        sendKey(code: 48, flags: [])
+    }
+
     private func sendKey(code: CGKeyCode, flags: CGEventFlags) {
         guard let source = CGEventSource(stateID: .hidSystemState),
               let down = CGEvent(keyboardEventSource: source, virtualKey: code, keyDown: true),

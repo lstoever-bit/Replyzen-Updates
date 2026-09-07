@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 SRC="$ROOT/app"
 WORK="$ROOT/.build-ci"
 APP="$WORK/Replyzen.app"
-UPDATE_ZIP="$ROOT/Replyzen-update-1.17.zip"
+UPDATE_ZIP="$ROOT/Replyzen-update-1.18.zip"
 UPDATE_JSON="$ROOT/update.json"
 SWIFTC="$(xcrun --find swiftc)"
 SDK="$(xcrun --sdk macosx --show-sdk-path)"
@@ -37,6 +37,7 @@ SOURCES=("$SRC"/*.swift)
 "$SWIFTC" -O -parse-as-library -sdk "$SDK" -target "$TARGET" \
   -framework AppKit -framework SwiftUI -framework ApplicationServices \
   -framework Security -framework ServiceManagement -framework Network \
+  -framework PDFKit -framework Vision \
   "${SOURCES[@]}" \
   -o "$APP/Contents/MacOS/Replyzen"
 
@@ -53,8 +54,8 @@ cat > "$UPDATE_JSON" <<EOF
 {
   "version": "$APP_VERSION",
   "build": $APP_BUILD,
-  "download_url": "Replyzen-update-1.17.zip",
+  "download_url": "Replyzen-update-1.18.zip",
   "sha256": "$UPDATE_SHA",
-  "notes": "Replyzen 1.17: New Mail erzeugt immer einen eigenen Betreff und Mailtext und befüllt beide Outlook-Felder automatisch; Preview zeigt beide Felder separat."
+  "notes": "Replyzen 1.18: schnellere Antworten mit GPT-5.4 Mini ohne Reasoning; robuster New-Mail-Body via Tab-Fallback; neue Überweisungsdaten-Extraktion aus Mail und lesbaren PDF/Bild-Anhängen."
 }
 EOF
