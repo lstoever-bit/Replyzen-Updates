@@ -1,7 +1,7 @@
 {
-  "version": "1.4.0",
-  "build": 5,
+  "version": "1.5.0",
+  "build": 6,
   "download_url": "Replyzen-update.zip",
-  "sha256": "b0ae0cd5d9d72de5695d7a198f321fc3a01098fbe5b75f07e89591d636dc3425",
-  "notes": "Replyzen 1.4: Summary durch Termin ersetzt. Erstellt aus dem Outlook-Mailverlauf einen minimalen Termintitel und legt den Termin im minubo-Kalender an."
+  "sha256": "7fbaaa0d356096837a942a26df8ba3fdfb3dd188c27d3fc54e7b7d89dc255f9d",
+  "notes": "Replyzen 1.5: Termin-Body extrem kompakt; Auswahl des Zielkalenders innerhalb des minubo-Kontos."
 }
