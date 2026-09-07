@@ -2,7 +2,7 @@ name: Build Replyzen Update
 
 on:
   push:
-    branches: [replyzen-v1.4]
+    branches: [main]
     paths:
       - 'patch14/part-*.patch'
       - '.github/workflows/build-update.yml'
