@@ -24,6 +24,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var updateMenuItem: NSMenuItem?
     private var requestedMailMode: AppState.OutputMode?
     private var replyAllForCurrentDraft = true
+    private var outlookLaunchObserver: NSObjectProtocol?
+    private var outlookTerminateObserver: NSObjectProtocol?
+    private var outlookSessionActive = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -35,25 +38,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         migrateExistingAPIKeyIfPossible()
         configureStateActions()
         panel.onClose = { [weak self] in self?.closePanel() }
-        configureStatusItem()
         configureHotKey()
         configureToolbarButton()
         configureUpdates()
+        configureOutlookLifecycle()
 
+        // The login item is intentionally kept as a silent watcher. Without a tiny
+        // background process macOS could not relaunch Replyzen exactly when Outlook
+        // opens. No Replyzen UI is shown while Outlook is closed.
         _ = loginItem.enableAtLoginIfPossible()
 
-        if keychain.loadAPIKey() == nil {
-            state.stage = .apiKey
-            panel.show()
+        if isOutlookRunning {
+            activateForOutlook()
         } else {
-            state.startupJoke = startupJoke()
-            state.stage = .startup
-            panel.show(activate: true)
+            deactivateForOutlook()
         }
+    }
 
-        if !outlook.isTrusted() {
-            outlook.requestTrustPrompt()
-        }
+    func applicationWillTerminate(_ notification: Notification) {
+        let center = NSWorkspace.shared.notificationCenter
+        if let outlookLaunchObserver { center.removeObserver(outlookLaunchObserver) }
+        if let outlookTerminateObserver { center.removeObserver(outlookTerminateObserver) }
+        toolbarButton.stop()
     }
 
     func applicationShouldSaveSecureApplicationState(_ app: NSApplication) -> Bool {
@@ -107,6 +113,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func configureStatusItem() {
+        guard statusItem == nil else { return }
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let url = Bundle.main.url(forResource: "ReplyzenLogo", withExtension: "png"),
            let source = NSImage(contentsOf: url),
@@ -211,7 +218,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func configureHotKey() {
-        hotKey.action = { [weak self] in self?.openWorkspace() }
+        hotKey.action = { [weak self] in
+            guard let self, self.isOutlookRunning else { return }
+            self.openWorkspace()
+        }
         hotKey.start()
     }
 
@@ -223,7 +233,73 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         toolbarButton.cancelAction = { [weak self] in self?.quickDecline() }
         toolbarButton.calendarAction = { [weak self] in self?.createCalendarFromOverlay() }
         toolbarButton.paymentAction = { [weak self] in self?.createPaymentFromOverlay() }
+    }
+
+    private var isOutlookRunning: Bool {
+        NSWorkspace.shared.runningApplications.contains { $0.bundleIdentifier == "com.microsoft.Outlook" }
+    }
+
+    private func configureOutlookLifecycle() {
+        let center = NSWorkspace.shared.notificationCenter
+
+        outlookLaunchObserver = center.addObserver(
+            forName: NSWorkspace.didLaunchApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self,
+                  let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
+                  app.bundleIdentifier == "com.microsoft.Outlook" else { return }
+            self.activateForOutlook()
+        }
+
+        outlookTerminateObserver = center.addObserver(
+            forName: NSWorkspace.didTerminateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self,
+                  let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
+                  app.bundleIdentifier == "com.microsoft.Outlook" else { return }
+            self.deactivateForOutlook()
+        }
+    }
+
+    private func activateForOutlook() {
+        guard !outlookSessionActive else { return }
+        outlookSessionActive = true
+        configureStatusItem()
+        toolbarButton.setSuppressed(false)
         toolbarButton.start()
+
+        if !outlook.isTrusted() {
+            outlook.requestTrustPrompt()
+        }
+
+        // Do not pop up the old startup window every time Outlook launches. The
+        // menu-bar icon and Outlook overlay are the visible Replyzen surface. Only
+        // first-time API-key setup needs a panel automatically.
+        if keychain.loadAPIKey() == nil {
+            state.stage = .apiKey
+            panel.show()
+        } else {
+            state.stage = .idle
+            panel.hide()
+        }
+    }
+
+    private func deactivateForOutlook() {
+        outlookSessionActive = false
+        isRunningFlow = false
+        isLoadingMail = false
+        activeSnapshot = nil
+        panel.hide()
+        toolbarButton.stop()
+
+        if let item = statusItem {
+            NSStatusBar.system.removeStatusItem(item)
+            statusItem = nil
+        }
     }
 
     private func openNewMailWorkspace() {
@@ -331,9 +407,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     mail = try self.outlook.readMail(from: snapshot)
                 }
 
+                var paymentSnapshot = snapshot
+                var paymentMail = mail
+
+                // Legacy Outlook exposes attachment files more reliably once the
+                // selected mail is opened in its own message window.
+                DispatchQueue.main.sync {
+                    paymentSnapshot = self.outlook.openSelectedMessageWindowIfNeeded(from: snapshot)
+                }
+                if let refreshedMail = try? self.outlook.readMail(from: paymentSnapshot),
+                   !refreshedMail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    paymentMail = refreshedMail
+                }
+
                 DispatchQueue.main.async {
-                    self.activeSnapshot = snapshot
-                    self.state.mailText = mail
+                    self.activeSnapshot = paymentSnapshot
+                    self.state.mailText = paymentMail
                     self.state.mailStatus = .available
                     self.state.outputMode = .payment
                     // Do not show the normal Replyzen form. The existing extractor

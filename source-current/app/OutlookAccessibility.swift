@@ -151,6 +151,64 @@ final class OutlookAccessibility {
         return Array(urls.prefix(8))
     }
 
+    func openSelectedMessageWindowIfNeeded(from snapshot: Snapshot) -> Snapshot {
+        guard let focusedWindow = snapshot.windows.first,
+              looksLikeMainOutlookWindow(focusedWindow) else {
+            return snapshot
+        }
+
+        activateOutlook(pid: snapshot.pid)
+        focusSelectedMessageRow(in: focusedWindow)
+        postKey(code: 36) // Return opens the selected message in Legacy Outlook.
+        Thread.sleep(forTimeInterval: 0.95)
+
+        return (try? captureSnapshot(includeAllWindows: true)) ?? snapshot
+    }
+
+    private func looksLikeMainOutlookWindow(_ window: AXUIElement) -> Bool {
+        // The mailbox window contains a large outline/table outside the message
+        // web area. A standalone message window normally does not.
+        var stack: [(AXUIElement, Int)] = [(window, 0)]
+        var visited = 0
+
+        while let (element, depth) = stack.popLast(), visited < 10_000 {
+            visited += 1
+            let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
+
+            if role == "AXWebArea" { continue }
+
+            if depth <= 9 && (role == "AXOutline" || role == "AXTable") {
+                if let size = sizeAttribute(kAXSizeAttribute as CFString, from: element),
+                   size.width > 180, size.height > 180 {
+                    return true
+                }
+            }
+
+            if depth < 10 {
+                for child in children(of: element).reversed() {
+                    stack.append((child, depth + 1))
+                }
+            }
+        }
+        return false
+    }
+
+    private func focusSelectedMessageRow(in window: AXUIElement) {
+        var stack: [AXUIElement] = [window]
+        var visited = 0
+        while let element = stack.popLast(), visited < 12_000 {
+            visited += 1
+            let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
+            if role == "AXRow", boolAttribute(kAXSelectedAttribute as CFString, from: element) == true {
+                _ = focus(element)
+                return
+            }
+            if role != "AXWebArea" {
+                for child in children(of: element).reversed() { stack.append(child) }
+            }
+        }
+    }
+
     func activateAttachment(named filename: String, from snapshot: Snapshot) -> Bool {
         guard let element = attachmentElement(named: filename, from: snapshot) else { return false }
 
@@ -737,6 +795,13 @@ final class OutlookAccessibility {
             return visible
         }
         return []
+    }
+
+    private func boolAttribute(_ attribute: CFString, from element: AXUIElement) -> Bool? {
+        var value: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(element, attribute, &value) == .success else { return nil }
+        if let number = value as? NSNumber { return number.boolValue }
+        return nil
     }
 
     private func stringAttribute(_ attribute: CFString, from element: AXUIElement) -> String? {

@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 SRC="$ROOT/app"
 WORK="$ROOT/.build-ci"
 APP="$WORK/Replyzen.app"
-UPDATE_ZIP="$ROOT/Replyzen-update-1.41.zip"
+UPDATE_ZIP="$ROOT/Replyzen-update-1.42.zip"
 UPDATE_JSON="$ROOT/update.json"
 SWIFTC="$(xcrun --find swiftc)"
 SDK="$(xcrun --sdk macosx --show-sdk-path)"
@@ -54,8 +54,8 @@ cat > "$UPDATE_JSON" <<EOF
 {
   "version": "$APP_VERSION",
   "build": $APP_BUILD,
-  "download_url": "Replyzen-update-1.41.zip",
+  "download_url": "Replyzen-update-1.42.zip",
   "sha256": "$UPDATE_SHA",
-  "notes": "Replyzen 1.41: Payment versucht bei Legacy Outlook zusätzlich einen echten Rechtsklick auf die Anhangskarte, wenn AXShowMenu fehlt. Falls Outlook den PDF-Anhang trotzdem technisch blockiert, öffnet Replyzen als letzten Fallback direkt einen PDF-Dateidialog statt eine leere Überweisungsmaske anzuzeigen. Die ausgewählte PDF wird anschließend wie gewohnt direkt mit OpenAI gelesen."
+  "notes": "Replyzen 1.42: Payment öffnet eine im Outlook Lesebereich ausgewählte Mail bei Bedarf automatisch in einem eigenen Nachrichtenfenster, bevor auf den PDF-Anhang zugegriffen wird. PDF-Dateinamen werden beim OpenAI Upload immer mit kleingeschriebener .pdf Endung übertragen, damit .PDF Dateien nicht mehr an der Dateityp-Prüfung scheitern. Replyzens sichtbare Oberfläche und Menüleiste erscheinen automatisch mit Outlook und verschwinden wieder, wenn Outlook geschlossen wird."
 }
 EOF

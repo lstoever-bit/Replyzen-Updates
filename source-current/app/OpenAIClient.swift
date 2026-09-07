@@ -505,7 +505,14 @@ final class OpenAIClient {
         }
 
         let boundary = "Replyzen-\(UUID().uuidString)"
-        let safeFilename = url.lastPathComponent.replacingOccurrences(of: "\"", with: "_")
+        let originalFilename = url.lastPathComponent.replacingOccurrences(of: "\"", with: "_")
+        let safeFilename: String
+        if url.pathExtension.lowercased() == "pdf" {
+            let stem = URL(fileURLWithPath: originalFilename).deletingPathExtension().lastPathComponent
+            safeFilename = (stem.isEmpty ? "invoice" : stem) + ".pdf"
+        } else {
+            safeFilename = originalFilename
+        }
         var body = Data()
 
         func append(_ string: String) {
