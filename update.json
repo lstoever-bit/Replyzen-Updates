@@ -1,0 +1,7 @@
+{
+  "version": "1.3.0",
+  "build": 4,
+  "download_url": "Replyzen-update.zip",
+  "sha256": "d6e6f7759e966a8e567f1b964a7cce488ebdafb4ff43c39d0ddcc0e2323f1e19",
+  "notes": "Replyzen 1.3: erster automatischer In-App-Update-Test; Funktionen aus 1.2 bleiben unverändert."
+}
