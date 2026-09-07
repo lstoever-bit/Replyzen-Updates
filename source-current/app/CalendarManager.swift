@@ -593,12 +593,114 @@ final class CalendarManager {
 }
 
 private final class GoogleKeychain {
-    private let service = "com.lstoever.replyzen.google"
+    // New layout: all Google OAuth values live in ONE Keychain item.  The old
+    // implementation created a separate protected item for every value, which
+    // could make macOS show several almost identical "Allow" dialogs in a row.
+    private let service = "com.lstoever.replyzen.google.v2"
+    private let account = "oauth-bundle"
+    private let legacyService = "com.lstoever.replyzen.google"
+    private let migrationDisabledKey = "Replyzen.GoogleKeychainV2.LegacyDisabled"
+
+    private let lock = NSLock()
+    private var cache: [String: String] = [:]
+    private var bundleLoaded = false
 
     func load(_ key: String) -> String? {
+        lock.lock()
+        defer { lock.unlock() }
+
+        ensureBundleLoaded()
+        if let value = cache[key], !value.isEmpty {
+            return value
+        }
+
+        // One-time compatibility path for existing installations. Each legacy
+        // value that is successfully read is immediately copied into the single
+        // v2 bundle, so the old per-item prompts disappear after migration.
+        guard !UserDefaults.standard.bool(forKey: migrationDisabledKey),
+              let legacy = legacyLoad(key), !legacy.isEmpty else {
+            return nil
+        }
+
+        cache[key] = legacy
+        try? saveBundle()
+        markLegacyMigrationCompleteIfPossible()
+        return legacy
+    }
+
+    func save(_ value: String, key: String) throws {
+        lock.lock()
+        defer { lock.unlock() }
+
+        ensureBundleLoaded()
+        cache[key] = value
+        try saveBundle()
+        markLegacyMigrationCompleteIfPossible()
+    }
+
+    func delete(_ key: String) {
+        lock.lock()
+        defer { lock.unlock() }
+
+        ensureBundleLoaded()
+        cache.removeValue(forKey: key)
+        try? saveBundle()
+
+        // A delete is intentional (for example "Trennen"). Never resurrect an
+        // old token from the legacy keychain afterwards.
+        UserDefaults.standard.set(true, forKey: migrationDisabledKey)
+        legacyDelete(key)
+    }
+
+    private func ensureBundleLoaded() {
+        guard !bundleLoaded else { return }
+        bundleLoaded = true
+
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        var item: CFTypeRef?
+        guard SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess,
+              let data = item as? Data,
+              let decoded = try? JSONDecoder().decode([String: String].self, from: data) else {
+            return
+        }
+        cache = decoded
+    }
+
+    private func saveBundle() throws {
+        let data = try JSONEncoder().encode(cache)
+        let base: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account
+        ]
+
+        let updateStatus = SecItemUpdate(
+            base as CFDictionary,
+            [kSecValueData as String: data] as CFDictionary
+        )
+        if updateStatus == errSecSuccess { return }
+        guard updateStatus == errSecItemNotFound else {
+            throw CalendarManager.CalendarError.keychainError(updateStatus)
+        }
+
+        var add = base
+        add[kSecValueData as String] = data
+        let addStatus = SecItemAdd(add as CFDictionary, nil)
+        guard addStatus == errSecSuccess else {
+            throw CalendarManager.CalendarError.keychainError(addStatus)
+        }
+    }
+
+    private func legacyLoad(_ key: String) -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: legacyService,
             kSecAttrAccount as String: key,
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne
@@ -609,24 +711,24 @@ private final class GoogleKeychain {
         return String(data: data, encoding: .utf8)
     }
 
-    func save(_ value: String, key: String) throws {
-        delete(key)
-        let attributes: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: key,
-            kSecValueData as String: Data(value.utf8)
-        ]
-        let status = SecItemAdd(attributes as CFDictionary, nil)
-        guard status == errSecSuccess else { throw CalendarManager.CalendarError.keychainError(status) }
-    }
-
-    func delete(_ key: String) {
+    private func legacyDelete(_ key: String) {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
+            kSecAttrService as String: legacyService,
             kSecAttrAccount as String: key
         ]
         SecItemDelete(query as CFDictionary)
+    }
+
+    private func markLegacyMigrationCompleteIfPossible() {
+        let essentials = [
+            "google.oauth.client_id",
+            "google.oauth.client_secret",
+            "google.oauth.refresh_token",
+            "google.oauth.email"
+        ]
+        if essentials.allSatisfy({ !(cache[$0] ?? "").isEmpty }) {
+            UserDefaults.standard.set(true, forKey: migrationDisabledKey)
+        }
     }
 }

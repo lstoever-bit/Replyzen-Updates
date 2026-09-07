@@ -1,7 +1,7 @@
 {
-  "version": "1.11.0",
-  "build": 12,
-  "download_url": "Replyzen-update-1.11.zip",
-  "sha256": "9c72bd248d840780ec0dcf8877e416db971b72af9ad3fc7fa10317c4924df25d",
-  "notes": "Replyzen 1.11: Fenstergröße passt sich automatisch an Inhalt, Modus und verfügbare Bildschirmfläche an; Scroll-Fallback verhindert abgeschnittene Buttons."
+  "version": "1.12.0",
+  "build": 13,
+  "download_url": "Replyzen-update-1.12.zip",
+  "sha256": "3ffbbfb3021ca3a9886dc2edf5ab1016184b520b854a7148eeaaae2728647a5f",
+  "notes": "Replyzen 1.12: Google-Schlüsselbundzugriff auf einen einzigen Eintrag konsolidiert; wiederholte macOS-Zugriffsabfragen werden nach einmaliger Migration vermieden."
 }
