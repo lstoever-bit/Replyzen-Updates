@@ -23,6 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var availableUpdate: UpdateManager.AvailableUpdate?
     private var updateMenuItem: NSMenuItem?
     private var requestedMailMode: AppState.OutputMode?
+    private var replyAllForCurrentDraft = true
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -216,19 +217,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func configureToolbarButton() {
         toolbarButton.newAction = { [weak self] in self?.openNewMailWorkspace() }
-        toolbarButton.replyAction = { [weak self] in self?.openReplyWorkspace() }
-        toolbarButton.declineAction = { [weak self] in self?.quickDecline() }
+        toolbarButton.replyAction = { [weak self] in self?.openReplyWorkspace(replyAll: false) }
+        toolbarButton.replyAllAction = { [weak self] in self?.openReplyWorkspace(replyAll: true) }
+        toolbarButton.forwardAction = { [weak self] in self?.forwardCurrentMail() }
+        toolbarButton.cancelAction = { [weak self] in self?.quickDecline() }
         toolbarButton.start()
     }
 
     private func openNewMailWorkspace() {
         requestedMailMode = .newMail
+        replyAllForCurrentDraft = true
         openWorkspace()
     }
 
-    private func openReplyWorkspace() {
+    private func openReplyWorkspace(replyAll: Bool) {
         requestedMailMode = .reply
+        replyAllForCurrentDraft = replyAll
         openWorkspace()
+    }
+
+    private func forwardCurrentMail() {
+        guard !isRunningFlow else { return }
+        guard let pid = outlook.runningPID() else { return }
+        guard outlook.isTrusted() else {
+            outlook.requestTrustPrompt()
+            return
+        }
+
+        toolbarButton.setSuppressed(true)
+        outlook.activateOutlook(pid: pid)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { [weak self] in
+            self?.keyboard.sendCommandJ()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+                self?.toolbarButton.setSuppressed(false)
+            }
+        }
     }
 
     private func quickDecline() {
@@ -476,6 +499,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // One unified Mail form. New and Reply only choose the behavior of the
         // same form. The Outlook overlay can request either mode explicitly.
+        // When Reply is entered through the generic Replyzen window, keep the
+        // historical default of Reply All. The explicit overlay buttons override it.
+        if requestedMailMode != .reply {
+            replyAllForCurrentDraft = true
+        }
         if requestedMailMode == .reply {
             state.outputMode = .reply
             state.instruction = defaultReplyInstruction(for: state.replyLanguage)
@@ -1129,7 +1157,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         outlook.activateOutlook(pid: snapshot.pid)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
-            self?.keyboard.sendCommandShiftR()
+            guard let self else { return }
+            if self.replyAllForCurrentDraft {
+                self.keyboard.sendCommandShiftR()
+            } else {
+                self.keyboard.sendCommandR()
+            }
 
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.05) { [weak self] in
                 guard let self else { return }

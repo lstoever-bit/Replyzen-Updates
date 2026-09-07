@@ -6,18 +6,22 @@ final class OutlookToolbarButtonController: NSObject {
     private let panel: NSPanel
     private let newButton: NSButton
     private let replyButton: NSButton
-    private let declineButton: NSButton
+    private let replyAllButton: NSButton
+    private let forwardButton: NSButton
+    private let cancelButton: NSButton
     private var timer: Timer?
     private var isSuppressed = false
 
     var newAction: (() -> Void)?
     var replyAction: (() -> Void)?
-    var declineAction: (() -> Void)?
+    var replyAllAction: (() -> Void)?
+    var forwardAction: (() -> Void)?
+    var cancelAction: (() -> Void)?
 
     init(outlook: OutlookAccessibility) {
         self.outlook = outlook
 
-        let size = NSSize(width: 250, height: 34)
+        let size = NSSize(width: 448, height: 34)
         panel = NSPanel(
             contentRect: NSRect(origin: .zero, size: size),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -48,13 +52,17 @@ final class OutlookToolbarButtonController: NSObject {
             return button
         }
 
-        newButton = makeButton(title: "New", symbol: "square.and.pencil", x: 4, width: 72, help: "Neue Mail mit Replyzen")
-        replyButton = makeButton(title: "Reply", symbol: "arrowshape.turn.up.left.fill", x: 84, width: 76, help: "Auf die aktuelle Mail antworten")
-        declineButton = makeButton(title: "Decline", symbol: "xmark.circle", x: 168, width: 78, help: "Freundliche kurze Absage direkt als Antwort einsetzen")
+        newButton = makeButton(title: "New", symbol: "square.and.pencil", x: 4, width: 68, help: "Neue Mail mit Replyzen")
+        replyButton = makeButton(title: "Reply", symbol: "arrowshape.turn.up.left", x: 76, width: 74, help: "Nur dem Absender antworten")
+        replyAllButton = makeButton(title: "Reply All", symbol: "arrowshape.turn.up.left.2", x: 154, width: 94, help: "Allen Empfängern antworten")
+        forwardButton = makeButton(title: "Forward", symbol: "arrowshape.turn.up.right", x: 252, width: 88, help: "Aktuelle Mail in Outlook weiterleiten")
+        cancelButton = makeButton(title: "Cancel", symbol: "xmark.circle", x: 344, width: 96, help: "Freundliche kurze Absage direkt als Antwort einsetzen")
 
         effect.addSubview(newButton)
         effect.addSubview(replyButton)
-        effect.addSubview(declineButton)
+        effect.addSubview(replyAllButton)
+        effect.addSubview(forwardButton)
+        effect.addSubview(cancelButton)
 
         panel.contentView = effect
         panel.isOpaque = false
@@ -72,8 +80,12 @@ final class OutlookToolbarButtonController: NSObject {
         newButton.action = #selector(newClicked)
         replyButton.target = self
         replyButton.action = #selector(replyClicked)
-        declineButton.target = self
-        declineButton.action = #selector(declineClicked)
+        replyAllButton.target = self
+        replyAllButton.action = #selector(replyAllClicked)
+        forwardButton.target = self
+        forwardButton.action = #selector(forwardClicked)
+        cancelButton.target = self
+        cancelButton.action = #selector(cancelClicked)
     }
 
     func start() {
@@ -96,7 +108,9 @@ final class OutlookToolbarButtonController: NSObject {
 
     @objc private func newClicked() { newAction?() }
     @objc private func replyClicked() { replyAction?() }
-    @objc private func declineClicked() { declineAction?() }
+    @objc private func replyAllClicked() { replyAllAction?() }
+    @objc private func forwardClicked() { forwardAction?() }
+    @objc private func cancelClicked() { cancelAction?() }
 
     private func update() {
         guard !isSuppressed,
