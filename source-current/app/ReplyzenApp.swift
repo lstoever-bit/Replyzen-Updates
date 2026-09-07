@@ -1,12 +1,13 @@
-import SwiftUI
+import AppKit
 
 @main
-struct ReplyzenApp: App {
-    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-
-    var body: some Scene {
-        Settings {
-            EmptyView()
+enum ReplyzenApp {
+    static func main() {
+        let app = NSApplication.shared
+        let delegate = AppDelegate()
+        app.delegate = delegate
+        withExtendedLifetime(delegate) {
+            app.run()
         }
     }
 }

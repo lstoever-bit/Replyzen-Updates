@@ -1,7 +1,7 @@
 {
-  "version": "1.6.0",
-  "build": 7,
+  "version": "1.7.0",
+  "build": 8,
   "download_url": "Replyzen-update.zip",
-  "sha256": "a7e40d01aa878c818436ab2090bea76150835011f675ac8a35991f6ebd7bc101",
-  "notes": "Replyzen 1.6: direkte Google-Calendar-API mit OAuth; Kalenderauswahl und kompakter Termin-Body."
+  "sha256": "2bc97c6be3d158663e1f62d9674cab68a6f67d6a29c240fcd4d7dd7ccbf6ff56",
+  "notes": "Replyzen 1.7: größeres, frei skalierbares Fenster; leeres Einstellungsfenster entfernt."
 }
