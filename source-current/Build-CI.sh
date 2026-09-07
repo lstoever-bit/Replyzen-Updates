@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 SRC="$ROOT/app"
 WORK="$ROOT/.build-ci"
 APP="$WORK/Replyzen.app"
-UPDATE_ZIP="$ROOT/Replyzen-update-1.21.zip"
+UPDATE_ZIP="$ROOT/Replyzen-update-1.22.zip"
 UPDATE_JSON="$ROOT/update.json"
 SWIFTC="$(xcrun --find swiftc)"
 SDK="$(xcrun --sdk macosx --show-sdk-path)"
@@ -54,8 +54,8 @@ cat > "$UPDATE_JSON" <<EOF
 {
   "version": "$APP_VERSION",
   "build": $APP_BUILD,
-  "download_url": "Replyzen-update-1.21.zip",
+  "download_url": "Replyzen-update-1.22.zip",
   "sha256": "$UPDATE_SHA",
-  "notes": "Replyzen 1.21: robustere PDF-Übernahme aus Outlook über direkte AX-Datei-URLs und automatisches Materialisieren des Anhangs; erweiterte Outlook-Temp-Suche."
+  "notes": "Replyzen 1.22: neuer Absage-Button direkt im Outlook-Overlay. Ein Klick erkennt automatisch die Sprache der Mail, erstellt eine freundliche knappe Absage und setzt sie direkt in einen Outlook-Antwortentwurf ein; gesendet wird weiterhin nur manuell."
 }
 EOF

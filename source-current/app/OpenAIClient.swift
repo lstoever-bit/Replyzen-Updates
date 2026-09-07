@@ -36,6 +36,33 @@ final class OpenAIClient {
         )
     }
 
+    func generateQuickDecline(
+        apiKey: String,
+        mailText: String,
+        completion: @escaping (Result<String, Error>) -> Void
+    ) {
+        let systemInstructions = [
+            "Draft a very short, friendly decline as an email reply.",
+            "Automatically detect the language of the latest relevant incoming message and write the reply in that same language.",
+            "If the thread mixes languages, use the language of the most recent request that is being declined.",
+            "Keep it warm, polite and concise: normally 1-3 short sentences.",
+            "Clearly decline the request or invitation, but do not invent a reason, excuse, date, promise or alternative unless it is explicitly supported by the email.",
+            "Do not add a subject line, greeting-only filler, signature or the user's name.",
+            "Return only the reply text."
+        ].joined(separator: "\n")
+
+        performRequest(
+            apiKey: apiKey,
+            instructions: systemInstructions,
+            input: "EMAIL THREAD:\n\(String(mailText.prefix(30_000)))",
+            model: "gpt-5.6-luna",
+            reasoningEffort: "none",
+            maxOutputTokens: 180,
+            lowVerbosity: true,
+            completion: completion
+        )
+    }
+
     struct NewMailDraft: Decodable {
         let subject: String
         let body: String

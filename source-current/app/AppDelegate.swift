@@ -150,7 +150,86 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func configureToolbarButton() {
         toolbarButton.action = { [weak self] in self?.openWorkspace() }
+        toolbarButton.declineAction = { [weak self] in self?.quickDecline() }
         toolbarButton.start()
+    }
+
+    private func quickDecline() {
+        guard !isRunningFlow else { return }
+        guard let apiKey = keychain.loadAPIKey() else {
+            openWorkspace()
+            return
+        }
+        guard outlook.isTrusted() else {
+            outlook.requestTrustPrompt()
+            return
+        }
+
+        isRunningFlow = true
+        toolbarButton.setSuppressed(true)
+
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self else { return }
+
+            do {
+                var snapshot = try self.outlook.captureSnapshot(includeAllWindows: false)
+                var mail: String
+                do {
+                    mail = try self.outlook.readMail(from: snapshot)
+                } catch OutlookAccessibility.OutlookError.noMailText {
+                    snapshot = try self.outlook.captureSnapshot(includeAllWindows: true)
+                    mail = try self.outlook.readMail(from: snapshot)
+                }
+
+                self.openAI.generateQuickDecline(apiKey: apiKey, mailText: mail) { [weak self] result in
+                    DispatchQueue.main.async {
+                        guard let self else { return }
+                        switch result {
+                        case .success(let text):
+                            let reply = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                            guard !reply.isEmpty else {
+                                self.isRunningFlow = false
+                                self.toolbarButton.setSuppressed(false)
+                                self.showSimpleAlert(title: "Absage fehlgeschlagen", message: "OpenAI hat keinen Antworttext geliefert.")
+                                return
+                            }
+                            self.activeSnapshot = snapshot
+                            self.insertQuickReply(reply, snapshot: snapshot)
+                        case .failure(let error):
+                            self.isRunningFlow = false
+                            self.toolbarButton.setSuppressed(false)
+                            self.showSimpleAlert(title: "Absage fehlgeschlagen", message: error.localizedDescription)
+                        }
+                    }
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.isRunningFlow = false
+                    self.toolbarButton.setSuppressed(false)
+                    self.showSimpleAlert(title: "Absage fehlgeschlagen", message: "Die geöffnete Outlook-Mail konnte nicht gelesen werden.")
+                }
+            }
+        }
+    }
+
+    private func insertQuickReply(_ reply: String, snapshot: OutlookAccessibility.Snapshot) {
+        copyToPasteboard(reply)
+        panel.hide()
+        outlook.activateOutlook(pid: snapshot.pid)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+            self?.keyboard.sendCommandR()
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                guard let self else { return }
+                self.copyToPasteboard(reply)
+                self.keyboard.sendCommandV()
+                self.isRunningFlow = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                    self.toolbarButton.setSuppressed(false)
+                }
+            }
+        }
     }
 
     @objc private func menuReply() {

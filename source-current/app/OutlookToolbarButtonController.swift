@@ -5,15 +5,17 @@ final class OutlookToolbarButtonController: NSObject {
     private let outlook: OutlookAccessibility
     private let panel: NSPanel
     private let button: NSButton
+    private let declineButton: NSButton
     private var timer: Timer?
     private var isSuppressed = false
 
     var action: (() -> Void)?
+    var declineAction: (() -> Void)?
 
     init(outlook: OutlookAccessibility) {
         self.outlook = outlook
 
-        let size = NSSize(width: 112, height: 34)
+        let size = NSSize(width: 206, height: 34)
         panel = NSPanel(
             contentRect: NSRect(origin: .zero, size: size),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -29,7 +31,7 @@ final class OutlookToolbarButtonController: NSObject {
         effect.layer?.cornerRadius = 9
         effect.layer?.masksToBounds = true
 
-        button = NSButton(frame: effect.bounds.insetBy(dx: 4, dy: 3))
+        button = NSButton(frame: NSRect(x: 4, y: 3, width: 112, height: 28))
         button.title = "Replyzen"
         button.bezelStyle = .rounded
         button.font = .systemFont(ofSize: 12.5, weight: .semibold)
@@ -48,7 +50,19 @@ final class OutlookToolbarButtonController: NSObject {
             button.imageScaling = .scaleProportionallyDown
         }
 
+        declineButton = NSButton(frame: NSRect(x: 120, y: 3, width: 82, height: 28))
+        declineButton.title = "Absage"
+        declineButton.bezelStyle = .rounded
+        declineButton.font = .systemFont(ofSize: 12.5, weight: .semibold)
+        declineButton.alignment = .center
+        declineButton.isBordered = false
+        declineButton.setButtonType(.momentaryPushIn)
+        declineButton.toolTip = "Freundliche knappe Absage direkt als Outlook-Antwort einsetzen"
+        declineButton.image = NSImage(systemSymbolName: "xmark.circle", accessibilityDescription: "Absage")
+        declineButton.imagePosition = .imageLeading
+
         effect.addSubview(button)
+        effect.addSubview(declineButton)
 
         panel.contentView = effect
         panel.isOpaque = false
@@ -64,6 +78,8 @@ final class OutlookToolbarButtonController: NSObject {
 
         button.target = self
         button.action = #selector(buttonClicked)
+        declineButton.target = self
+        declineButton.action = #selector(declineButtonClicked)
     }
 
     func start() {
@@ -92,6 +108,10 @@ final class OutlookToolbarButtonController: NSObject {
 
     @objc private func buttonClicked() {
         action?()
+    }
+
+    @objc private func declineButtonClicked() {
+        declineAction?()
     }
 
     private func update() {
