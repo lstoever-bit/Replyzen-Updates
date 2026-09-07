@@ -1036,6 +1036,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
 
+            if selectedPDFs.isEmpty, let pdfName = mentionedPDF {
+                var manuallySelectedPDF: URL?
+                DispatchQueue.main.sync {
+                    self.state.statusText = "Outlook blockiert den PDF-Zugriff – bitte Rechnung auswählen …"
+                    manuallySelectedPDF = self.choosePaymentPDFFallback(suggestedName: pdfName)
+                }
+                if let manuallySelectedPDF {
+                    selectedPDFs = [manuallySelectedPDF]
+                }
+            }
+
+            // A detected invoice PDF must be read as a real file. Never continue to
+            // the blank payment form based only on mail text when Outlook blocks it.
+            if selectedPDFs.isEmpty, mentionedPDF != nil {
+                DispatchQueue.main.async {
+                    self.isRunningFlow = false
+                    self.toolbarButton.setSuppressed(false)
+                    self.showSimpleAlert(
+                        title: "PDF nicht verfügbar",
+                        message: "Outlook gibt den PDF-Anhang nicht frei. Bitte Payment erneut klicken und im Dateidialog die Rechnung auswählen."
+                    )
+                }
+                return
+            }
+
             let replyzenTempDirectories = Set(selectedPDFs.compactMap { url -> URL? in
                 guard url.path.contains("/Replyzen-Attachments/") else { return nil }
                 return url.deletingLastPathComponent()
@@ -1112,6 +1137,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
         }
+    }
+
+    private func choosePaymentPDFFallback(suggestedName: String?) -> URL? {
+        let picker = NSOpenPanel()
+        picker.title = "Rechnung auswählen"
+        picker.message = "Outlook stellt den erkannten PDF-Anhang nicht als Datei bereit. Wähle die Rechnung einmal aus; Replyzen liest sie danach direkt mit OpenAI."
+        picker.prompt = "PDF verwenden"
+        picker.canChooseFiles = true
+        picker.canChooseDirectories = false
+        picker.allowsMultipleSelection = false
+        picker.allowedFileTypes = ["pdf"]
+
+        let downloads = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Downloads", isDirectory: true)
+        if FileManager.default.fileExists(atPath: downloads.path) {
+            picker.directoryURL = downloads
+        }
+        if let suggestedName, !suggestedName.isEmpty {
+            picker.nameFieldStringValue = URL(fileURLWithPath: suggestedName).lastPathComponent
+        }
+
+        NSApp.activate(ignoringOtherApps: true)
+        guard picker.runModal() == .OK,
+              let url = picker.url,
+              url.pathExtension.lowercased() == "pdf" else { return nil }
+        return url.standardizedFileURL
     }
 
     private func copyPaymentDetails() {

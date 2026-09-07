@@ -192,7 +192,7 @@ final class OutlookAccessibility {
             return nil
         }
 
-        Thread.sleep(forTimeInterval: 0.22)
+        Thread.sleep(forTimeInterval: 0.48)
         guard let selectedTitle = pressBestSaveAttachmentMenuItem(pid: snapshot.pid, near: element) else {
             try? fm.removeItem(at: directory)
             return nil
@@ -294,14 +294,49 @@ final class OutlookAccessibility {
 
     private func showAttachmentMenu(for element: AXUIElement) -> Bool {
         var current: AXUIElement? = element
-        for _ in 0..<7 {
+        var rightClickTarget: AXUIElement = element
+        var bestArea: CGFloat = 0
+
+        for _ in 0..<8 {
             guard let candidate = current else { break }
             if AXUIElementPerformAction(candidate, "AXShowMenu" as CFString) == .success {
                 return true
             }
+
+            if let size = sizeAttribute(kAXSizeAttribute as CFString, from: candidate) {
+                let area = size.width * size.height
+                if size.width >= 28, size.height >= 18, area > bestArea {
+                    bestArea = area
+                    rightClickTarget = candidate
+                }
+            }
             current = axElementAttribute(kAXParentAttribute as CFString, from: candidate)
         }
-        return false
+
+        // Legacy Outlook frequently exposes no AXShowMenu action at all even though
+        // a normal right click on the attachment card opens the menu. Reproduce that
+        // native interaction at the attachment card center as a second route.
+        guard let position = pointAttribute(kAXPositionAttribute as CFString, from: rightClickTarget),
+              let size = sizeAttribute(kAXSizeAttribute as CFString, from: rightClickTarget),
+              size.width > 0, size.height > 0,
+              let source = CGEventSource(stateID: .hidSystemState) else { return false }
+
+        let point = CGPoint(x: position.x + size.width / 2, y: position.y + size.height / 2)
+        guard let down = CGEvent(
+            mouseEventSource: source,
+            mouseType: .rightMouseDown,
+            mouseCursorPosition: point,
+            mouseButton: .right
+        ), let up = CGEvent(
+            mouseEventSource: source,
+            mouseType: .rightMouseUp,
+            mouseCursorPosition: point,
+            mouseButton: .right
+        ) else { return false }
+
+        down.post(tap: .cghidEventTap)
+        up.post(tap: .cghidEventTap)
+        return true
     }
 
     private func pressBestSaveAttachmentMenuItem(pid: pid_t, near attachment: AXUIElement) -> String? {
