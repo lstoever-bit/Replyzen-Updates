@@ -1,0 +1,211 @@
+/Replyzen_v1.3/app/CalendarManager.swift replyzen_v14_work/Replyzen_v1.4/app/CalendarManager.swift
+--- replyzen_autoupdate_work/Replyzen_v1.3/app/CalendarManager.swift	1970-01-01 00:00:00.000000000 +0000
++++ replyzen_v14_work/Replyzen_v1.4/app/CalendarManager.swift	2026-09-07 04:21:02.213686357 +0000
+@@ -0,0 +1,100 @@
++import Foundation
++import EventKit
++
++final class CalendarManager {
++    static let targetCalendarID = "lennard@minubo.com"
++    static let targetCalendarName = "minubo"
++
++    enum CalendarError: LocalizedError {
++        case accessDenied
++        case targetCalendarNotFound([String])
++        case invalidDates
++        case saveFailed(String)
++
++        var errorDescription: String? {
++            switch self {
++            case .accessDenied:
++                return "Replyzen braucht Kalenderzugriff. Bitte unter Systemeinstellungen → Datenschutz & Sicherheit → Kalender den Zugriff für Replyzen erlauben."
++            case .targetCalendarNotFound(let available):
++                let suffix = available.isEmpty ? "" : " Gefundene beschreibbare Kalender: \(available.joined(separator: ", "))."
++                return "Der Google-Kalender lennard@minubo.com (minubo) ist auf diesem Mac nicht verfügbar. Bitte das minubo-Google-Konto unter Systemeinstellungen → Internetaccounts hinzufügen und Kalender aktivieren." + suffix
++            case .invalidDates:
++                return "Start- und Endzeit des Termins sind ungültig."
++            case .saveFailed(let message):
++                return "Der Termin konnte nicht gespeichert werden: \(message)"
++            }
++        }
++    }
++
++    private let store = EKEventStore()
++
++    func createEvent(
++        title: String,
++        start: Date,
++        end: Date,
++        completion: @escaping (Result<String, Error>) -> Void
++    ) {
++        guard end > start else {
++            completion(.failure(CalendarError.invalidDates))
++            return
++        }
++
++        requestAccess { [weak self] granted in
++            guard let self else { return }
++            guard granted else {
++                completion(.failure(CalendarError.accessDenied))
++                return
++            }
++
++            do {
++                let calendar = try self.resolveTargetCalendar()
++                let event = EKEvent(eventStore: self.store)
++                event.calendar = calendar
++                event.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
++                event.startDate = start
++                event.endDate = end
++                try self.store.save(event, span: .thisEvent, commit: true)
++                completion(.success(calendar.title))
++            } catch {
++                completion(.failure(error))
++            }
++        }
++    }
++
++    private func requestAccess(completion: @escaping (Bool) -> Void) {
++        if #available(macOS 14.0, *) {
++            store.requestFullAccessToEvents { granted, _ in completion(granted) }
++        } else {
++            store.requestAccess(to: .event) { granted, _ in completion(granted) }
++        }
++    }
++
++    private func resolveTargetCalendar() throws -> EKCalendar {
++        let calendars = store.calendars(for: .event).filter { $0.allowsContentModifications }
++        let wantedEmail = Self.targetCalendarID.lowercased()
++        let wantedName = Self.targetCalendarName.lowercased()
++
++        func score(_ calendar: EKCalendar) -> Int {
++            let title = calendar.title.lowercased()
++            let source = calendar.source.title.lowercased()
++            var value = 0
++            if title == wantedEmail { value += 1000 }
++            if source == wantedEmail { value += 1000 }
++            if title.contains(wantedEmail) { value += 900 }
++            if source.contains(wantedEmail) { value += 900 }
++            if title == wantedName { value += 800 }
++            if title.contains(wantedName) { value += 700 }
++            if source.contains(wantedName) { value += 650 }
++            if title.contains("lennard") { value += 150 }
++            if source.contains("lennard") { value += 150 }
++            return value
++        }
++
++        if let best = calendars.map({ ($0, score($0)) }).filter({ $0.1 > 0 }).max(by: { $0.1 < $1.1 })?.0 {
++            return best
++        }
++
++        let available = calendars.map { "\($0.title) [\($0.source.title)]" }.sorted()
++        throw CalendarError.targetCalendarNotFound(available)
++    }
++}
+diff -uNr '--exclude=.github' '--exclude=Brand' '--exclude=Build-App.command' '--exclude=README*' replyzen_autoupdate_work/Replyzen_v1.3/app/Info.plist replyzen_v14_work/Replyzen_v1.4/app/Info.plist
+--- replyzen_autoupdate_work/Replyzen_v1.3/app/Info.plist	2026-09-07 03:48:27.947995121 +0000
++++ replyzen_v14_work/Replyzen_v1.4/app/Info.plist	2026-09-07 04:21:02.090045344 +0000
+@@ -17,9 +17,9 @@
+     <key>CFBundlePackageType</key>
+     <string>APPL</string>
+     <key>CFBundleShortVersionString</key>
+-    <string>1.3.0</string>
++    <string>1.4.0</string>
+     <key>CFBundleVersion</key>
+-    <string>4</string>
++    <string>5</string>
+     <key>CFBundleIconFile</key>
+     <string>Replyzen.icns</string>
+     <key>LSMinimumSystemVersion</key>
+@@ -28,5 +28,9 @@
+     <true/>
+     <key>NSHighResolutionCapable</key>
+     <true/>
++    <key>NSCalendarsUsageDescription</key>
++    <string>Replyzen legt auf Wunsch Termine im minubo-Kalender an.</string>
++    <key>NSCalendarsFullAccessUsageDescription</key>
++    <string>Replyzen braucht Kalenderzugriff, um Termine im minubo-Kalender anzulegen.</string>
+ </dict>
+ </plist>
+diff -uNr '--exclude=.github' '--exclude=Brand' '--exclude=Build-App.command' '--exclude=README*' replyzen_autoupdate_work/Replyzen_v1.3/app/OpenAIClient.swift replyzen_v14_work/Replyzen_v1.4/app/OpenAIClient.swift
+--- replyzen_autoupdate_work/Replyzen_v1.3/app/OpenAIClient.swift	2026-09-07 03:23:24.000000000 +0000
++++ replyzen_v14_work/Replyzen_v1.4/app/OpenAIClient.swift	2026-09-07 04:21:03.260962234 +0000
+@@ -86,6 +86,75 @@
+         )
+     }
+ 
++    struct CalendarSuggestion: Decodable {
++        let title: String
++        let start: String?
++        let end: String?
++        let confidence: String?
++    }
++
++    func createCalendarSuggestion(
++        apiKey: String,
++        mailText: String,
++        language: AppState.ReplyLanguage,
++        completion: @escaping (Result<CalendarSuggestion, Error>) -> Void
++    ) {
++        let now = ISO8601DateFormatter().string(from: Date())
++        let timezone = TimeZone.current.identifier
++        let titleLanguage = language == .german ? "German" : "US English"
++
++        let systemInstructions = [
++            "Create a calendar event suggestion from the email thread.",
++            "Return ONLY valid JSON with exactly these keys: title, start, end, confidence.",
++            "title: the shortest useful calendar title possible, ideally 1-4 words, maximum 6 words. No filler such as Meeting, Call, Appointment, Termin unless it is necessary to understand the event.",
++            "Write the title in \(titleLanguage). Preserve important project or person names.",
++            "start and end: ISO-8601 timestamps with timezone offset, or null.",
++            "Use a date/time only if one future appointment time is clearly agreed or clearly proposed in the thread. If several dates/times are possible or the timing is ambiguous, set start and end to null.",
++            "If a start time is clear but no end time or duration is given, set end to 30 minutes after start.",
++            "confidence must be one of explicit, ambiguous, missing.",
++            "Do not invent a date, time, attendee, location, or commitment.",
++            "Current time is \(now). The user's local timezone is \(timezone). Resolve explicit relative dates such as tomorrow using this context."
++        ].joined(separator: "\n")
++
++        performRequest(
++            apiKey: apiKey,
++            instructions: systemInstructions,
++            input: "EMAIL THREAD:\n\(String(mailText.prefix(30_000)))"
++        ) { result in
++            switch result {
++            case .success(let text):
++                do {
++                    completion(.success(try Self.decodeCalendarSuggestion(text)))
++                } catch {
++                    completion(.failure(error))
++                }
++            case .failure(let error):
++                completion(.failure(error))
++            }
++        }
++    }
++
++    private static func decodeCalendarSuggestion(_ text: String) throws -> CalendarSuggestion {
++        var cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
++        if cleaned.hasPrefix("```") {
++            let lines = cleaned.split(separator: "\n", omittingEmptySubsequences: false)
++            if lines.count >= 3 {
++                cleaned = lines.dropFirst().dropLast().joined(separator: "\n")
++                if cleaned.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("json") {
++                    cleaned = String(cleaned.dropFirst(4)).trimmingCharacters(in: .whitespacesAndNewlines)
++                }
++            }
++        }
++        guard let data = cleaned.data(using: .utf8) else {
++            throw APIError(message: "OpenAI hat keinen gültigen Terminvorschlag geliefert.")
++        }
++        do {
++            return try JSONDecoder().decode(CalendarSuggestion.self, from: data)
++        } catch {
++            throw APIError(message: "OpenAI hat den Terminvorschlag nicht im erwarteten Format geliefert.")
++        }
++    }
++
+     private func languageInstruction(for language: AppState.ReplyLanguage, purpose: String) -> String {
+         switch language {
+         case .german:
+diff -uNr '--exclude=.github' '--exclude=Brand' '--exclude=Build-App.command' '--exclude=README*' replyzen_autoupdate_work/Replyzen_v1.3/app/OverlayView.swift replyzen_v14_work/Replyzen_v1.4/app/OverlayView.swift
+--- replyzen_autoupdate_work/Replyzen_v1.3/app/OverlayView.swift	2026-09-07 03:24:48.000000000 +0000
++++ replyzen_v14_work/Replyzen_v1.
