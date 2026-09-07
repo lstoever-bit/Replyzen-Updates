@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'v48/**'
+      - 'v49/**'
       - '.github/workflows/build-update.yml'
   workflow_dispatch:
 
@@ -26,19 +26,19 @@ jobs:
           cp source-current/Build-CI.sh buildsrc/Build-CI.sh
           cp source-current/app/*.swift buildsrc/app/
           cp source-current/app/Info.plist buildsrc/app/Info.plist
-      - name: Apply Replyzen 1.35 overlay polish
+      - name: Apply Replyzen 1.36 direct calendar flow
         run: |
-          python3 v48/patch.py buildsrc
+          python3 v49/patch.py buildsrc
       - name: Build update package
         run: |
           cd buildsrc
           chmod +x Build-CI.sh
           ./Build-CI.sh
-      - name: Publish Replyzen 1.35 update and source snapshot
+      - name: Publish Replyzen 1.36 update and source snapshot
         run: |
-          cp buildsrc/Replyzen-update-1.35.zip ./Replyzen-update-1.35.zip
+          cp buildsrc/Replyzen-update-1.36.zip ./Replyzen-update-1.36.zip
           cp buildsrc/update.json ./update.json
-          cp buildsrc/update.json ./update-1.35.json
+          cp buildsrc/update.json ./update-1.36.json
           rm -rf source-current
           mkdir -p source-current/app
           cp buildsrc/Build-CI.sh source-current/Build-CI.sh
@@ -46,10 +46,10 @@ jobs:
           cp buildsrc/app/Info.plist source-current/app/Info.plist
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f Replyzen-update-1.35.zip update.json update-1.35.json source-current
+          git add -f Replyzen-update-1.36.zip update.json update-1.36.json source-current
           if git diff --cached --quiet; then
             echo "No update artifact changes"
             exit 0
           fi
-          git commit -m "Build Replyzen 1.35 overlay polish"
+          git commit -m "Build Replyzen 1.36 direct calendar flow"
           git push
