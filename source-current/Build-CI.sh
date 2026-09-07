@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 SRC="$ROOT/app"
 WORK="$ROOT/.build-ci"
 APP="$WORK/Replyzen.app"
-UPDATE_ZIP="$ROOT/Replyzen-update-1.18.zip"
+UPDATE_ZIP="$ROOT/Replyzen-update-1.19.zip"
 UPDATE_JSON="$ROOT/update.json"
 SWIFTC="$(xcrun --find swiftc)"
 SDK="$(xcrun --sdk macosx --show-sdk-path)"
@@ -54,8 +54,8 @@ cat > "$UPDATE_JSON" <<EOF
 {
   "version": "$APP_VERSION",
   "build": $APP_BUILD,
-  "download_url": "Replyzen-update-1.18.zip",
+  "download_url": "Replyzen-update-1.19.zip",
   "sha256": "$UPDATE_SHA",
-  "notes": "Replyzen 1.18: schnellere Antworten mit GPT-5.4 Mini ohne Reasoning; robuster New-Mail-Body via Tab-Fallback; neue Überweisungsdaten-Extraktion aus Mail und lesbaren PDF/Bild-Anhängen."
+  "notes": "Replyzen 1.19: cache-sicherer Updater mit zweiter GitHub-API-Quelle und frischer URLSession; alte manuelle Cache-URLs werden automatisch bereinigt."
 }
 EOF

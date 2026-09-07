@@ -67,20 +67,35 @@ final class UpdateManager {
     private let lastCheckKey = "Replyzen.LastUpdateCheck"
 
     private let defaultFeedURL = "https://raw.githubusercontent.com/lstoever-bit/Replyzen-Updates/main/update.json"
+    private let githubAPIFeedURL = "https://api.github.com/repos/lstoever-bit/Replyzen-Updates/contents/update.json?ref=main"
 
     var feedURLString: String {
         get {
             let stored = defaults.string(forKey: feedKey)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            return stored.isEmpty ? defaultFeedURL : stored
+            // Older Replyzen versions asked users to add cache-busting query strings or
+            // versioned update manifests manually. From 1.19 onward all official-feed
+            // variants are migrated back to the canonical URL automatically.
+            if stored.isEmpty || isOfficialFeedVariant(stored) {
+                return defaultFeedURL
+            }
+            return stored
         }
         set {
             let cleaned = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
-            if cleaned.isEmpty || cleaned == defaultFeedURL {
+            if cleaned.isEmpty || isOfficialFeedVariant(cleaned) {
                 defaults.removeObject(forKey: feedKey)
             } else {
                 defaults.set(cleaned, forKey: feedKey)
             }
         }
+    }
+
+    private func isOfficialFeedVariant(_ raw: String) -> Bool {
+        guard let url = URL(string: raw),
+              url.host?.lowercased() == "raw.githubusercontent.com" else { return false }
+        return url.path.hasPrefix("/lstoever-bit/Replyzen-Updates/") &&
+               url.lastPathComponent.lowercased().hasPrefix("update") &&
+               url.pathExtension.lowercased() == "json"
     }
 
     var currentVersion: String {
@@ -98,6 +113,17 @@ final class UpdateManager {
         return now.timeIntervalSince(last) >= 12 * 60 * 60
     }
 
+    private struct ManifestCandidate {
+        let requestURL: URL
+        let feedURL: URL
+        let acceptHeader: String?
+    }
+
+    private struct GitHubContentsResponse: Decodable {
+        let content: String?
+        let encoding: String?
+    }
+
     func checkForUpdates(markCheckTime: Bool = true, completion: @escaping (Result<AvailableUpdate?, Error>) -> Void) {
         let raw = feedURLString
         guard !raw.isEmpty else {
@@ -110,46 +136,144 @@ final class UpdateManager {
             return
         }
 
-        let fetchURL = cacheBustedURL(url, token: String(Int(Date().timeIntervalSince1970)))
-        var request = URLRequest(url: fetchURL)
-        request.cachePolicy = .reloadIgnoringLocalCacheData
-        request.timeoutInterval = 15
-        request.setValue("no-cache, no-store, max-age=0", forHTTPHeaderField: "Cache-Control")
-        request.setValue("no-cache", forHTTPHeaderField: "Pragma")
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+        configuration.urlCache = nil
+        configuration.httpCookieStorage = nil
+        configuration.timeoutIntervalForRequest = 15
+        configuration.timeoutIntervalForResource = 20
+        let session = URLSession(configuration: configuration)
+        let candidates = manifestCandidates(for: url)
 
-        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+        fetchManifestCandidates(candidates, index: 0, session: session, decoded: [], lastError: nil) { [weak self] decoded, lastError in
             guard let self else { return }
+            session.finishTasksAndInvalidate()
 
             if markCheckTime {
                 self.defaults.set(Date(), forKey: self.lastCheckKey)
             }
 
+            guard let best = decoded.max(by: { $0.0.build < $1.0.build }) else {
+                completion(.failure(lastError ?? UpdateError.badResponse))
+                return
+            }
+
+            if best.0.build > self.currentBuild {
+                completion(.success(AvailableUpdate(manifest: best.0, feedURL: best.1)))
+            } else {
+                completion(.success(nil))
+            }
+        }
+    }
+
+    private func manifestCandidates(for feedURL: URL) -> [ManifestCandidate] {
+        let token = "\(Int(Date().timeIntervalSince1970))-\(UUID().uuidString)"
+        var result = [
+            ManifestCandidate(
+                requestURL: cacheBustedURL(feedURL, token: token),
+                feedURL: feedURL,
+                acceptHeader: nil
+            )
+        ]
+
+        // The official raw.githubusercontent.com feed can occasionally be stale at the
+        // CDN edge. Always query GitHub's Contents API as a second independent source
+        // and choose the highest build number returned by either endpoint.
+        if feedURL.host?.lowercased() == "raw.githubusercontent.com",
+           feedURL.path.hasPrefix("/lstoever-bit/Replyzen-Updates/"),
+           let apiURL = URL(string: githubAPIFeedURL) {
+            result.append(ManifestCandidate(
+                requestURL: cacheBustedURL(apiURL, token: token),
+                feedURL: URL(string: defaultFeedURL) ?? feedURL,
+                acceptHeader: "application/vnd.github.raw+json"
+            ))
+        }
+        return result
+    }
+
+    private func fetchManifestCandidates(
+        _ candidates: [ManifestCandidate],
+        index: Int,
+        session: URLSession,
+        decoded: [(Manifest, URL)],
+        lastError: Error?,
+        completion: @escaping ([(Manifest, URL)], Error?) -> Void
+    ) {
+        guard index < candidates.count else {
+            completion(decoded, lastError)
+            return
+        }
+
+        let candidate = candidates[index]
+        var request = URLRequest(url: candidate.requestURL)
+        request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+        request.timeoutInterval = 15
+        request.setValue("no-cache, no-store, max-age=0", forHTTPHeaderField: "Cache-Control")
+        request.setValue("no-cache", forHTTPHeaderField: "Pragma")
+        request.setValue("Replyzen/\(currentVersion)", forHTTPHeaderField: "User-Agent")
+        if let acceptHeader = candidate.acceptHeader {
+            request.setValue(acceptHeader, forHTTPHeaderField: "Accept")
+        }
+
+        session.dataTask(with: request) { [weak self] data, response, error in
+            guard let self else { return }
+            var nextDecoded = decoded
+            var nextError = lastError
+
             if let error {
-                completion(.failure(error))
-                return
-            }
-
-            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode), let data else {
-                completion(.failure(UpdateError.badResponse))
-                return
-            }
-
-            do {
-                let manifest = try JSONDecoder().decode(Manifest.self, from: data)
-                guard manifest.build > 0, !manifest.version.isEmpty, !manifest.downloadURL.isEmpty, !(manifest.sha256 ?? "").isEmpty else {
-                    completion(.failure(UpdateError.invalidManifest))
-                    return
+                nextError = error
+            } else if let http = response as? HTTPURLResponse,
+                      (200...299).contains(http.statusCode),
+                      let data {
+                do {
+                    let manifest = try self.decodeManifest(from: data)
+                    nextDecoded.append((manifest, candidate.feedURL))
+                } catch {
+                    nextError = error
                 }
-
-                if manifest.build > self.currentBuild {
-                    completion(.success(AvailableUpdate(manifest: manifest, feedURL: url)))
-                } else {
-                    completion(.success(nil))
-                }
-            } catch {
-                completion(.failure(UpdateError.invalidManifest))
+            } else {
+                nextError = UpdateError.badResponse
             }
+
+            self.fetchManifestCandidates(
+                candidates,
+                index: index + 1,
+                session: session,
+                decoded: nextDecoded,
+                lastError: nextError,
+                completion: completion
+            )
         }.resume()
+    }
+
+    private func decodeManifest(from data: Data) throws -> Manifest {
+        let decoder = JSONDecoder()
+
+        if let manifest = try? decoder.decode(Manifest.self, from: data),
+           manifest.build > 0,
+           !manifest.version.isEmpty,
+           !manifest.downloadURL.isEmpty,
+           !(manifest.sha256 ?? "").isEmpty {
+            return manifest
+        }
+
+        // GitHub may return either raw file bytes or the normal Contents API JSON
+        // wrapper depending on media-type handling. Support both forms.
+        if let wrapper = try? decoder.decode(GitHubContentsResponse.self, from: data),
+           wrapper.encoding?.lowercased() == "base64",
+           let content = wrapper.content {
+            let compact = content.replacingOccurrences(of: "\n", with: "")
+            if let decodedData = Data(base64Encoded: compact),
+               let manifest = try? decoder.decode(Manifest.self, from: decodedData),
+               manifest.build > 0,
+               !manifest.version.isEmpty,
+               !manifest.downloadURL.isEmpty,
+               !(manifest.sha256 ?? "").isEmpty {
+                return manifest
+            }
+        }
+
+        throw UpdateError.invalidManifest
     }
 
     func install(_ update: AvailableUpdate, completion: @escaping (Result<Void, Error>) -> Void) {
