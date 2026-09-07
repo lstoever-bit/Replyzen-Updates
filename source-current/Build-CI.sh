@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 SRC="$ROOT/app"
 WORK="$ROOT/.build-ci"
 APP="$WORK/Replyzen.app"
-UPDATE_ZIP="$ROOT/Replyzen-update-1.38.zip"
+UPDATE_ZIP="$ROOT/Replyzen-update-1.39.zip"
 UPDATE_JSON="$ROOT/update.json"
 SWIFTC="$(xcrun --find swiftc)"
 SDK="$(xcrun --sdk macosx --show-sdk-path)"
@@ -54,8 +54,8 @@ cat > "$UPDATE_JSON" <<EOF
 {
   "version": "$APP_VERSION",
   "build": $APP_BUILD,
-  "download_url": "Replyzen-update-1.38.zip",
+  "download_url": "Replyzen-update-1.39.zip",
   "sha256": "$UPDATE_SHA",
-  "notes": "Replyzen 1.38: Das Outlook Overlay ist kompakt und zeigt nur noch Symbole. Die englischen Bezeichnungen erscheinen nach 1,5 Sekunden als Tooltip. Cancel, Calendar und Payment sind mit Pipes getrennt; der dezente Overlay Hintergrund bleibt erhalten. Command+A markiert jetzt im WYSIWYG Editor zuverlässig den gesamten Text."
+  "notes": "Replyzen 1.39: Im Outlook Overlay trennt nur noch ein Pipe Forward von den kontextuellen Aktionen Cancel, Calendar und Payment. Tooltips erscheinen nach 0,75 Sekunden und der Overlay Hintergrund hebt sich deutlicher von Outlook ab. Die Mail Form ist deutlich kompakter, das WYSIWYG Textfeld größer und die große graue Leerfläche entfernt."
 }
 EOF

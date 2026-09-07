@@ -176,14 +176,14 @@ struct OverlayView: View {
     }
 
     private var instructionView: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 10) {
-                replyzenLogo(size: 38)
-                VStack(alignment: .leading, spacing: 1) {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                replyzenLogo(size: 34)
+                VStack(alignment: .leading, spacing: 0) {
                     Text("Replyzen")
-                        .font(.title2.bold())
+                        .font(.headline)
                     Text("Mail AI")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
@@ -227,7 +227,7 @@ struct OverlayView: View {
                 RichTextMailEditor(
                     plainText: $state.instruction,
                     html: $state.instructionHTML,
-                    height: 320,
+                    height: 390,
                     showsHTMLBadge: false
                 )
             }
@@ -278,9 +278,8 @@ struct OverlayView: View {
                 .foregroundStyle(.secondary)
             }
 
-            Spacer(minLength: 12)
-
             Divider()
+                .padding(.top, 2)
 
             HStack(spacing: 12) {
                 Button("Schließen") { state.closeAction?() }

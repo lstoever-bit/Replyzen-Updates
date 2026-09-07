@@ -38,7 +38,7 @@ private final class DelayedTooltipButton: NSButton {
             self?.showDelayedTooltip()
         }
         tooltipWorkItem = item
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: item)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.75, execute: item)
     }
 
     override func mouseExited(with event: NSEvent) {
@@ -127,7 +127,7 @@ final class OutlookToolbarButtonController: NSObject {
     init(outlook: OutlookAccessibility) {
         self.outlook = outlook
 
-        let size = NSSize(width: 322, height: 34)
+        let size = NSSize(width: 302, height: 34)
         panel = NSPanel(
             contentRect: NSRect(origin: .zero, size: size),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -136,14 +136,21 @@ final class OutlookToolbarButtonController: NSObject {
         )
 
         let effect = NSVisualEffectView(frame: NSRect(origin: .zero, size: size))
-        effect.material = .hudWindow
+        effect.material = .popover
         effect.blendingMode = .withinWindow
         effect.state = .active
         effect.wantsLayer = true
         effect.layer?.cornerRadius = 9
         effect.layer?.masksToBounds = true
-        // Keep the subtle Replyzen tint requested for the Outlook overlay.
-        effect.layer?.backgroundColor = NSColor.controlBackgroundColor.withAlphaComponent(0.22).cgColor
+        // Deliberately a little stronger than Outlook's toolbar gray so Replyzen
+        // reads as one compact control while still feeling native on macOS.
+        let isDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        let overlayTint = isDark
+            ? NSColor(calibratedWhite: 0.16, alpha: 0.78)
+            : NSColor(calibratedWhite: 0.84, alpha: 0.82)
+        effect.layer?.backgroundColor = overlayTint.cgColor
+        effect.layer?.borderWidth = 0.6
+        effect.layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.55).cgColor
 
         func makeButton(symbol: String, x: CGFloat, tooltip: String) -> DelayedTooltipButton {
             let button = DelayedTooltipButton(
@@ -175,8 +182,8 @@ final class OutlookToolbarButtonController: NSObject {
         replyAllButton = makeButton(symbol: "arrowshape.turn.up.left.2", x: 86, tooltip: "Reply All")
         forwardButton = makeButton(symbol: "arrowshape.turn.up.right", x: 126, tooltip: "Forward")
         cancelButton = makeButton(symbol: "xmark.circle", x: 178, tooltip: "Cancel")
-        calendarButton = makeButton(symbol: "calendar.badge.plus", x: 228, tooltip: "Calendar")
-        paymentButton = makeButton(symbol: "banknote", x: 278, tooltip: "Payment")
+        calendarButton = makeButton(symbol: "calendar.badge.plus", x: 218, tooltip: "Calendar")
+        paymentButton = makeButton(symbol: "banknote", x: 258, tooltip: "Payment")
 
         effect.addSubview(newButton)
         effect.addSubview(replyButton)
@@ -184,9 +191,7 @@ final class OutlookToolbarButtonController: NSObject {
         effect.addSubview(forwardButton)
         effect.addSubview(makePipe(x: 166))
         effect.addSubview(cancelButton)
-        effect.addSubview(makePipe(x: 216))
         effect.addSubview(calendarButton)
-        effect.addSubview(makePipe(x: 266))
         effect.addSubview(paymentButton)
 
         panel.contentView = effect
