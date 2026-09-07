@@ -1,7 +1,7 @@
 {
-  "version": "1.16.0",
-  "build": 17,
-  "download_url": "Replyzen-update-1.16.zip",
-  "sha256": "1ef67e468790de22ca346a6126b9c2fd3c94745716184b0dddaa413fbe0a7604",
-  "notes": "Replyzen 1.16: Der Outlook-Button zeigt jetzt den Namen Replyzen und das echte Replyzen-Logo statt ✨ AI."
+  "version": "1.17.0",
+  "build": 18,
+  "download_url": "Replyzen-update-1.17.zip",
+  "sha256": "b520011b6c23e8605bb36c5c10821fb1881c8d20b3cf56e51d8ea0529395acc6",
+  "notes": "Replyzen 1.17: New Mail erzeugt immer einen eigenen Betreff und Mailtext und befüllt beide Outlook-Felder automatisch; Preview zeigt beide Felder separat."
 }

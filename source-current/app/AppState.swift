@@ -62,6 +62,7 @@ final class AppState: ObservableObject {
     @Published var replyLanguage: ReplyLanguage = .german
     @Published var replyTone: ReplyTone = .friendly
     @Published var newMailCompact: Bool = false
+    @Published var newMailSubject: String = ""
     @Published var selectedCommandName: String = "Custom"
     @Published var outputMode: OutputMode = .reply
     @Published var mailStatus: MailStatus = .notChecked

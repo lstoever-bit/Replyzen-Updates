@@ -34,37 +34,80 @@ final class OpenAIClient {
         )
     }
 
+    struct NewMailDraft: Decodable {
+        let subject: String
+        let body: String
+    }
+
     func generateNewMail(
         apiKey: String,
         instruction: String,
         tone: ReplyTone,
         language: AppState.ReplyLanguage,
         compact: Bool,
-        completion: @escaping (Result<String, Error>) -> Void
+        completion: @escaping (Result<NewMailDraft, Error>) -> Void
     ) {
         var systemInstructions = [
             "Draft a new email for the user based only on the user's instruction.",
+            "Return ONLY valid JSON with exactly these keys: subject, body.",
+            "subject: write a short, useful email subject in the selected output language, ideally 2-7 words. Do not prefix it with Subject:, Betreff:, Re:, or Fwd:.",
+            "body: write the actual email body only. Do not repeat the subject in the body.",
             "Be concise, natural, and appropriate for email.",
             tone.apiInstruction,
-            languageInstruction(for: language, purpose: "email"),
+            languageInstruction(for: language, purpose: "email subject and body"),
             "Follow the user's instruction precisely.",
             "Do not invent facts, promises, dates, attachments, recipients, or commitments that the user did not provide.",
-            "Do not add a subject line unless the user explicitly asks for one.",
-            "Do not add a signature or the user's name unless the user explicitly asks for it.",
-            "Return only the email text."
+            "Do not add a signature or the user's name unless the user explicitly asks for it."
         ]
         if compact {
-            systemInstructions.append("COMPACT MODE IS ON: make the email as short as possible while preserving the requested meaning. Prefer 2-4 short sentences and normally stay under 80 words.")
+            systemInstructions.append("COMPACT MODE IS ON: make the body as short as possible while preserving the requested meaning. Prefer 2-4 short sentences and normally stay under 80 words.")
         }
 
         performRequest(
             apiKey: apiKey,
             instructions: systemInstructions.joined(separator: "\n"),
             input: "USER INSTRUCTION:\n\(instruction)",
-            maxOutputTokens: compact ? 220 : nil,
-            lowVerbosity: compact,
-            completion: completion
-        )
+            maxOutputTokens: compact ? 320 : 700,
+            lowVerbosity: compact
+        ) { result in
+            switch result {
+            case .success(let text):
+                do {
+                    completion(.success(try Self.decodeNewMailDraft(text)))
+                } catch {
+                    completion(.failure(error))
+                }
+            case .failure(let error):
+                completion(.failure(error))
+            }
+        }
+    }
+
+    private static func decodeNewMailDraft(_ text: String) throws -> NewMailDraft {
+        var cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if cleaned.hasPrefix("```") {
+            let lines = cleaned.split(separator: "\n", omittingEmptySubsequences: false)
+            if lines.count >= 3 {
+                cleaned = lines.dropFirst().dropLast().joined(separator: "\n")
+                if cleaned.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("json") {
+                    cleaned = String(cleaned.dropFirst(4)).trimmingCharacters(in: .whitespacesAndNewlines)
+                }
+            }
+        }
+        guard let data = cleaned.data(using: .utf8) else {
+            throw APIError(message: "OpenAI hat keinen gültigen Mailentwurf geliefert.")
+        }
+        do {
+            let draft = try JSONDecoder().decode(NewMailDraft.self, from: data)
+            guard !draft.body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                throw APIError(message: "OpenAI hat keinen Mailtext geliefert.")
+            }
+            return draft
+        } catch let error as APIError {
+            throw error
+        } catch {
+            throw APIError(message: "OpenAI hat den Mailentwurf nicht im erwarteten Format geliefert.")
+        }
     }
 
     func summarizeThread(

@@ -484,8 +484,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.isRunningFlow = false
 
                 switch result {
-                case .success(let text):
-                    self.state.reply = text
+                case .success(let draft):
+                    self.state.newMailSubject = draft.subject.trimmingCharacters(in: .whitespacesAndNewlines)
+                    self.state.reply = draft.body.trimmingCharacters(in: .whitespacesAndNewlines)
                     self.state.stage = .preview
                     self.panel.show()
                 case .failure(let error):
@@ -774,42 +775,84 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func insertNewMail() {
-        let text = state.reply.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { return }
+        let subject = state.newMailSubject.trimmingCharacters(in: .whitespacesAndNewlines)
+        let body = state.reply.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !body.isEmpty else { return }
 
         guard let pid = outlook.runningPID() else {
-            copyToPasteboard(text)
+            copyToPasteboard(body)
             showError("Microsoft Outlook läuft nicht. Der Mailtext wurde in die Zwischenablage kopiert.")
             return
         }
 
         guard outlook.isTrusted() else {
-            copyToPasteboard(text)
+            copyToPasteboard(body)
             outlook.requestTrustPrompt()
-            showError("Replyzen braucht Bedienungshilfen, um automatisch eine neue Outlook-Mail zu öffnen. Der Text wurde in die Zwischenablage kopiert.")
+            showError("Replyzen braucht Bedienungshilfen, um automatisch eine neue Outlook-Mail zu befüllen. Der Mailtext wurde in die Zwischenablage kopiert.")
             return
         }
 
         state.stage = .inserting
-        state.statusText = "Neue Outlook-Mail wird geöffnet"
+        state.statusText = "Neue Outlook-Mail wird geöffnet und befüllt"
         isRunningFlow = true
         toolbarButton.setSuppressed(true)
 
-        copyToPasteboard(text)
         panel.hide()
         outlook.activateOutlook(pid: pid)
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
             self?.keyboard.sendCommandN()
+            self?.populateNewMailDraft(subject: subject, body: body, attempt: 0)
+        }
+    }
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-                guard let self else { return }
+    private func populateNewMailDraft(subject: String, body: String, attempt: Int) {
+        let delay = attempt == 0 ? 0.85 : 0.25
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+            guard let self else { return }
+
+            let subjectDone = subject.isEmpty || self.outlook.setComposeSubjectValue(subject)
+            let bodyDone = self.outlook.setComposeBodyValue(body)
+
+            if subjectDone && bodyDone {
+                self.finishNewMailInsertion()
+                return
+            }
+
+            if attempt < 8 {
+                self.populateNewMailDraft(subject: subject, body: body, attempt: attempt + 1)
+                return
+            }
+
+            // Fallback for Outlook builds where the web editor is focusable but AXValue is not directly settable.
+            var subjectReady = subjectDone
+            if !subjectReady, self.outlook.focusComposeSubjectField() {
+                self.copyToPasteboard(subject)
                 self.keyboard.sendCommandV()
-                self.isRunningFlow = false
-                self.state.stage = .success
-                self.panel.show()
+                subjectReady = true
+            }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) { [weak self] in
+                guard let self else { return }
+                if self.outlook.focusComposeBodyField() {
+                    self.copyToPasteboard(body)
+                    self.keyboard.sendCommandV()
+                    self.finishNewMailInsertion()
+                } else {
+                    self.copyToPasteboard(body)
+                    self.isRunningFlow = false
+                    let subjectInfo = subjectReady ? "Der Betreff wurde eingesetzt. " : ""
+                    self.showError("\(subjectInfo)Der Outlook-Mailtext konnte nicht automatisch fokussiert werden. Der Mailtext liegt in der Zwischenablage.")
+                }
             }
         }
+    }
+
+    private func finishNewMailInsertion() {
+        isRunningFlow = false
+        state.successMessage = "Neue Outlook-Mail wurde mit Betreff und Mailtext vorbereitet."
+        state.stage = .success
+        panel.show()
     }
 
     private func copyToPasteboard(_ text: String) {

@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 SRC="$ROOT/app"
 WORK="$ROOT/.build-ci"
 APP="$WORK/Replyzen.app"
-UPDATE_ZIP="$ROOT/Replyzen-update-1.16.zip"
+UPDATE_ZIP="$ROOT/Replyzen-update-1.17.zip"
 UPDATE_JSON="$ROOT/update.json"
 SWIFTC="$(xcrun --find swiftc)"
 SDK="$(xcrun --sdk macosx --show-sdk-path)"
@@ -53,8 +53,8 @@ cat > "$UPDATE_JSON" <<EOF
 {
   "version": "$APP_VERSION",
   "build": $APP_BUILD,
-  "download_url": "Replyzen-update-1.16.zip",
+  "download_url": "Replyzen-update-1.17.zip",
   "sha256": "$UPDATE_SHA",
-  "notes": "Replyzen 1.16: Der Outlook-Button zeigt jetzt den Namen Replyzen und das echte Replyzen-Logo statt ✨ AI."
+  "notes": "Replyzen 1.17: New Mail erzeugt immer einen eigenen Betreff und Mailtext und befüllt beide Outlook-Felder automatisch; Preview zeigt beide Felder separat."
 }
 EOF

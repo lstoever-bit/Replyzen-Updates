@@ -391,6 +391,7 @@ struct OverlayView: View {
             state.instruction = ""
             state.selectedCommandName = "Custom"
             state.replyTone = .professional
+            state.newMailSubject = ""
         case .reply:
             if state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
                let first = commands.commands.first {
@@ -427,11 +428,28 @@ struct OverlayView: View {
             Text(previewTitle)
                 .font(.title2.bold())
 
-            TextEditor(text: $state.reply)
-                .font(.body)
-                .frame(height: 190)
-                .padding(8)
-                .background(.background.opacity(0.7), in: RoundedRectangle(cornerRadius: 12))
+            if state.outputMode == .newMail {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Betreff").font(.caption).foregroundStyle(.secondary)
+                    TextField("Betreff", text: $state.newMailSubject)
+                        .textFieldStyle(.roundedBorder)
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Mailtext").font(.caption).foregroundStyle(.secondary)
+                    TextEditor(text: $state.reply)
+                        .font(.body)
+                        .frame(height: 190)
+                        .padding(8)
+                        .background(.background.opacity(0.7), in: RoundedRectangle(cornerRadius: 12))
+                }
+            } else {
+                TextEditor(text: $state.reply)
+                    .font(.body)
+                    .frame(height: 190)
+                    .padding(8)
+                    .background(.background.opacity(0.7), in: RoundedRectangle(cornerRadius: 12))
+            }
 
             HStack {
                 Button("Zurück") {

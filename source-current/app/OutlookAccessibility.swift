@@ -83,6 +83,121 @@ final class OutlookAccessibility {
         NSRunningApplication(processIdentifier: pid)?.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
     }
 
+    func setComposeSubjectValue(_ subject: String) -> Bool {
+        guard let window = focusedOutlookWindow(), let element = composeSubjectElement(in: window) else { return false }
+        return setValue(subject, on: element)
+    }
+
+    func setComposeBodyValue(_ body: String) -> Bool {
+        guard let window = focusedOutlookWindow(), let element = composeBodyElement(in: window) else { return false }
+        return setValue(body, on: element)
+    }
+
+    func focusComposeSubjectField() -> Bool {
+        guard let window = focusedOutlookWindow(), let element = composeSubjectElement(in: window) else { return false }
+        return focus(element)
+    }
+
+    func focusComposeBodyField() -> Bool {
+        guard let window = focusedOutlookWindow(), let element = composeBodyElement(in: window) else { return false }
+        return focus(element)
+    }
+
+    private func focusedOutlookWindow() -> AXUIElement? {
+        guard let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == "com.microsoft.Outlook" }) else { return nil }
+        let appElement = AXUIElementCreateApplication(app.processIdentifier)
+        return axElementAttribute(kAXFocusedWindowAttribute as CFString, from: appElement)
+    }
+
+    private func composeSubjectElement(in window: AXUIElement) -> AXUIElement? {
+        var stack: [AXUIElement] = [window]
+        var visited = 0
+        var fallback: [(AXUIElement, CGFloat)] = []
+        let windowY = pointAttribute(kAXPositionAttribute as CFString, from: window)?.y ?? 0
+        let windowHeight = sizeAttribute(kAXSizeAttribute as CFString, from: window)?.height ?? 900
+
+        while let element = stack.popLast(), visited < 14_000 {
+            visited += 1
+            let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
+            if role == "AXTextField" || role == "AXTextArea" || role == "AXComboBox" {
+                let meta = composeMetadata(for: element)
+                if meta.contains("subject") || meta.contains("betreff") {
+                    return element
+                }
+
+                if isValueSettable(element),
+                   let size = sizeAttribute(kAXSizeAttribute as CFString, from: element),
+                   let pos = pointAttribute(kAXPositionAttribute as CFString, from: element),
+                   size.width > 260, size.height < 90,
+                   pos.y < windowY + windowHeight * 0.55 {
+                    fallback.append((element, pos.y))
+                }
+            }
+            for child in children(of: element).reversed() { stack.append(child) }
+        }
+
+        // In compose windows the subject field is normally the lowest wide editable single-line field
+        // below To/Cc/Bcc, so use it as a language-independent fallback.
+        return fallback.max(by: { $0.1 < $1.1 })?.0
+    }
+
+    private func composeBodyElement(in window: AXUIElement) -> AXUIElement? {
+        var stack: [AXUIElement] = [window]
+        var visited = 0
+        var best: (AXUIElement, CGFloat)?
+
+        while let element = stack.popLast(), visited < 14_000 {
+            visited += 1
+            let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
+            if role == "AXTextArea" || role == "AXWebArea" {
+                let meta = composeMetadata(for: element)
+                if meta.contains("message body") || meta.contains("mail body") || meta.contains("nachrichtentext") || meta.contains("compose body") {
+                    return element
+                }
+
+                if let size = sizeAttribute(kAXSizeAttribute as CFString, from: element),
+                   size.width > 300, size.height > 120 {
+                    let area = size.width * size.height
+                    if best == nil || area > best!.1 { best = (element, area) }
+                }
+            }
+            for child in children(of: element).reversed() { stack.append(child) }
+        }
+        return best?.0
+    }
+
+    private func composeMetadata(for element: AXUIElement) -> String {
+        let attrs: [CFString] = [
+            kAXTitleAttribute as CFString,
+            kAXDescriptionAttribute as CFString,
+            kAXHelpAttribute as CFString,
+            "AXPlaceholderValue" as CFString,
+            "AXIdentifier" as CFString,
+            "AXDOMIdentifier" as CFString,
+            "AXRoleDescription" as CFString
+        ]
+        return attrs.compactMap { stringAttribute($0, from: element) }
+            .joined(separator: " ")
+            .lowercased()
+    }
+
+    private func isValueSettable(_ element: AXUIElement) -> Bool {
+        var settable = DarwinBoolean(false)
+        return AXUIElementIsAttributeSettable(element, kAXValueAttribute as CFString, &settable) == .success && settable.boolValue
+    }
+
+    private func setValue(_ value: String, on element: AXUIElement) -> Bool {
+        guard isValueSettable(element) else { return false }
+        return AXUIElementSetAttributeValue(element, kAXValueAttribute as CFString, value as CFTypeRef) == .success
+    }
+
+    private func focus(_ element: AXUIElement) -> Bool {
+        if AXUIElementSetAttributeValue(element, kAXFocusedAttribute as CFString, kCFBooleanTrue) == .success {
+            return true
+        }
+        return AXUIElementPerformAction(element, kAXPressAction as CFString) == .success
+    }
+
     func focusedWindowFrameInAppKitCoordinates() -> CGRect? {
         guard let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == "com.microsoft.Outlook" }) else {
             return nil
