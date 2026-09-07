@@ -7,7 +7,7 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
 
     init(state: AppState, commands: CommandStore) {
         panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 720, height: 650),
+            contentRect: NSRect(x: 0, y: 0, width: 840, height: 760),
             styleMask: [.titled, .closable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
@@ -27,7 +27,7 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
         panel.isOpaque = false
         panel.hasShadow = true
         panel.isMovableByWindowBackground = true
-        panel.minSize = NSSize(width: 620, height: 540)
+        panel.minSize = NSSize(width: 700, height: 620)
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient, .ignoresCycle]
         panel.standardWindowButton(.zoomButton)?.isHidden = true
         panel.standardWindowButton(.miniaturizeButton)?.isHidden = true
@@ -46,10 +46,10 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
             var frame = panel.frame
 
             if frame.width > visible.width - 40 {
-                frame.size.width = max(620, visible.width - 40)
+                frame.size.width = max(700, visible.width - 28)
             }
             if frame.height > visible.height - 40 {
-                frame.size.height = max(540, visible.height - 40)
+                frame.size.height = max(620, visible.height - 28)
             }
 
             frame.origin = NSPoint(

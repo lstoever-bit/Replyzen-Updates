@@ -34,7 +34,10 @@ struct OverlayView: View {
         case .preview:
             previewView
         case .calendarPreview:
-            calendarPreviewView
+            ScrollView {
+                calendarPreviewView
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         case .inserting:
             loadingView(title: "Fast fertig", subtitle: insertingSubtitle)
         case .success:

@@ -55,6 +55,6 @@ cat > "$UPDATE_JSON" <<EOF
   "build": $APP_BUILD,
   "download_url": "Replyzen-update.zip",
   "sha256": "$UPDATE_SHA",
-  "notes": "Replyzen 1.7: größeres, frei skalierbares Fenster; leeres Einstellungsfenster entfernt."
+  "notes": "Replyzen 1.8: deutlich größeres Terminfenster; Terminansicht scrollt bei kleinen Displays, damit nichts abgeschnitten wird."
 }
 EOF

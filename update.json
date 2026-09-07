@@ -1,7 +1,7 @@
 {
-  "version": "1.7.0",
-  "build": 8,
+  "version": "1.8.0",
+  "build": 9,
   "download_url": "Replyzen-update.zip",
-  "sha256": "2bc97c6be3d158663e1f62d9674cab68a6f67d6a29c240fcd4d7dd7ccbf6ff56",
-  "notes": "Replyzen 1.7: größeres, frei skalierbares Fenster; leeres Einstellungsfenster entfernt."
+  "sha256": "2f36ab39ad06575f2aa336c3b81c1ad729ea0d7338f93f23d47f1389ed9f253d",
+  "notes": "Replyzen 1.8: deutlich größeres Terminfenster; Terminansicht scrollt bei kleinen Displays, damit nichts abgeschnitten wird."
 }
