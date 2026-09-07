@@ -1,0 +1,227 @@
+diff -uNr '--exclude=.github' '--exclude=Brand' '--exclude=Build-App.command' '--exclude=README*' replyzen_autoupdate_work/Replyzen_v1.3/Build-CI.sh replyzen_v14_work/Replyzen_v1.4/Build-CI.sh
+--- replyzen_autoupdate_work/Replyzen_v1.3/Build-CI.sh	2026-09-07 03:48:49.877776359 +0000
++++ replyzen_v14_work/Replyzen_v1.4/Build-CI.sh	2026-09-07 04:21:02.090180749 +0000
+@@ -36,7 +36,7 @@
+ 
+ "$SWIFTC" -O -parse-as-library -sdk "$SDK" -target "$TARGET" \
+   -framework AppKit -framework SwiftUI -framework ApplicationServices \
+-  -framework Security -framework ServiceManagement \
++  -framework Security -framework ServiceManagement -framework EventKit \
+   "${SOURCES[@]}" \
+   -o "$APP/Contents/MacOS/Replyzen"
+ 
+@@ -55,6 +55,6 @@
+   "build": $APP_BUILD,
+   "download_url": "Replyzen-update.zip",
+   "sha256": "$UPDATE_SHA",
+-  "notes": "Replyzen 1.3: erster automatischer In-App-Update-Test; Funktionen aus 1.2 bleiben unverändert."
++  "notes": "Replyzen 1.4: Summary durch Termin ersetzt. Erstellt aus dem Outlook-Mailverlauf einen minimalen Termintitel und legt den Termin im minubo-Kalender an."
+ }
+ EOF
+diff -uNr '--exclude=.github' '--exclude=Brand' '--exclude=Build-App.command' '--exclude=README*' replyzen_autoupdate_work/Replyzen_v1.3/app/AppDelegate.swift replyzen_v14_work/Replyzen_v1.4/app/AppDelegate.swift
+--- replyzen_autoupdate_work/Replyzen_v1.3/app/AppDelegate.swift	2026-09-07 03:25:36.000000000 +0000
++++ replyzen_v14_work/Replyzen_v1.4/app/AppDelegate.swift	2026-09-07 04:21:03.872938265 +0000
+@@ -12,6 +12,7 @@
+     private let hotKey = HotKeyMonitor()
+     private let loginItem = LoginItemManager()
+     private let updateManager = UpdateManager()
++    private let calendarManager = CalendarManager()
+     private lazy var toolbarButton = OutlookToolbarButtonController(outlook: outlook)
+ 
+     private var statusItem: NSStatusItem?
+@@ -49,6 +50,7 @@
+     private func configureStateActions() {
+         state.generateAction = { [weak self] in self?.generateCurrentOutput() }
+         state.insertAction = { [weak self] in self?.insertGeneratedText() }
++        state.createCalendarAction = { [weak self] in self?.createCalendarEvent() }
+         state.retryAction = { [weak self] in self?.openWorkspace() }
+         state.refreshMailAction = { [weak self] in self?.refreshMailContext() }
+         state.closeAction = { [weak self] in self?.closePanel() }
+@@ -354,8 +356,8 @@
+             generateReply()
+         case .newMail:
+             generateNewMail()
+-        case .summary:
+-            generateSummary()
++        case .calendar:
++            generateCalendarSuggestion()
+         }
+     }
+ 
+@@ -436,31 +438,51 @@
+         }
+     }
+ 
+-    private func generateSummary() {
++    private func generateCalendarSuggestion() {
+         guard let apiKey = keychain.loadAPIKey() else {
+             state.stage = .apiKey
+             return
+         }
+ 
+         guard !state.mailText.isEmpty else {
+-            state.mailStatus = .unavailable("Keine lesbare Outlook-Mail erkannt. Für Summary bitte eine Mail öffnen und erneut versuchen.")
++            state.mailStatus = .unavailable("Keine lesbare Outlook-Mail erkannt. Für einen Termin bitte eine Mail öffnen und erneut versuchen.")
+             return
+         }
+ 
+         isRunningFlow = true
+         toolbarButton.setSuppressed(true)
+         state.stage = .generating
+-        state.statusText = "OpenAI fasst den E-Mail-Verlauf zusammen"
++        state.statusText = "Replyzen erstellt den Terminvorschlag"
+ 
+-        openAI.summarizeThread(apiKey: apiKey, mailText: state.mailText, language: state.replyLanguage) { [weak self] result in
++        openAI.createCalendarSuggestion(
++            apiKey: apiKey,
++            mailText: state.mailText,
++            language: state.replyLanguage
++        ) { [weak self] result in
+             DispatchQueue.main.async {
+                 guard let self else { return }
+                 self.isRunningFlow = false
+ 
+                 switch result {
+-                case .success(let text):
+-                    self.state.reply = text
+-                    self.state.stage = .preview
++                case .success(let suggestion):
++                    self.state.calendarTitle = suggestion.title.trimmingCharacters(in: .whitespacesAndNewlines)
++                    let parsedStart = self.parseISODate(suggestion.start)
++                    let parsedEnd = self.parseISODate(suggestion.end)
++
++                    if let start = parsedStart {
++                        self.state.calendarStart = start
++                        self.state.calendarEnd = (parsedEnd != nil && parsedEnd! > start)
++                            ? parsedEnd!
++                            : start.addingTimeInterval(30 * 60)
++                        self.state.calendarWarning = ""
++                    } else {
++                        let fallback = self.nextRoundedHour()
++                        self.state.calendarStart = fallback
++                        self.state.calendarEnd = fallback.addingTimeInterval(30 * 60)
++                        self.state.calendarWarning = "Im Mailverlauf wurde kein eindeutiger Terminzeitpunkt erkannt. Bitte Datum und Uhrzeit prüfen."
++                    }
++
++                    self.state.stage = .calendarPreview
+                     self.panel.show()
+                 case .failure(let error):
+                     self.showError(error.localizedDescription)
+@@ -469,13 +491,68 @@
+         }
+     }
+ 
++    private func createCalendarEvent() {
++        let title = state.calendarTitle.trimmingCharacters(in: .whitespacesAndNewlines)
++        guard !title.isEmpty else { return }
++        guard state.calendarEnd > state.calendarStart else {
++            showError("Die Endzeit muss nach der Startzeit liegen.")
++            return
++        }
++
++        isRunningFlow = true
++        toolbarButton.setSuppressed(true)
++        state.stage = .generating
++        state.statusText = "Termin wird im minubo-Kalender angelegt"
++
++        calendarManager.createEvent(
++            title: title,
++            start: state.calendarStart,
++            end: state.calendarEnd
++        ) { [weak self] result in
++            DispatchQueue.main.async {
++                guard let self else { return }
++                self.isRunningFlow = false
++                switch result {
++                case .success:
++                    let formatter = DateFormatter()
++                    formatter.locale = Locale(identifier: "de_DE")
++                    formatter.dateStyle = .medium
++                    formatter.timeStyle = .short
++                    self.state.successMessage = "„\(title)“ wurde am \(formatter.string(from: self.state.calendarStart)) im Google-Kalender lennard@minubo.com angelegt."
++                    self.state.stage = .success
++                    self.panel.show()
++                case .failure(let error):
++                    self.showError(error.localizedDescription)
++                }
++            }
++        }
++    }
++
++    private func parseISODate(_ value: String?) -> Date? {
++        guard let value, !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
++        let formatter = ISO8601DateFormatter()
++        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
++        if let date = formatter.date(from: value) { return date }
++        formatter.formatOptions = [.withInternetDateTime]
++        return formatter.date(from: value)
++    }
++
++    private func nextRoundedHour() -> Date {
++        let calendar = Calendar.current
++        let now = Date().addingTimeInterval(60 * 60)
++        var components = calendar.dateComponents([.year, .month, .day, .hour], from: now)
++        components.minute = 0
++        components.second = 0
++        return calendar.date(from: components) ?? now
++    }
++
+     private func insertGeneratedText() {
+         switch state.outputMode {
+         case .reply:
+             insertReply()
+         case .newMail:
+             insertNewMail()
+-        case .summary:
++        case .calendar:
+             break
+         }
+     }
+diff -uNr '--exclude=.github' '--exclude=Brand' '--exclude=Build-App.command' '--exclude=README*' replyzen_autoupdate_work/Replyzen_v1.3/app/AppState.swift replyzen_v14_work/Replyzen_v1.4/app/AppState.swift
+--- replyzen_autoupdate_work/Replyzen_v1.3/app/AppState.swift	2026-09-07 03:23:53.000000000 +0000
++++ replyzen_v14_work/Replyzen_v1.4/app/AppState.swift	2026-09-07 04:21:02.669719070 +0000
+@@ -5,7 +5,7 @@
+     enum OutputMode: String, CaseIterable, Identifiable, Equatable {
+         case reply
+         case newMail
+-        case summary
++        case calendar
+ 
+         var id: String { rawValue }
+ 
+@@ -13,7 +13,7 @@
+             switch self {
+             case .reply: return "Reply"
+             case .newMail: return "New Mail"
+-            case .summary: return "Summary"
++            case .calendar: return "Termin"
+             }
+         }
+     }
+@@ -43,6 +43,7 @@
+         case generating
+         case updating
+         case preview
++        case calendarPreview
+         case inserting
+         case success
+         case needsAccessibility
+@@ -61,11 +62,17 @@
+     @Published var selectedCommandName: String = "Custom"
+     @Published var outputMode: OutputMode = .reply
+     @Published var mailStatus: MailStatus = .notChecked
++    @Published var calendarTitle: String = ""
++    @Published var calendarStart: Date = Date()
++    @Published var calendarEnd: Date = Date().addingTimeInterval(30 * 60)
++    @Published var calendarWarning: String = ""
++    @Published var successMessage: String = ""
+ 
+     var mailText: String = ""
+ 
+     var generateAction: (() -> Void)?
+     var insertAction: (() -> Void)?
++    var createCalendarAction: (() -> Void)?
+     var retryAction: (() -> Void)?
+     var refreshMailAction: (() -> Void)?
+     var closeAction: (() -> Void)?
+diff -uNr '--exclude=.github' '--exclude=Brand' '--exclude=Build-App.command' '--exclude=README*' replyzen_autoupdate_work
