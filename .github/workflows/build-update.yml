@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'v42/**'
+      - 'v43/**'
       - '.github/workflows/build-update.yml'
   workflow_dispatch:
 
@@ -28,7 +28,7 @@ jobs:
           cp source-current/app/Info.plist buildsrc/app/Info.plist
       - name: Apply Replyzen 1.30 reminder and Reply All
         run: |
-          python3 v42/patch.py buildsrc
+          python3 v43/patch.py buildsrc
       - name: Build update package
         run: |
           cd buildsrc
