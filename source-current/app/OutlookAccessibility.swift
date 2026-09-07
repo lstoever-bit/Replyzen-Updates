@@ -152,37 +152,242 @@ final class OutlookAccessibility {
     }
 
     func activateAttachment(named filename: String, from snapshot: Snapshot) -> Bool {
-        let needle = filename.lowercased()
-        guard !needle.isEmpty else { return false }
+        guard let element = attachmentElement(named: filename, from: snapshot) else { return false }
+
+        // Outlook often exposes the visible filename as a static child while the
+        // clickable attachment card lives several parents above it. Walk the chain
+        // instead of trying only one parent.
+        var current: AXUIElement? = element
+        for _ in 0..<7 {
+            guard let candidate = current else { break }
+            if AXUIElementPerformAction(candidate, kAXPressAction as CFString) == .success {
+                return true
+            }
+            current = axElementAttribute(kAXParentAttribute as CFString, from: candidate)
+        }
+        return false
+    }
+
+    /// Last-resort Outlook attachment materialization for PDFs that are visible in
+    /// the UI but not yet present on disk. Uses the attachment context menu and the
+    /// native Save As sheet, saving into a unique Replyzen temp directory.
+    /// Must be called on the main thread because it drives Outlook UI events.
+    func materializeAttachmentToTemporaryFile(named filename: String, from snapshot: Snapshot) -> URL? {
+        guard let element = attachmentElement(named: filename, from: snapshot) else { return nil }
+
+        let fm = FileManager.default
+        let directory = fm.temporaryDirectory
+            .appendingPathComponent("Replyzen-Attachments", isDirectory: true)
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        do {
+            try fm.createDirectory(at: directory, withIntermediateDirectories: true)
+        } catch {
+            return nil
+        }
+
+        activateOutlook(pid: snapshot.pid)
+
+        guard showAttachmentMenu(for: element) else {
+            try? fm.removeItem(at: directory)
+            return nil
+        }
+
+        Thread.sleep(forTimeInterval: 0.22)
+        guard let selectedTitle = pressBestSaveAttachmentMenuItem(pid: snapshot.pid, near: element) else {
+            try? fm.removeItem(at: directory)
+            return nil
+        }
+
+        let lowerTitle = selectedTitle.lowercased()
+        // A plain Download action usually writes to Downloads without opening a
+        // Save As sheet. Let the caller's filesystem resolver pick that file up.
+        if lowerTitle.contains("download") || lowerTitle.contains("herunter") {
+            Thread.sleep(forTimeInterval: 1.0)
+            try? fm.removeItem(at: directory)
+            return nil
+        }
+
+        Thread.sleep(forTimeInterval: 0.45)
+        guard hasSavePanel(pid: snapshot.pid) else {
+            // Some Outlook builds save immediately. Keep a short grace period and
+            // let the normal resolver discover the resulting file afterwards.
+            Thread.sleep(forTimeInterval: 0.8)
+            try? fm.removeItem(at: directory)
+            return nil
+        }
+
+        // In the native macOS Save As sheet, Cmd+Shift+G opens "Go to Folder".
+        // Set that focused field through Accessibility so no user clipboard is used.
+        postKey(code: 5, flags: [.maskCommand, .maskShift]) // G
+        Thread.sleep(forTimeInterval: 0.25)
+
+        let appElement = AXUIElementCreateApplication(snapshot.pid)
+        guard let focused = axElementAttribute(kAXFocusedUIElementAttribute as CFString, from: appElement),
+              setValue(directory.path, on: focused) else {
+            try? fm.removeItem(at: directory)
+            return nil
+        }
+
+        postKey(code: 36) // Return: navigate to temp folder
+        Thread.sleep(forTimeInterval: 0.35)
+        postKey(code: 36) // Return: confirm Save As
+
+        let exact = directory.appendingPathComponent(URL(fileURLWithPath: filename).lastPathComponent)
+        for _ in 0..<40 {
+            if fm.fileExists(atPath: exact.path),
+               ((try? exact.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0) > 0 {
+                return exact
+            }
+            if let files = try? fm.contentsOfDirectory(
+                at: directory,
+                includingPropertiesForKeys: [.fileSizeKey],
+                options: [.skipsHiddenFiles]
+            ), let pdf = files.first(where: {
+                $0.pathExtension.lowercased() == "pdf" &&
+                (((try? $0.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0) > 0)
+            }) {
+                return pdf
+            }
+            Thread.sleep(forTimeInterval: 0.10)
+        }
+
+        try? fm.removeItem(at: directory)
+        return nil
+    }
+
+    private func attachmentElement(named filename: String, from snapshot: Snapshot) -> AXUIElement? {
+        let needle = URL(fileURLWithPath: filename).lastPathComponent.lowercased()
+        guard !needle.isEmpty else { return nil }
         let attributes: [CFString] = [
             kAXTitleAttribute as CFString,
             kAXDescriptionAttribute as CFString,
             kAXHelpAttribute as CFString,
             kAXValueAttribute as CFString,
-            "AXFilename" as CFString
+            "AXFilename" as CFString,
+            "AXURL" as CFString
         ]
 
+        var best: (AXUIElement, Int)?
         for window in snapshot.windows {
             var stack: [AXUIElement] = [window]
             var visited = 0
-            while let element = stack.popLast(), visited < 20_000 {
+            while let element = stack.popLast(), visited < 24_000 {
                 visited += 1
                 let meta = attributes.compactMap { stringLikeAttribute($0, from: element) }
                     .joined(separator: " ")
                     .lowercased()
                 if meta.contains(needle) {
-                    if AXUIElementPerformAction(element, kAXPressAction as CFString) == .success {
-                        return true
+                    let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
+                    let score: Int
+                    switch role {
+                    case "AXButton", "AXLink", "AXGroup": score = 3
+                    case "AXStaticText": score = 2
+                    default: score = 1
                     }
-                    if let parent = axElementAttribute(kAXParentAttribute as CFString, from: element),
-                       AXUIElementPerformAction(parent, kAXPressAction as CFString) == .success {
-                        return true
-                    }
+                    if best == nil || score > best!.1 { best = (element, score) }
                 }
                 for child in children(of: element).reversed() { stack.append(child) }
             }
         }
+        return best?.0
+    }
+
+    private func showAttachmentMenu(for element: AXUIElement) -> Bool {
+        var current: AXUIElement? = element
+        for _ in 0..<7 {
+            guard let candidate = current else { break }
+            if AXUIElementPerformAction(candidate, "AXShowMenu" as CFString) == .success {
+                return true
+            }
+            current = axElementAttribute(kAXParentAttribute as CFString, from: candidate)
+        }
         return false
+    }
+
+    private func pressBestSaveAttachmentMenuItem(pid: pid_t, near attachment: AXUIElement) -> String? {
+        let appElement = AXUIElementCreateApplication(pid)
+        let saveNeedles = [
+            "save attachment as", "save attachment", "save as",
+            "anlage speichern unter", "anhang speichern unter", "speichern unter",
+            "anlage speichern", "anhang speichern",
+            "download", "herunterladen"
+        ]
+
+        let attachmentPosition = pointAttribute(kAXPositionAttribute as CFString, from: attachment) ?? .zero
+        let attachmentSize = sizeAttribute(kAXSizeAttribute as CFString, from: attachment) ?? .zero
+        let attachmentCenter = CGPoint(
+            x: attachmentPosition.x + attachmentSize.width / 2,
+            y: attachmentPosition.y + attachmentSize.height / 2
+        )
+
+        var candidates: [(AXUIElement, String, Double, Int)] = []
+        var stack: [AXUIElement] = [appElement]
+        var visited = 0
+        while let element = stack.popLast(), visited < 28_000 {
+            visited += 1
+            if stringAttribute(kAXRoleAttribute as CFString, from: element) == "AXMenuItem" {
+                let title = firstNonEmpty([
+                    stringAttribute(kAXTitleAttribute as CFString, from: element),
+                    stringAttribute(kAXDescriptionAttribute as CFString, from: element),
+                    stringAttribute(kAXValueAttribute as CFString, from: element)
+                ]) ?? ""
+                let lower = title.lowercased()
+                if let priority = saveNeedles.firstIndex(where: { lower.contains($0) }) {
+                    let pos = pointAttribute(kAXPositionAttribute as CFString, from: element) ?? attachmentCenter
+                    let dx = Double(pos.x - attachmentCenter.x)
+                    let dy = Double(pos.y - attachmentCenter.y)
+                    candidates.append((element, title, dx * dx + dy * dy, priority))
+                }
+            }
+            for child in children(of: element).reversed() { stack.append(child) }
+        }
+
+        // Prefer explicit attachment/save-as actions; proximity breaks ties in case
+        // Outlook's main menu exposes a similarly named item.
+        candidates.sort {
+            if $0.3 != $1.3 { return $0.3 < $1.3 }
+            return $0.2 < $1.2
+        }
+        for candidate in candidates {
+            if AXUIElementPerformAction(candidate.0, kAXPressAction as CFString) == .success {
+                return candidate.1
+            }
+        }
+        return nil
+    }
+
+    private func hasSavePanel(pid: pid_t) -> Bool {
+        let appElement = AXUIElementCreateApplication(pid)
+        var stack: [AXUIElement] = [appElement]
+        var visited = 0
+        while let element = stack.popLast(), visited < 12_000 {
+            visited += 1
+            let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
+            if role == "AXSheet" {
+                return true
+            }
+            if role == "AXWindow" || role == "AXDialog" {
+                let text = firstNonEmpty([
+                    stringAttribute(kAXTitleAttribute as CFString, from: element),
+                    stringAttribute(kAXDescriptionAttribute as CFString, from: element)
+                ])?.lowercased() ?? ""
+                if text.contains("save") || text.contains("speichern") || text.contains("sichern") {
+                    return true
+                }
+            }
+            for child in children(of: element).reversed() { stack.append(child) }
+        }
+        return false
+    }
+
+    private func postKey(code: CGKeyCode, flags: CGEventFlags = []) {
+        guard let source = CGEventSource(stateID: .hidSystemState),
+              let down = CGEvent(keyboardEventSource: source, virtualKey: code, keyDown: true),
+              let up = CGEvent(keyboardEventSource: source, virtualKey: code, keyDown: false) else { return }
+        down.flags = flags
+        up.flags = flags
+        down.post(tap: .cghidEventTap)
+        up.post(tap: .cghidEventTap)
     }
 
     private func localAttachmentURLs(from raw: String) -> [URL] {

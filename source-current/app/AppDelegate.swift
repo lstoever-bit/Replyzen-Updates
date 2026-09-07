@@ -1005,18 +1005,49 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     _ = self.outlook.activateAttachment(named: pdfName, from: snapshot)
                 }
 
-                Thread.sleep(forTimeInterval: 1.4)
+                Thread.sleep(forTimeInterval: 1.6)
                 let retrySnapshot = (try? self.outlook.captureSnapshot(includeAllWindows: true)) ?? snapshot
                 directFiles = self.outlook.attachmentFileURLs(from: retrySnapshot)
                 resolvedFiles = directFiles + self.attachmentExtractor.resolveFiles(filenames: filenames)
                 selectedPDFs = Array(resolvedFiles.filter { $0.pathExtension.lowercased() == "pdf" }.prefix(3))
+
+                // If Outlook still has not materialized the attachment, use its own
+                // attachment context menu and Save As sheet automatically. This is
+                // intentionally a last resort because direct AX file URLs are faster.
+                if selectedPDFs.isEmpty {
+                    var savedURL: URL?
+                    DispatchQueue.main.sync {
+                        self.state.statusText = "PDF wird automatisch aus Outlook gespeichert …"
+                        self.outlook.activateOutlook(pid: snapshot.pid)
+                        savedURL = self.outlook.materializeAttachmentToTemporaryFile(named: pdfName, from: retrySnapshot)
+                    }
+
+                    if let savedURL {
+                        selectedPDFs = [savedURL]
+                    } else {
+                        // Save/Download can complete without exposing a Save As sheet.
+                        // Give Outlook a final moment, then search its caches/Downloads.
+                        Thread.sleep(forTimeInterval: 1.0)
+                        let finalSnapshot = (try? self.outlook.captureSnapshot(includeAllWindows: true)) ?? retrySnapshot
+                        directFiles = self.outlook.attachmentFileURLs(from: finalSnapshot)
+                        resolvedFiles = directFiles + self.attachmentExtractor.resolveFiles(filenames: filenames)
+                        selectedPDFs = Array(resolvedFiles.filter { $0.pathExtension.lowercased() == "pdf" }.prefix(3))
+                    }
+                }
             }
+
+            let replyzenTempDirectories = Set(selectedPDFs.compactMap { url -> URL? in
+                guard url.path.contains("/Replyzen-Attachments/") else { return nil }
+                return url.deletingLastPathComponent()
+            })
 
             var fallbackText = ""
             var sourceStatus: String
 
             if !selectedPDFs.isEmpty {
-                sourceStatus = "PDF direkt mit OpenAI gelesen: " + selectedPDFs.map(\.lastPathComponent).joined(separator: ", ")
+                let wasAutoSaved = !replyzenTempDirectories.isEmpty
+                sourceStatus = (wasAutoSaved ? "PDF automatisch aus Outlook gespeichert und direkt mit OpenAI gelesen: " : "PDF direkt mit OpenAI gelesen: ")
+                    + selectedPDFs.map(\.lastPathComponent).joined(separator: ", ")
                 DispatchQueue.main.async {
                     self.state.statusText = "PDF wird direkt an OpenAI übergeben und gelesen …"
                 }
@@ -1028,7 +1059,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 if !fallback.usedFiles.isEmpty {
                     sourceStatus = "Kein direkt zugängliches PDF; lokal gelesen: " + fallback.usedFiles.joined(separator: ", ")
                 } else if pdfMentioned {
-                    sourceStatus = "PDF-Anhang erkannt, aber Outlook hat keine lokale Datei bereitgestellt. Bitte den PDF-Anhang einmal in Outlook öffnen und erneut auf Überweisung klicken."
+                    sourceStatus = "PDF-Anhang erkannt, aber Outlook konnte ihn weder lokal bereitstellen noch automatisch speichern."
                 } else {
                     sourceStatus = "Kein PDF-Anhang erkannt. Extraktion aus dem Mailtext."
                 }
@@ -1043,6 +1074,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 fileURLs: selectedPDFs,
                 fallbackAttachmentText: fallbackText
             ) { [weak self] result in
+                // OpenAI has completed reading/uploading at this point, so any
+                // temporary Outlook Save As copies can be removed immediately.
+                for directory in replyzenTempDirectories {
+                    try? FileManager.default.removeItem(at: directory)
+                }
+
                 DispatchQueue.main.async {
                     guard let self else { return }
                     self.isRunningFlow = false
