@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 SRC="$ROOT/app"
 WORK="$ROOT/.build-ci"
 APP="$WORK/Replyzen.app"
-UPDATE_ZIP="$ROOT/Replyzen-update-1.22.zip"
+UPDATE_ZIP="$ROOT/Replyzen-update-1.23.zip"
 UPDATE_JSON="$ROOT/update.json"
 SWIFTC="$(xcrun --find swiftc)"
 SDK="$(xcrun --sdk macosx --show-sdk-path)"
@@ -37,7 +37,7 @@ SOURCES=("$SRC"/*.swift)
 "$SWIFTC" -O -parse-as-library -sdk "$SDK" -target "$TARGET" \
   -framework AppKit -framework SwiftUI -framework ApplicationServices \
   -framework Security -framework ServiceManagement -framework Network \
-  -framework PDFKit -framework Vision \
+  -framework PDFKit -framework Vision -framework NaturalLanguage \
   "${SOURCES[@]}" \
   -o "$APP/Contents/MacOS/Replyzen"
 
@@ -54,8 +54,8 @@ cat > "$UPDATE_JSON" <<EOF
 {
   "version": "$APP_VERSION",
   "build": $APP_BUILD,
-  "download_url": "Replyzen-update-1.22.zip",
+  "download_url": "Replyzen-update-1.23.zip",
   "sha256": "$UPDATE_SHA",
-  "notes": "Replyzen 1.22: neuer Absage-Button direkt im Outlook-Overlay. Ein Klick erkennt automatisch die Sprache der Mail, erstellt eine freundliche knappe Absage und setzt sie direkt in einen Outlook-Antwortentwurf ein; gesendet wird weiterhin nur manuell."
+  "notes": "Replyzen 1.23: Beim Klick auf Replyzen wird die Sprache der geöffneten Mail lokal erkannt und Deutsch/US English automatisch vorausgewählt. Der vorgeschlagene Reply-Prompt ist vollständig markiert, sodass Tippen ihn sofort ersetzt."
 }
 EOF

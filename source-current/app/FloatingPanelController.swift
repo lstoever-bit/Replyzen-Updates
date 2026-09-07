@@ -60,6 +60,42 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
         }
     }
 
+    func selectInstructionTextSoon() {
+        let delays: [TimeInterval] = [0.05, 0.16, 0.34]
+        for delay in delays {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.selectInstructionTextIfPossible()
+            }
+        }
+    }
+
+    private func selectInstructionTextIfPossible() {
+        guard state.stage == .instruction, state.outputMode == .reply,
+              let root = panel.contentView else { return }
+
+        let expected = state.instruction
+        guard !expected.isEmpty else { return }
+
+        if let textView = findInstructionTextView(in: root, expectedText: expected) {
+            panel.makeKey()
+            panel.makeFirstResponder(textView)
+            textView.setSelectedRange(NSRange(location: 0, length: (textView.string as NSString).length))
+            textView.scrollRangeToVisible(NSRange(location: 0, length: 0))
+        }
+    }
+
+    private func findInstructionTextView(in view: NSView, expectedText: String) -> NSTextView? {
+        if let textView = view as? NSTextView, textView.isEditable {
+            if textView.string == expectedText { return textView }
+        }
+        for child in view.subviews {
+            if let found = findInstructionTextView(in: child, expectedText: expectedText) {
+                return found
+            }
+        }
+        return nil
+    }
+
     func hide() {
         wantsVisibleInOutlookContext = false
         panel.orderOut(nil)

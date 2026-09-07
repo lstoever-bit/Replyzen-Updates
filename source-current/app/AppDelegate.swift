@@ -1,5 +1,6 @@
 import AppKit
 import ApplicationServices
+import NaturalLanguage
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let state = AppState()
@@ -397,6 +398,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
+        // The main Replyzen overlay is the normal reply workflow. If another
+        // mode was used previously, switch back to Reply and restore its default
+        // suggested command. The suggestion is selected below so the user can
+        // overwrite it by simply typing.
+        let wasReplyMode = state.outputMode == .reply
+        state.outputMode = .reply
+        if !wasReplyMode {
+            state.instruction = ""
+            state.selectedCommandName = "Custom"
+        }
+
         guard keychain.loadAPIKey() != nil else {
             toolbarButton.setSuppressed(true)
             state.apiKeyDraft = ""
@@ -409,8 +421,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         prepareDefaultCommandIfNeeded()
         state.stage = .instruction
         panel.show(activate: true)
+        panel.selectInstructionTextSoon()
 
         refreshMailContext()
+    }
+
+    private func detectReplyLanguage(in mailText: String) -> AppState.ReplyLanguage? {
+        let cleaned = mailText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard cleaned.count >= 8 else { return nil }
+
+        // The currently opened/latest message is normally at the beginning of the
+        // accessibility text. Limiting the sample reduces influence from older quoted
+        // messages in long bilingual threads.
+        let sample = String(cleaned.prefix(6_000))
+        let recognizer = NLLanguageRecognizer()
+        recognizer.processString(sample)
+
+        guard let language = recognizer.dominantLanguage else { return nil }
+        switch language {
+        case .german:
+            return .german
+        case .english:
+            return .usEnglish
+        default:
+            return nil
+        }
     }
 
     private func prepareDefaultCommandIfNeeded() {
@@ -463,6 +498,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self.activeSnapshot = snapshot
                     self.state.mailText = mail
                     self.state.mailStatus = .available
+
+                    // Language selection is instant and local; it does not spend
+                    // another API request. We currently expose German and US English
+                    // in the UI, so only switch when one of those is confidently
+                    // recognized.
+                    if self.state.outputMode == .reply,
+                       let language = self.detectReplyLanguage(in: mail) {
+                        self.state.replyLanguage = language
+                    }
+
+                    // Keep the suggested instruction fully selected after the mail
+                    // context arrives, so the first keystroke replaces it.
+                    if self.state.outputMode == .reply {
+                        self.panel.selectInstructionTextSoon()
+                    }
                 }
             } catch {
                 DispatchQueue.main.async {
