@@ -55,7 +55,7 @@ final class OutlookToolbarButtonController: NSObject {
         newButton = makeButton(title: "New", symbol: "square.and.pencil", x: 4, width: 68, help: "Neue Mail mit Replyzen")
         replyButton = makeButton(title: "Reply", symbol: "arrowshape.turn.up.left", x: 76, width: 74, help: "Nur dem Absender antworten")
         replyAllButton = makeButton(title: "Reply All", symbol: "arrowshape.turn.up.left.2", x: 154, width: 94, help: "Allen Empfängern antworten")
-        forwardButton = makeButton(title: "Forward", symbol: "arrowshape.turn.up.right", x: 252, width: 88, help: "Aktuelle Mail in Outlook weiterleiten")
+        forwardButton = makeButton(title: "Forward", symbol: "arrowshape.turn.up.right", x: 252, width: 88, help: "Aktuelle Mail mit Replyzen weiterleiten")
         cancelButton = makeButton(title: "Cancel", symbol: "xmark.circle", x: 344, width: 96, help: "Freundliche kurze Absage direkt als Antwort einsetzen")
 
         effect.addSubview(newButton)
@@ -124,7 +124,7 @@ final class OutlookToolbarButtonController: NSObject {
 
         let size = panel.frame.size
         let x = frame.maxX - size.width - 122
-        let y = frame.maxY - size.height - 10
+        let y = frame.maxY - size.height - 48
         panel.setFrameOrigin(NSPoint(x: x, y: y))
         panel.orderFrontRegardless()
     }

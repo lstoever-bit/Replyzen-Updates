@@ -132,15 +132,23 @@ struct OverlayView: View {
         switch state.outputMode {
         case .reply: return "Ich erstelle deine Antwort …"
         case .newMail: return "Ich formuliere deine neue Mail …"
+        case .forward: return "Ich bereite die Weiterleitung vor …"
         case .calendar: return "Ich erstelle einen kurzen Termintitel und erkenne den Zeitpunkt …"
         case .payment: return "Ich lese den PDF-Anhang und extrahiere die Überweisungsdaten …"
         }
     }
 
     private var insertingSubtitle: String {
-        state.outputMode == .newMail
-            ? "Ich öffne eine neue Outlook-Mail und setze den Text ein …"
-            : "Ich setze die Antwort in Outlook ein …"
+        switch state.outputMode {
+        case .newMail:
+            return "Ich öffne eine neue Outlook-Mail und setze den Text ein …"
+        case .forward:
+            return "Ich öffne die Outlook-Weiterleitung und setze deinen Text über den Thread …"
+        case .reply:
+            return "Ich setze die Antwort in Outlook ein …"
+        case .calendar, .payment:
+            return "Fast fertig …"
+        }
     }
 
     private func loadingView(title: String, subtitle: String) -> some View {
@@ -183,7 +191,7 @@ struct OverlayView: View {
 
             modeSelector
 
-            if state.outputMode == .reply || state.outputMode == .newMail {
+            if state.outputMode == .reply || state.outputMode == .newMail || state.outputMode == .forward {
                 mailTypeSelector
             } else {
                 mailContextBanner
@@ -249,13 +257,13 @@ struct OverlayView: View {
 
                 Spacer()
 
-                if state.outputMode != .payment {
+                if state.outputMode != .payment && state.outputMode != .forward {
                     languageButton("🇩🇪", language: .german, help: "Ausgabe auf Deutsch")
                     languageButton("🇺🇸", language: .usEnglish, help: "Ausgabe in US English")
                 }
             }
 
-            if state.outputMode == .reply || state.outputMode == .newMail {
+            if state.outputMode == .reply || state.outputMode == .newMail || state.outputMode == .forward {
                 reminderRow
             }
 
@@ -388,6 +396,9 @@ struct OverlayView: View {
                 mailTypeButton(.reply, title: "Reply", systemImage: "arrowshape.turn.up.left.fill")
             }
             mailTypeButton(.newMail, title: "New Mail", systemImage: "square.and.pencil")
+            if mailAvailable {
+                mailTypeButton(.forward, title: "Forward", systemImage: "arrowshape.turn.up.right")
+            }
 
             if !mailAvailable {
                 HStack(spacing: 5) {
@@ -396,7 +407,7 @@ struct OverlayView: View {
                         Text("Prüfe Outlook-Mail …")
                     } else {
                         Image(systemName: "info.circle")
-                        Text("Keine Mail erkannt. Reply ist ausgeblendet.")
+                        Text("Keine Mail erkannt. Reply und Forward sind ausgeblendet.")
                     }
                 }
                 .font(.caption)
@@ -444,7 +455,7 @@ struct OverlayView: View {
 
     private func isTopLevelModeSelected(_ mode: AppState.OutputMode) -> Bool {
         if mode == .reply {
-            return state.outputMode == .reply || state.outputMode == .newMail
+            return state.outputMode == .reply || state.outputMode == .newMail || state.outputMode == .forward
         }
         return state.outputMode == mode
     }
@@ -494,6 +505,7 @@ struct OverlayView: View {
         switch state.outputMode {
         case .reply: return "Antwort erstellen"
         case .newMail: return "Mail erstellen"
+        case .forward: return "In Outlook weiterleiten"
         case .calendar: return "Termin erstellen"
         case .payment: return "Überweisung extrahieren"
         }
@@ -505,6 +517,8 @@ struct OverlayView: View {
             return !mailAvailable || state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         case .newMail:
             return state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case .forward:
+            return !mailAvailable || state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         case .calendar, .payment:
             return !mailAvailable
         }
@@ -532,6 +546,13 @@ struct OverlayView: View {
                 state.instruction = state.replyLanguage == .german
                     ? "Kurz, freundlich und direkt antworten."
                     : "Reply briefly, friendly and directly."
+                state.instructionHTML = ""
+            }
+        case .forward:
+            let trimmed = state.instruction.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed == "Kurz, freundlich und direkt antworten." ||
+               trimmed == "Reply briefly, friendly and directly." {
+                state.instruction = ""
                 state.instructionHTML = ""
             }
         case .calendar, .payment:
@@ -805,6 +826,7 @@ struct OverlayView: View {
         switch state.outputMode {
         case .reply: return "Antwortvorschlag"
         case .newMail: return "Neue Mail"
+        case .forward: return "Weiterleitung"
         case .calendar: return "Termin"
         case .payment: return "Überweisung"
         }

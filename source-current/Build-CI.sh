@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 SRC="$ROOT/app"
 WORK="$ROOT/.build-ci"
 APP="$WORK/Replyzen.app"
-UPDATE_ZIP="$ROOT/Replyzen-update-1.32.zip"
+UPDATE_ZIP="$ROOT/Replyzen-update-1.33.zip"
 UPDATE_JSON="$ROOT/update.json"
 SWIFTC="$(xcrun --find swiftc)"
 SDK="$(xcrun --sdk macosx --show-sdk-path)"
@@ -54,8 +54,8 @@ cat > "$UPDATE_JSON" <<EOF
 {
   "version": "$APP_VERSION",
   "build": $APP_BUILD,
-  "download_url": "Replyzen-update-1.32.zip",
+  "download_url": "Replyzen-update-1.33.zip",
   "sha256": "$UPDATE_SHA",
-  "notes": "Replyzen 1.32: Das Outlook Overlay zeigt jetzt genau New, Reply, Reply All, Forward und Cancel. Reply antwortet nur dem Absender, Reply All allen Empfängern, Forward öffnet direkt Outlook Weiterleiten und Cancel erstellt weiterhin eine kurze freundliche Absage. Der normale Replyzen Reply bleibt standardmäßig Reply All."
+  "notes": "Replyzen 1.33: Das Outlook Overlay sitzt tiefer und verdeckt die Outlook Suche nicht mehr. Forward öffnet jetzt zuerst Replyzen. Der dort eingegebene WYSIWYG Text wird unverändert oberhalb des nativen Outlook Forward Threads eingesetzt; Empfänger bleibt leer und Outlook behält ursprünglichen Thread und Anhänge."
 }
 EOF

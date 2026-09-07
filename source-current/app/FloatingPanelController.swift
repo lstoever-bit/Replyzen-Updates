@@ -230,7 +230,7 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
             return NSSize(width: 650, height: 430)
         case .instruction:
             switch state.outputMode {
-            case .reply, .newMail:
+            case .reply, .newMail, .forward:
                 return NSSize(width: 900, height: 800)
             case .calendar, .payment:
                 return NSSize(width: 840, height: 640)

@@ -21,6 +21,10 @@ final class KeyboardController {
         sendKey(code: 9, flags: .maskCommand)
     }
 
+    func sendCommandUp() {
+        sendKey(code: 126, flags: .maskCommand)
+    }
+
     func sendTab() {
         sendKey(code: 48, flags: [])
     }

@@ -5,6 +5,7 @@ final class AppState: ObservableObject {
     enum OutputMode: String, CaseIterable, Identifiable, Equatable {
         case reply
         case newMail
+        case forward
         case calendar
         case payment
 
@@ -14,6 +15,7 @@ final class AppState: ObservableObject {
             switch self {
             case .reply: return "Reply"
             case .newMail: return "New Mail"
+            case .forward: return "Forward"
             case .calendar: return "Termin"
             case .payment: return "Überweisung"
             }

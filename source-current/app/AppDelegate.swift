@@ -219,7 +219,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         toolbarButton.newAction = { [weak self] in self?.openNewMailWorkspace() }
         toolbarButton.replyAction = { [weak self] in self?.openReplyWorkspace(replyAll: false) }
         toolbarButton.replyAllAction = { [weak self] in self?.openReplyWorkspace(replyAll: true) }
-        toolbarButton.forwardAction = { [weak self] in self?.forwardCurrentMail() }
+        toolbarButton.forwardAction = { [weak self] in self?.openForwardWorkspace() }
         toolbarButton.cancelAction = { [weak self] in self?.quickDecline() }
         toolbarButton.start()
     }
@@ -236,22 +236,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         openWorkspace()
     }
 
-    private func forwardCurrentMail() {
-        guard !isRunningFlow else { return }
-        guard let pid = outlook.runningPID() else { return }
-        guard outlook.isTrusted() else {
-            outlook.requestTrustPrompt()
-            return
-        }
-
-        toolbarButton.setSuppressed(true)
-        outlook.activateOutlook(pid: pid)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { [weak self] in
-            self?.keyboard.sendCommandJ()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
-                self?.toolbarButton.setSuppressed(false)
-            }
-        }
+    private func openForwardWorkspace() {
+        requestedMailMode = .forward
+        replyAllForCurrentDraft = true
+        openWorkspace()
     }
 
     private func quickDecline() {
@@ -507,6 +495,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if requestedMailMode == .reply {
             state.outputMode = .reply
             state.instruction = defaultReplyInstruction(for: state.replyLanguage)
+        } else if requestedMailMode == .forward {
+            state.outputMode = .forward
+            state.instruction = ""
         } else {
             state.outputMode = .newMail
             state.instruction = ""
@@ -606,6 +597,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     // Respect an explicit New or Reply click from the Outlook overlay.
                     if self.requestedMailMode == .reply {
                         self.state.outputMode = .reply
+                    } else if self.requestedMailMode == .forward {
+                        self.state.outputMode = .forward
                     } else if self.requestedMailMode == .newMail {
                         self.state.outputMode = .newMail
                     } else if self.state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -668,6 +661,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             generateReply()
         case .newMail:
             generateNewMail()
+        case .forward:
+            forwardWithNote()
         case .calendar:
             generateCalendarSuggestion()
         case .payment:
@@ -755,6 +750,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
         }
+    }
+
+    private func forwardWithNote() {
+        let body = state.instruction.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !body.isEmpty else { return }
+        guard !state.mailText.isEmpty, activeSnapshot != nil else {
+            state.mailStatus = .unavailable("Keine lesbare Outlook-Mail erkannt. Für Forward bitte eine Mail öffnen und erneut versuchen.")
+            return
+        }
+
+        state.reply = body
+        state.replyHTML = state.instructionHTML
+        insertForwardDraft()
     }
 
     private func generateCalendarSuggestion() {
@@ -1126,6 +1134,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             insertReply()
         case .newMail:
             insertNewMail()
+        case .forward:
+            insertForwardDraft()
         case .calendar, .payment:
             break
         }
@@ -1178,6 +1188,72 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self.toolbarButton.setSuppressed(false)
                 }
             }
+        }
+    }
+
+    private func insertForwardDraft() {
+        guard let snapshot = activeSnapshot else {
+            state.stage = .instruction
+            state.mailStatus = .unavailable("Die ursprüngliche Outlook-Mail ist nicht mehr verfügbar. Bitte erneut laden.")
+            return
+        }
+
+        let body = state.reply.trimmingCharacters(in: .whitespacesAndNewlines)
+        let html = state.replyHTML.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !body.isEmpty else { return }
+
+        guard outlook.isTrusted() else {
+            copyMailToPasteboard(plainText: body, html: html)
+            showError("Replyzen braucht Bedienungshilfen, um den Forward automatisch in Outlook vorzubereiten. Dein Text wurde in die Zwischenablage kopiert.")
+            return
+        }
+
+        state.stage = .inserting
+        state.statusText = "Outlook Forward wird geöffnet; Thread und Anhänge bleiben erhalten"
+        isRunningFlow = true
+        toolbarButton.setSuppressed(true)
+        panel.hide()
+        outlook.activateOutlook(pid: snapshot.pid)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+            guard let self else { return }
+            self.keyboard.sendCommandJ()
+            self.populateForwardDraft(body: body, html: html, attempt: 0)
+        }
+    }
+
+    private func populateForwardDraft(body: String, html: String, attempt: Int) {
+        let delay = attempt == 0 ? 0.95 : 0.28
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+            guard let self else { return }
+
+            if let reminder = self.reminderBCCAddress() {
+                _ = self.outlook.setComposeBCCValue(reminder)
+            }
+
+            if self.outlook.focusComposeBodyField() {
+                // Native Outlook Forward preserves the original message and its attachments.
+                // Move to the very top and paste only the user's Replyzen note above it.
+                self.keyboard.sendCommandUp()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
+                    guard let self else { return }
+                    let plain = body + "\n\n"
+                    let rich = html.isEmpty ? "" : html + "<br><br>"
+                    self.copyMailToPasteboard(plainText: plain, html: rich)
+                    self.keyboard.sendCommandV()
+                    self.finishNewMailInsertion()
+                }
+                return
+            }
+
+            if attempt < 3 {
+                self.populateForwardDraft(body: body, html: html, attempt: attempt + 1)
+                return
+            }
+
+            self.copyMailToPasteboard(plainText: body, html: html)
+            self.isRunningFlow = false
+            self.showError("Der Forward wurde in Outlook geöffnet, aber Replyzen konnte den Text nicht automatisch über dem Thread einsetzen. Der Text liegt in der Zwischenablage.")
         }
     }
 
