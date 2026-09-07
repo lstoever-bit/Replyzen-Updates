@@ -255,6 +255,10 @@ struct OverlayView: View {
                 }
             }
 
+            if state.outputMode == .reply || state.outputMode == .newMail {
+                reminderRow
+            }
+
             if state.outputMode == .calendar {
                 Text("Sprache: \(state.replyLanguage.displayName)")
                     .font(.caption)
@@ -287,6 +291,83 @@ struct OverlayView: View {
             }
             .padding(.top, 2)
         }
+    }
+
+    private var reminderRow: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            HStack(spacing: 8) {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        state.reminderEnabled.toggle()
+                    }
+                } label: {
+                    Label("Reminder", systemImage: state.reminderEnabled ? "bell.fill" : "bell")
+                        .font(.system(size: 12.5, weight: .semibold))
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+
+                if state.reminderEnabled {
+                    Text("BCC")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                    Text(reminderAddress)
+                        .font(.caption.monospaced())
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+            }
+
+            if state.reminderEnabled {
+                HStack(spacing: 9) {
+                    ForEach(reminderDays, id: \.code) { day in
+                        Button { state.reminderDay = day.code } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: state.reminderDay == day.code ? "largecircle.fill.circle" : "circle")
+                                    .font(.system(size: 11))
+                                Text(day.label)
+                                    .font(.system(size: 12, weight: .medium))
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .contentShape(Rectangle())
+                    }
+
+                    Divider()
+                        .frame(height: 20)
+                        .padding(.horizontal, 2)
+
+                    Picker("Zeit", selection: $state.reminderTime) {
+                        ForEach(reminderTimes, id: \.self) { time in
+                            Text(time).tag(time)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .frame(width: 90)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .background(.background.opacity(0.42), in: RoundedRectangle(cornerRadius: 9))
+            }
+        }
+    }
+
+    private var reminderDays: [(label: String, code: String)] {
+        [("Mo", "mon"), ("Di", "tue"), ("Mi", "wed"), ("Do", "thu"), ("Fr", "fri"), ("Sa", "sat"), ("So", "sun")]
+    }
+
+    private var reminderTimes: [String] {
+        (0...48).map { slot in
+            if slot == 48 { return "24:00" }
+            let hour = slot / 2
+            let minute = slot % 2 == 0 ? "00" : "30"
+            return "\(hour):\(minute)"
+        }
+    }
+
+    private var reminderAddress: String {
+        "\(state.reminderDay)\(state.reminderTime)@fut.io"
     }
 
     private var modeSelector: some View {

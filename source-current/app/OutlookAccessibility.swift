@@ -225,6 +225,22 @@ final class OutlookAccessibility {
         NSRunningApplication(processIdentifier: pid)?.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
     }
 
+    func setComposeBCCValue(_ bcc: String) -> Bool {
+        guard let window = focusedOutlookWindow() else { return false }
+        if let element = composeBCCElement(in: window) {
+            return setValue(bcc, on: element)
+        }
+
+        // Some Outlook layouts hide BCC until its small Bcc control is pressed.
+        // Reveal it once, then resolve the actual BCC field again by accessibility metadata.
+        if pressComposeControl(in: window, matching: ["bcc", "blind carbon", "blind copy", "blindkopie"]) ,
+           let refreshed = focusedOutlookWindow(),
+           let element = composeBCCElement(in: refreshed) {
+            return setValue(bcc, on: element)
+        }
+        return false
+    }
+
     func setComposeSubjectValue(_ subject: String) -> Bool {
         guard let window = focusedOutlookWindow(), let element = composeSubjectElement(in: window) else { return false }
         return setValue(subject, on: element)
@@ -249,6 +265,42 @@ final class OutlookAccessibility {
         guard let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == "com.microsoft.Outlook" }) else { return nil }
         let appElement = AXUIElementCreateApplication(app.processIdentifier)
         return axElementAttribute(kAXFocusedWindowAttribute as CFString, from: appElement)
+    }
+
+    private func composeBCCElement(in window: AXUIElement) -> AXUIElement? {
+        var stack: [AXUIElement] = [window]
+        var visited = 0
+        while let element = stack.popLast(), visited < 14_000 {
+            visited += 1
+            let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
+            if role == "AXTextField" || role == "AXTextArea" || role == "AXComboBox" {
+                let meta = composeMetadata(for: element)
+                if meta.contains("bcc") || meta.contains("blind carbon") || meta.contains("blind copy") || meta.contains("blindkopie") {
+                    return element
+                }
+            }
+            for child in children(of: element).reversed() { stack.append(child) }
+        }
+        return nil
+    }
+
+    private func pressComposeControl(in window: AXUIElement, matching needles: [String]) -> Bool {
+        var stack: [AXUIElement] = [window]
+        var visited = 0
+        while let element = stack.popLast(), visited < 14_000 {
+            visited += 1
+            let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
+            if role == "AXButton" || role == "AXCheckBox" || role == "AXMenuButton" {
+                let meta = composeMetadata(for: element)
+                if needles.contains(where: { meta.contains($0) }) {
+                    if AXUIElementPerformAction(element, kAXPressAction as CFString) == .success {
+                        return true
+                    }
+                }
+            }
+            for child in children(of: element).reversed() { stack.append(child) }
+        }
+        return false
     }
 
     private func composeSubjectElement(in window: AXUIElement) -> AXUIElement? {

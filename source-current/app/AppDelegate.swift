@@ -108,9 +108,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func configureStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let url = Bundle.main.url(forResource: "ReplyzenLogo", withExtension: "png"),
-           let image = NSImage(contentsOf: url) {
-            image.size = NSSize(width: 18, height: 18)
-            image.isTemplate = true
+           let source = NSImage(contentsOf: url),
+           let image = makeMenuBarTemplateIcon(from: source) {
             item.button?.image = image
         } else if let fallback = NSImage(systemSymbolName: "envelope.badge", accessibilityDescription: "Replyzen") {
             fallback.isTemplate = true
@@ -153,6 +152,61 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         item.menu = menu
         statusItem = item
+    }
+
+    private func makeMenuBarTemplateIcon(from source: NSImage) -> NSImage? {
+        let pixels = 36
+        guard let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: pixels,
+            pixelsHigh: pixels,
+            bitsPerSample: 8,
+            samplesPerPixel: 4,
+            hasAlpha: true,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: 0,
+            bitsPerPixel: 0
+        ) else { return nil }
+
+        NSGraphicsContext.saveGraphicsState()
+        if let context = NSGraphicsContext(bitmapImageRep: rep) {
+            NSGraphicsContext.current = context
+            context.imageInterpolation = .high
+            NSColor.white.setFill()
+            NSRect(x: 0, y: 0, width: pixels, height: pixels).fill()
+            source.draw(
+                in: NSRect(x: 1, y: 1, width: pixels - 2, height: pixels - 2),
+                from: .zero,
+                operation: .sourceOver,
+                fraction: 1
+            )
+        }
+        NSGraphicsContext.restoreGraphicsState()
+
+        guard let data = rep.bitmapData else { return nil }
+        let rowBytes = rep.bytesPerRow
+        for y in 0..<pixels {
+            for x in 0..<pixels {
+                let i = y * rowBytes + x * 4
+                let r = Int(data[i])
+                let g = Int(data[i + 1])
+                let b = Int(data[i + 2])
+                let originalAlpha = Int(data[i + 3])
+                let luminance = (r * 30 + g * 59 + b * 11) / 100
+                let darkness = max(0, 255 - luminance)
+                let alpha = darkness * originalAlpha / 255
+                data[i] = 0
+                data[i + 1] = 0
+                data[i + 2] = 0
+                data[i + 3] = UInt8(alpha)
+            }
+        }
+
+        let image = NSImage(size: NSSize(width: 18, height: 18))
+        image.addRepresentation(rep)
+        image.isTemplate = true
+        return image
     }
 
     private func configureHotKey() {
@@ -241,7 +295,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         outlook.activateOutlook(pid: snapshot.pid)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
-            self?.keyboard.sendCommandR()
+            self?.keyboard.sendCommandShiftR()
 
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                 guard let self else { return }
@@ -430,6 +484,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             state.instruction = ""
         }
         state.instructionHTML = ""
+        state.reminderEnabled = false
 
         guard keychain.loadAPIKey() != nil else {
             toolbarButton.setSuppressed(true)
@@ -1022,6 +1077,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return calendar.date(from: components) ?? now
     }
 
+    private func reminderBCCAddress() -> String? {
+        guard state.reminderEnabled else { return nil }
+        let day = state.reminderDay.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let time = state.reminderTime.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard ["mon", "tue", "wed", "thu", "fri", "sat", "sun"].contains(day), !time.isEmpty else { return nil }
+        return "\(day)\(time)@fut.io"
+    }
+
     private func insertGeneratedText() {
         switch state.outputMode {
         case .reply:
@@ -1059,10 +1122,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         outlook.activateOutlook(pid: snapshot.pid)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
-            self?.keyboard.sendCommandR()
+            self?.keyboard.sendCommandShiftR()
 
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.05) { [weak self] in
                 guard let self else { return }
+                if let reminder = self.reminderBCCAddress() {
+                    _ = self.outlook.setComposeBCCValue(reminder)
+                    _ = self.outlook.focusComposeBodyField()
+                    self.copyMailToPasteboard(plainText: reply, html: self.state.replyHTML)
+                }
                 self.keyboard.sendCommandV()
                 self.isRunningFlow = false
                 self.state.stage = .idle
@@ -1112,10 +1180,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let self else { return }
 
             let subjectDone = subject.isEmpty || self.outlook.setComposeSubjectValue(subject)
+            let reminderDone: Bool
+            if let reminder = self.reminderBCCAddress() {
+                reminderDone = self.outlook.setComposeBCCValue(reminder)
+            } else {
+                reminderDone = true
+            }
             // Accessibility can set plain text directly, but rich formatting must be
             // pasted from the HTML/RTF clipboard. Keep the direct path only when
             // no rich HTML has been produced.
-            if html.isEmpty, self.outlook.setComposeBodyValue(body) {
+            if html.isEmpty, reminderDone, self.outlook.setComposeBodyValue(body) {
                 self.finishNewMailInsertion()
                 return
             }
@@ -1124,6 +1198,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if attempt < 2 {
                 self.populateNewMailDraft(subject: subject, body: body, html: html, attempt: attempt + 1)
                 return
+            }
+
+            if !reminderDone, let reminder = self.reminderBCCAddress() {
+                _ = self.outlook.setComposeBCCValue(reminder)
             }
 
             var subjectReady = subjectDone

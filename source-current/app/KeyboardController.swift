@@ -5,6 +5,10 @@ final class KeyboardController {
         sendKey(code: 15, flags: .maskCommand)
     }
 
+    func sendCommandShiftR() {
+        sendKey(code: 15, flags: [.maskCommand, .maskShift])
+    }
+
     func sendCommandN() {
         sendKey(code: 45, flags: .maskCommand)
     }
