@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'v18/**'
+      - 'v19/**'
       - '.github/workflows/build-update.yml'
   workflow_dispatch:
 
@@ -26,15 +26,15 @@ jobs:
           cp source-current/Build-CI.sh buildsrc/Build-CI.sh
           cp source-current/app/*.swift buildsrc/app/
           cp source-current/app/Info.plist buildsrc/app/Info.plist
-      - name: Apply Replyzen 1.8 window fix
+      - name: Apply Replyzen 1.9 startup fixes
         run: |
-          python3 v18/patch.py buildsrc
+          python3 v19/patch.py buildsrc
       - name: Build update package
         run: |
           cd buildsrc
           chmod +x Build-CI.sh
           ./Build-CI.sh
-      - name: Publish Replyzen 1.8 update and source snapshot
+      - name: Publish Replyzen 1.9 update and source snapshot
         run: |
           cp buildsrc/Replyzen-update.zip ./Replyzen-update.zip
           cp buildsrc/update.json ./update.json
@@ -50,5 +50,5 @@ jobs:
             echo "No update artifact changes"
             exit 0
           fi
-          git commit -m "Build Replyzen 1.8 larger calendar window"
+          git commit -m "Build Replyzen 1.9 startup fix"
           git push
