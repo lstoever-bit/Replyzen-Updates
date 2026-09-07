@@ -12,25 +12,31 @@ final class OpenAIClient {
         instruction: String,
         tone: ReplyTone,
         language: AppState.ReplyLanguage,
+        compact: Bool,
         completion: @escaping (Result<String, Error>) -> Void
     ) {
-        let systemInstructions = [
+        var systemInstructions = [
             "Draft an email reply for the user.",
             "Be concise, natural, and appropriate for email.",
             tone.apiInstruction,
+            restrainedDashInstruction,
             languageInstruction(for: language, purpose: "reply"),
+            restrainedDashInstruction,
             "Follow the user's instruction precisely.",
             "Do not invent facts, promises, dates, attachments, or commitments.",
             "Do not add a subject line.",
             "Do not add a signature or the user's name.",
             "Return only the reply text."
-        ].joined(separator: "\n")
+        ]
+        if compact {
+            systemInstructions.append("COMPACT MODE IS ON: make the reply as short as possible while preserving the requested meaning. Prefer 1 to 3 short sentences and normally stay under 70 words.")
+        }
 
         performRequest(
             apiKey: apiKey,
-            instructions: systemInstructions,
+            instructions: systemInstructions.joined(separator: "\n"),
             input: "USER INSTRUCTION:\n\(instruction)\n\nEMAIL CONTENT:\n\(String(mailText.prefix(30_000)))",
-            maxOutputTokens: 520,
+            maxOutputTokens: compact ? 260 : 520,
             lowVerbosity: true,
             completion: completion
         )
@@ -46,6 +52,7 @@ final class OpenAIClient {
             "Automatically detect the language of the latest relevant incoming message and write the reply in that same language.",
             "If the thread mixes languages, use the language of the most recent request that is being declined.",
             "Keep it warm, polite and concise: normally 1-3 short sentences.",
+            restrainedDashInstruction,
             "Clearly decline the request or invitation, but do not invent a reason, excuse, date, promise or alternative unless it is explicitly supported by the email.",
             "Do not add a subject line, greeting-only filler, signature or the user's name.",
             "Return only the reply text."
@@ -112,6 +119,10 @@ final class OpenAIClient {
         }
     }
 
+    private var restrainedDashInstruction: String {
+        "Avoid hyphens, en dashes, and em dashes in normal prose. Use them only when absolutely necessary for correctness or when preserving exact source text such as names, dates, URLs, email addresses, or reference numbers. Prefer commas, periods, or separate sentences instead."
+    }
+
     private static func decodeNewMailDraft(_ text: String) throws -> NewMailDraft {
         var cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
         if cleaned.hasPrefix("```") {
@@ -149,6 +160,7 @@ final class OpenAIClient {
             "Summarize the full email thread for the user. Do not draft an email reply.",
             languageInstruction(for: language, purpose: "summary"),
             "Be concise, clear, and structured.",
+            restrainedDashInstruction,
             "Capture the key points, decisions or commitments, open questions, and action items or next steps.",
             "Preserve names, dates, amounts, and deadlines only when they are relevant.",
             "Do not invent facts or infer commitments that are not supported by the email thread.",
@@ -193,6 +205,7 @@ final class OpenAIClient {
             "title: the shortest useful calendar title possible, ideally 1-4 words, maximum 6 words. No filler such as Meeting, Call, Appointment, Termin unless it is necessary to understand the event.",
             "description: an extremely compact description of what the appointment is about. Prefer one short sentence or a few compact phrases, maximum 180 characters. No greeting, no sign-off, no generic filler, no repeated title. Include only information useful when opening the calendar event later.",
             strictLanguageInstruction,
+            restrainedDashInstruction,
             "Write title and description in \(titleLanguage). Preserve important project or person names, but never copy the source language merely because the thread uses it.",
             "start and end: ISO-8601 timestamps with timezone offset, or null.",
             "Use a date/time only if one future appointment time is clearly agreed or clearly proposed in the thread. If several dates/times are possible or the timing is ambiguous, set start and end to null.",

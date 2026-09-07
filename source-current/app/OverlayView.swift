@@ -3,8 +3,6 @@ import AppKit
 
 struct OverlayView: View {
     @ObservedObject var state: AppState
-    @ObservedObject var commands: CommandStore
-    @State private var showCommandManager = false
 
     var body: some View {
         ZStack {
@@ -15,9 +13,6 @@ struct OverlayView: View {
                 .padding(28)
         }
         .frame(minWidth: 590, minHeight: 390)
-        .sheet(isPresented: $showCommandManager) {
-            CommandManagerView(store: commands)
-        }
     }
 
     @ViewBuilder
@@ -191,6 +186,10 @@ struct OverlayView: View {
 
             modeSelector
 
+            if state.outputMode == .reply || state.outputMode == .newMail {
+                mailTypeSelector
+            }
+
             if state.outputMode != .newMail {
                 mailContextBanner
             }
@@ -246,31 +245,7 @@ struct OverlayView: View {
             }
 
             HStack(spacing: 10) {
-                if state.outputMode == .reply {
-                    Menu {
-                        ForEach(commands.commands) { command in
-                            Button(command.name) {
-                                applyCommand(command)
-                            }
-                        }
-
-                        Divider()
-
-                        Button("+ Add Command…") {
-                            showCommandManager = true
-                        }
-                        Button("Manage Commands…") {
-                            showCommandManager = true
-                        }
-                    } label: {
-                        HStack(spacing: 5) {
-                            Image(systemName: "slider.horizontal.3")
-                            Text("Commands")
-                        }
-                    }
-                    .controlSize(.small)
-                    .help("Eigene Replyzen-Befehle auswählen oder verwalten")
-                } else if state.outputMode == .newMail {
+                if state.outputMode == .reply || state.outputMode == .newMail {
                     HStack(spacing: 7) {
                         Text("Mood")
                             .font(.caption)
@@ -298,17 +273,7 @@ struct OverlayView: View {
                 }
             }
 
-            if state.outputMode == .reply {
-                HStack(spacing: 6) {
-                    Text("Command: \(state.selectedCommandName)")
-                    Text("·")
-                    Text("Tone: \(state.replyTone.displayName)")
-                    Text("·")
-                    Text("Sprache: \(state.replyLanguage.displayName)")
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            } else if state.outputMode == .newMail {
+            if state.outputMode == .reply || state.outputMode == .newMail {
                 HStack(spacing: 6) {
                     Text("Mood: \(state.replyTone.displayName)")
                     Text("·")
@@ -343,11 +308,27 @@ struct OverlayView: View {
 
     private var modeSelector: some View {
         HStack(spacing: 8) {
-            modeButton(.reply, title: "Reply", systemImage: "arrowshape.turn.up.left.fill")
-            modeButton(.newMail, title: "New Mail", systemImage: "square.and.pencil")
+            modeButton(.reply, title: "Mail", systemImage: "envelope.fill")
             modeButton(.calendar, title: "Termin", systemImage: "calendar.badge.plus")
             modeButton(.payment, title: "Überweisung", systemImage: "banknote")
         }
+    }
+
+    private var mailTypeSelector: some View {
+        Picker("Mailtyp", selection: Binding(
+            get: { state.outputMode },
+            set: { mode in
+                guard mode == .reply || mode == .newMail else { return }
+                guard state.outputMode != mode else { return }
+                state.outputMode = mode
+                handleModeChange(mode)
+            }
+        )) {
+            Label("Reply", systemImage: "arrowshape.turn.up.left.fill").tag(AppState.OutputMode.reply)
+            Label("New Mail", systemImage: "square.and.pencil").tag(AppState.OutputMode.newMail)
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
     }
 
     private func modeButton(_ mode: AppState.OutputMode, title: String, systemImage: String) -> some View {
@@ -366,8 +347,15 @@ struct OverlayView: View {
             .frame(maxWidth: .infinity, minHeight: 34)
         }
         .buttonStyle(.borderedProminent)
-        .tint(state.outputMode == mode ? .accentColor : .gray.opacity(0.32))
+        .tint(isTopLevelModeSelected(mode) ? .accentColor : .gray.opacity(0.32))
         .controlSize(.regular)
+    }
+
+    private func isTopLevelModeSelected(_ mode: AppState.OutputMode) -> Bool {
+        if mode == .reply {
+            return state.outputMode == .reply || state.outputMode == .newMail
+        }
+        return state.outputMode == mode
     }
 
     @ViewBuilder
@@ -440,23 +428,16 @@ struct OverlayView: View {
         switch mode {
         case .newMail:
             state.instruction = ""
-            state.selectedCommandName = "Custom"
-            state.replyTone = .professional
             state.newMailSubject = ""
         case .reply:
-            if state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-               let first = commands.commands.first {
-                applyCommand(first)
+            if state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                state.instruction = state.replyLanguage == .german
+                    ? "Kurz, freundlich und direkt antworten."
+                    : "Reply briefly, friendly and directly."
             }
         case .calendar, .payment:
             break
         }
-    }
-
-    private func applyCommand(_ command: ReplyCommand) {
-        state.selectedCommandName = command.name
-        state.instruction = command.prompt
-        state.replyTone = command.tone
     }
 
     private func languageButton(_ label: String, language: AppState.ReplyLanguage, help: String) -> some View {

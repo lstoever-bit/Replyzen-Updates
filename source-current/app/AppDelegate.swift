@@ -4,8 +4,7 @@ import NaturalLanguage
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let state = AppState()
-    private let commandStore = CommandStore()
-    private lazy var panel = FloatingPanelController(state: state, commands: commandStore)
+    private lazy var panel = FloatingPanelController(state: state)
     private let outlook = OutlookAccessibility()
     private let openAI = OpenAIClient()
     private let keychain = KeychainStore()
@@ -398,16 +397,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        // The main Replyzen overlay is the normal reply workflow. If another
-        // mode was used previously, switch back to Reply and restore its default
-        // suggested command. The suggestion is selected below so the user can
-        // overwrite it by simply typing.
-        let wasReplyMode = state.outputMode == .reply
+        // Replyzen opens the unified Mail workspace in Reply mode. There are no
+        // reply presets or saved commands anymore. A single lightweight default
+        // instruction is selected so typing replaces it immediately.
         state.outputMode = .reply
-        if !wasReplyMode {
-            state.instruction = ""
-            state.selectedCommandName = "Custom"
-        }
+        state.instruction = defaultReplyInstruction(for: state.replyLanguage)
 
         guard keychain.loadAPIKey() != nil else {
             toolbarButton.setSuppressed(true)
@@ -418,7 +412,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         toolbarButton.setSuppressed(true)
-        prepareDefaultCommandIfNeeded()
         state.stage = .instruction
         panel.show(activate: true)
         panel.selectInstructionTextSoon()
@@ -448,20 +441,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func prepareDefaultCommandIfNeeded() {
-        guard state.outputMode == .reply else { return }
-        let trimmed = state.instruction.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed.isEmpty else { return }
-
-        if let command = commandStore.commands.first {
-            state.instruction = command.prompt
-            state.replyTone = command.tone
-            state.selectedCommandName = command.name
-        } else {
-            state.instruction = ""
-            state.replyTone = .friendly
-            state.selectedCommandName = "Custom"
+    private func defaultReplyInstruction(for language: AppState.ReplyLanguage) -> String {
+        switch language {
+        case .german:
+            return "Kurz, freundlich und direkt antworten."
+        case .usEnglish:
+            return "Reply briefly, friendly and directly."
         }
+    }
+
+    private func isDefaultReplyInstruction(_ text: String) -> Bool {
+        let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        return cleaned == defaultReplyInstruction(for: .german) ||
+               cleaned == defaultReplyInstruction(for: .usEnglish)
     }
 
     private func refreshMailContext() {
@@ -505,10 +497,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     // recognized.
                     if self.state.outputMode == .reply,
                        let language = self.detectReplyLanguage(in: mail) {
+                        let currentInstruction = self.state.instruction
                         self.state.replyLanguage = language
+                        if self.isDefaultReplyInstruction(currentInstruction) {
+                            self.state.instruction = self.defaultReplyInstruction(for: language)
+                        }
                     }
 
-                    // Keep the suggested instruction fully selected after the mail
+                    // Keep the built in suggestion fully selected after the mail
                     // context arrives, so the first keystroke replaces it.
                     if self.state.outputMode == .reply {
                         self.panel.selectInstructionTextSoon()
@@ -574,7 +570,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             mailText: state.mailText,
             instruction: instruction,
             tone: state.replyTone,
-            language: state.replyLanguage
+            language: state.replyLanguage,
+            compact: state.newMailCompact
         ) { [weak self] result in
             DispatchQueue.main.async {
                 guard let self else { return }

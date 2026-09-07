@@ -11,7 +11,7 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
     private var wantsVisibleInOutlookContext = false
     var onClose: (() -> Void)?
 
-    init(state: AppState, commands: CommandStore) {
+    init(state: AppState) {
         self.state = state
         panel = NSPanel(
             contentRect: NSRect(x: 0, y: 0, width: 820, height: 700),
@@ -20,7 +20,7 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
             defer: false
         )
 
-        let host = NSHostingController(rootView: OverlayView(state: state, commands: commands))
+        let host = NSHostingController(rootView: OverlayView(state: state))
         panel.contentViewController = host
 
         panel.title = "Replyzen"
