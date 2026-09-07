@@ -104,7 +104,7 @@ struct OverlayView: View {
             replyzenLogo(size: 72)
             Text("Replyzen")
                 .font(.title2.bold())
-            Text("Reply, New Mail, Termin oder Überweisung – direkt aus Outlook.")
+            Text("Mail, Termin oder Überweisung, direkt aus Outlook.")
                 .foregroundStyle(.secondary)
             Button("Replyzen öffnen") {
                 state.retryAction?()
@@ -188,9 +188,7 @@ struct OverlayView: View {
 
             if state.outputMode == .reply || state.outputMode == .newMail {
                 mailTypeSelector
-            }
-
-            if state.outputMode != .newMail {
+            } else {
                 mailContextBanner
             }
 
@@ -223,9 +221,6 @@ struct OverlayView: View {
                 .padding(14)
                 .background(.background.opacity(0.55), in: RoundedRectangle(cornerRadius: 12))
             } else {
-                Text(state.outputMode == .reply ? "Was soll ich antworten?" : "Was soll ich schreiben?")
-                    .font(.title3.bold())
-
                 TextEditor(text: $state.instruction)
                     .font(.body)
                     .frame(height: 122)
@@ -315,20 +310,43 @@ struct OverlayView: View {
     }
 
     private var mailTypeSelector: some View {
-        Picker("Mailtyp", selection: Binding(
-            get: { state.outputMode },
-            set: { mode in
-                guard mode == .reply || mode == .newMail else { return }
-                guard state.outputMode != mode else { return }
-                state.outputMode = mode
-                handleModeChange(mode)
+        HStack(spacing: 8) {
+            if mailAvailable {
+                mailTypeButton(.reply, title: "Reply", systemImage: "arrowshape.turn.up.left.fill")
             }
-        )) {
-            Label("Reply", systemImage: "arrowshape.turn.up.left.fill").tag(AppState.OutputMode.reply)
-            Label("New Mail", systemImage: "square.and.pencil").tag(AppState.OutputMode.newMail)
+            mailTypeButton(.newMail, title: "New Mail", systemImage: "square.and.pencil")
+
+            if !mailAvailable {
+                HStack(spacing: 5) {
+                    if case .loading = state.mailStatus {
+                        ProgressView().controlSize(.mini)
+                        Text("Prüfe Outlook-Mail …")
+                    } else {
+                        Image(systemName: "info.circle")
+                        Text("Keine Mail erkannt. Reply ist ausgeblendet.")
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(.leading, 4)
+            }
+
+            Spacer(minLength: 0)
         }
-        .pickerStyle(.segmented)
-        .labelsHidden()
+    }
+
+    private func mailTypeButton(_ mode: AppState.OutputMode, title: String, systemImage: String) -> some View {
+        Button {
+            guard state.outputMode != mode else { return }
+            state.outputMode = mode
+            handleModeChange(mode)
+        } label: {
+            Label(title, systemImage: systemImage)
+                .font(.system(size: 13, weight: .semibold))
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(state.outputMode == mode ? .accentColor : .gray.opacity(0.32))
+        .controlSize(.small)
     }
 
     private func modeButton(_ mode: AppState.OutputMode, title: String, systemImage: String) -> some View {
@@ -427,7 +445,13 @@ struct OverlayView: View {
     private func handleModeChange(_ mode: AppState.OutputMode) {
         switch mode {
         case .newMail:
-            state.instruction = ""
+            // Same form, same user input. Only remove Replyzen's own built-in
+            // reply suggestion if it is still untouched.
+            let trimmed = state.instruction.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed == "Kurz, freundlich und direkt antworten." ||
+               trimmed == "Reply briefly, friendly and directly." {
+                state.instruction = ""
+            }
             state.newMailSubject = ""
         case .reply:
             if state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {

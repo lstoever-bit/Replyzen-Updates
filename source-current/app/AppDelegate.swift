@@ -397,11 +397,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        // Replyzen opens the unified Mail workspace in Reply mode. There are no
-        // reply presets or saved commands anymore. A single lightweight default
-        // instruction is selected so typing replaces it immediately.
-        state.outputMode = .reply
-        state.instruction = defaultReplyInstruction(for: state.replyLanguage)
+        // Replyzen has one unified Mail form. While Outlook context is being
+        // checked it starts as New Mail. If a readable message is found below,
+        // the same form switches to Reply automatically.
+        state.outputMode = .newMail
+        state.instruction = ""
 
         guard keychain.loadAPIKey() != nil else {
             toolbarButton.setSuppressed(true)
@@ -414,7 +414,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         toolbarButton.setSuppressed(true)
         state.stage = .instruction
         panel.show(activate: true)
-        panel.selectInstructionTextSoon()
 
         refreshMailContext()
     }
@@ -463,7 +462,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         state.mailText = ""
 
         guard outlook.isTrusted() else {
-            state.mailStatus = .unavailable("Outlook-Zugriff ist noch nicht freigegeben. New Mail funktioniert trotzdem.")
+            state.outputMode = .newMail
+            state.mailStatus = .unavailable("Keine Outlook-Mail verfügbar. Reply ist ausgeblendet.")
             outlook.requestTrustPrompt()
             return
         }
@@ -491,22 +491,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self.state.mailText = mail
                     self.state.mailStatus = .available
 
-                    // Language selection is instant and local; it does not spend
-                    // another API request. We currently expose German and US English
-                    // in the UI, so only switch when one of those is confidently
-                    // recognized.
-                    if self.state.outputMode == .reply,
-                       let language = self.detectReplyLanguage(in: mail) {
-                        let currentInstruction = self.state.instruction
-                        self.state.replyLanguage = language
-                        if self.isDefaultReplyInstruction(currentInstruction) {
-                            self.state.instruction = self.defaultReplyInstruction(for: language)
-                        }
+                    // A readable message means Reply becomes available in the
+                    // same Mail form. Select it automatically unless the user has
+                    // already started writing a New Mail instruction while loading.
+                    if self.state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        self.state.outputMode = .reply
                     }
 
-                    // Keep the built in suggestion fully selected after the mail
-                    // context arrives, so the first keystroke replaces it.
+                    // Language selection is instant and local; it does not spend
+                    // another API request.
+                    if let language = self.detectReplyLanguage(in: mail) {
+                        self.state.replyLanguage = language
+                    }
+
                     if self.state.outputMode == .reply {
+                        if self.state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                           self.isDefaultReplyInstruction(self.state.instruction) {
+                            self.state.instruction = self.defaultReplyInstruction(for: self.state.replyLanguage)
+                        }
+                        // The lightweight suggestion is selected so typing replaces
+                        // it immediately.
                         self.panel.selectInstructionTextSoon()
                     }
                 }
@@ -529,6 +533,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     }
 
                     self.state.mailStatus = .unavailable(message)
+                    // No mail context means Reply is not a valid action. Keep the
+                    // same form in New Mail and remove only the built-in reply hint.
+                    self.state.outputMode = .newMail
+                    if self.isDefaultReplyInstruction(self.state.instruction) {
+                        self.state.instruction = ""
+                    }
                 }
             }
         }
