@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'v33/**'
+      - 'v34/**'
       - '.github/workflows/build-update.yml'
   workflow_dispatch:
 
@@ -26,19 +26,19 @@ jobs:
           cp source-current/Build-CI.sh buildsrc/Build-CI.sh
           cp source-current/app/*.swift buildsrc/app/
           cp source-current/app/Info.plist buildsrc/app/Info.plist
-      - name: Apply Replyzen 1.23 language preselect and select-all prompt
+      - name: Apply Replyzen 1.24 unified mail workspace
         run: |
-          python3 v33/patch.py buildsrc
+          python3 v34/patch.py buildsrc
       - name: Build update package
         run: |
           cd buildsrc
           chmod +x Build-CI.sh
           ./Build-CI.sh
-      - name: Publish Replyzen 1.23 update and source snapshot
+      - name: Publish Replyzen 1.24 update and source snapshot
         run: |
-          cp buildsrc/Replyzen-update-1.23.zip ./Replyzen-update-1.23.zip
+          cp buildsrc/Replyzen-update-1.24.zip ./Replyzen-update-1.24.zip
           cp buildsrc/update.json ./update.json
-          cp buildsrc/update.json ./update-1.23.json
+          cp buildsrc/update.json ./update-1.24.json
           rm -rf source-current
           mkdir -p source-current/app
           cp buildsrc/Build-CI.sh source-current/Build-CI.sh
@@ -46,10 +46,10 @@ jobs:
           cp buildsrc/app/Info.plist source-current/app/Info.plist
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f Replyzen-update-1.23.zip update.json update-1.23.json source-current
+          git add -f Replyzen-update-1.24.zip update.json update-1.24.json source-current
           if git diff --cached --quiet; then
             echo "No update artifact changes"
             exit 0
           fi
-          git commit -m "Build Replyzen 1.23 language preselect and select-all prompt"
+          git commit -m "Build Replyzen 1.24 unified mail workspace"
           git push
