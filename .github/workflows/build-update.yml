@@ -4,7 +4,9 @@ on:
   push:
     branches: [main]
     paths:
-      - 'source2/part-*.b64'
+      - 'sourcefix/part-*.b64'
+      - 'source2/part-02.b64'
+      - 'source2/part-03.b64'
       - '.github/workflows/build-update.yml'
   workflow_dispatch:
 
@@ -19,7 +21,7 @@ jobs:
       - name: Reassemble source
         run: |
           rm -rf buildsrc Replyzen-source.zip
-          cat source2/part-*.b64 | tr -d '\n\r ' | /usr/bin/base64 -D > Replyzen-source.zip
+          (cat sourcefix/part-*.b64; cat source2/part-02.b64 source2/part-03.b64) | tr -d '\n\r ' | /usr/bin/base64 -D > Replyzen-source.zip
           unzip -t Replyzen-source.zip
           mkdir buildsrc
           ditto -x -k Replyzen-source.zip buildsrc
