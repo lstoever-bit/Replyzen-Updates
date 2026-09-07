@@ -7,7 +7,7 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
 
     init(state: AppState, commands: CommandStore) {
         panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 620, height: 430),
+            contentRect: NSRect(x: 0, y: 0, width: 620, height: 510),
             styleMask: [.titled, .closable, .fullSizeContentView],
             backing: .buffered,
             defer: false

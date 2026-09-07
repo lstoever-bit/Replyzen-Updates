@@ -417,23 +417,77 @@ struct OverlayView: View {
                 Spacer()
             }
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Kalender · lennard@minubo.com").font(.caption).foregroundStyle(.secondary)
-                if state.calendarOptions.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    Image(systemName: "g.circle.fill")
+                    Text("Google Calendar · lennard@minubo.com")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    if !state.googleConnectedEmail.isEmpty {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                if state.googleNeedsOAuthCredentials {
+                    Text("Einmalig Google OAuth einrichten: Google Calendar API aktivieren und einen OAuth-Client vom Typ „Desktop-App“ erstellen. Client-ID und Client Secret hier einfügen.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    TextField("Google OAuth Client-ID", text: $state.googleClientIDDraft)
+                        .textFieldStyle(.roundedBorder)
+                    SecureField("Google OAuth Client Secret", text: $state.googleClientSecretDraft)
+                        .textFieldStyle(.roundedBorder)
+
+                    HStack {
+                        Button("Google Cloud öffnen") { state.openGoogleCloudAction?() }
+                        Spacer()
+                        Button(state.googleIsConnecting ? "Verbinde …" : "Speichern & Google verbinden") {
+                            state.connectGoogleCalendarAction?()
+                        }
+                        .disabled(state.googleIsConnecting)
+                    }
+                } else if state.googleConnectedEmail.isEmpty {
                     HStack(spacing: 8) {
-                        ProgressView().controlSize(.small)
-                        Text(state.calendarListStatus)
+                        if state.googleIsConnecting { ProgressView().controlSize(.small) }
+                        Text(state.googleOAuthStatus.isEmpty ? "Noch nicht verbunden." : state.googleOAuthStatus)
                             .font(.callout)
                             .foregroundStyle(.secondary)
                     }
-                } else {
-                    Picker("Kalender", selection: $state.selectedCalendarID) {
-                        ForEach(state.calendarOptions) { calendar in
-                            Text(calendar.title).tag(calendar.id)
-                        }
+                    HStack {
+                        Button("OAuth-Zugang ändern") { state.googleNeedsOAuthCredentials = true }
+                        Spacer()
+                        Button("Mit Google verbinden") { state.connectGoogleCalendarAction?() }
+                            .disabled(state.googleIsConnecting)
                     }
-                    .labelsHidden()
-                    .frame(maxWidth: 320, alignment: .leading)
+                } else {
+                    HStack {
+                        Text("Verbunden: \(state.googleConnectedEmail)")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Trennen") { state.disconnectGoogleCalendarAction?() }
+                            .controlSize(.small)
+                    }
+
+                    if state.calendarOptions.isEmpty {
+                        HStack(spacing: 8) {
+                            if state.calendarListStatus.contains("geladen") {
+                                ProgressView().controlSize(.small)
+                            }
+                            Text(state.calendarListStatus)
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                        }
+                    } else {
+                        Picker("Kalender", selection: $state.selectedCalendarID) {
+                            ForEach(state.calendarOptions) { calendar in
+                                Text(calendar.title).tag(calendar.id)
+                            }
+                        }
+                        .labelsHidden()
+                        .frame(maxWidth: 360, alignment: .leading)
+                    }
                 }
             }
 
@@ -444,7 +498,7 @@ struct OverlayView: View {
                 Spacer()
                 Button("Im Kalender anlegen") { state.createCalendarAction?() }
                     .keyboardShortcut(.defaultAction)
-                    .disabled(state.calendarTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || state.calendarEnd <= state.calendarStart || state.selectedCalendarID.isEmpty)
+                    .disabled(state.calendarTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || state.calendarEnd <= state.calendarStart || state.selectedCalendarID.isEmpty || state.googleConnectedEmail.isEmpty)
             }
         }
     }

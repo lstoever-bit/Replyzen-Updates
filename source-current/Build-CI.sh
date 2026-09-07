@@ -36,7 +36,7 @@ SOURCES=("$SRC"/*.swift)
 
 "$SWIFTC" -O -parse-as-library -sdk "$SDK" -target "$TARGET" \
   -framework AppKit -framework SwiftUI -framework ApplicationServices \
-  -framework Security -framework ServiceManagement -framework EventKit \
+  -framework Security -framework ServiceManagement -framework Network \
   "${SOURCES[@]}" \
   -o "$APP/Contents/MacOS/Replyzen"
 
@@ -55,6 +55,6 @@ cat > "$UPDATE_JSON" <<EOF
   "build": $APP_BUILD,
   "download_url": "Replyzen-update.zip",
   "sha256": "$UPDATE_SHA",
-  "notes": "Replyzen 1.5: Termin-Body extrem kompakt; Auswahl des Zielkalenders innerhalb des minubo-Kontos."
+  "notes": "Replyzen 1.6: direkte Google-Calendar-API mit OAuth; Kalenderauswahl und kompakter Termin-Body."
 }
 EOF

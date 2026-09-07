@@ -69,7 +69,13 @@ final class AppState: ObservableObject {
     @Published var calendarWarning: String = ""
     @Published var calendarOptions: [CalendarOption] = []
     @Published var selectedCalendarID: String = ""
-    @Published var calendarListStatus: String = "Kalender werden geladen …"
+    @Published var calendarListStatus: String = "Google-Kalender werden geladen …"
+    @Published var googleNeedsOAuthCredentials: Bool = false
+    @Published var googleClientIDDraft: String = ""
+    @Published var googleClientSecretDraft: String = ""
+    @Published var googleConnectedEmail: String = ""
+    @Published var googleOAuthStatus: String = ""
+    @Published var googleIsConnecting: Bool = false
     @Published var successMessage: String = ""
 
     var mailText: String = ""
@@ -77,6 +83,9 @@ final class AppState: ObservableObject {
     var generateAction: (() -> Void)?
     var insertAction: (() -> Void)?
     var createCalendarAction: (() -> Void)?
+    var connectGoogleCalendarAction: (() -> Void)?
+    var disconnectGoogleCalendarAction: (() -> Void)?
+    var openGoogleCloudAction: (() -> Void)?
     var retryAction: (() -> Void)?
     var refreshMailAction: (() -> Void)?
     var closeAction: (() -> Void)?

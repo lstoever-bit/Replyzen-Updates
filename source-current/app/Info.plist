@@ -17,9 +17,9 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.5.0</string>
+    <string>1.6.0</string>
     <key>CFBundleVersion</key>
-    <string>6</string>
+    <string>7</string>
     <key>CFBundleIconFile</key>
     <string>Replyzen.icns</string>
     <key>LSMinimumSystemVersion</key>
@@ -28,9 +28,5 @@
     <true/>
     <key>NSHighResolutionCapable</key>
     <true/>
-    <key>NSCalendarsUsageDescription</key>
-    <string>Replyzen legt auf Wunsch Termine in einem ausgewählten Kalender des minubo-Kontos an.</string>
-    <key>NSCalendarsFullAccessUsageDescription</key>
-    <string>Replyzen braucht Kalenderzugriff, um Kalender des minubo-Kontos auszuwählen und Termine anzulegen.</string>
 </dict>
 </plist>

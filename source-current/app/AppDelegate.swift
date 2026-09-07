@@ -51,6 +51,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         state.generateAction = { [weak self] in self?.generateCurrentOutput() }
         state.insertAction = { [weak self] in self?.insertGeneratedText() }
         state.createCalendarAction = { [weak self] in self?.createCalendarEvent() }
+        state.connectGoogleCalendarAction = { [weak self] in self?.connectGoogleCalendar() }
+        state.disconnectGoogleCalendarAction = { [weak self] in self?.disconnectGoogleCalendar() }
+        state.openGoogleCloudAction = { [weak self] in self?.openGoogleCloudCredentials() }
         state.retryAction = { [weak self] in self?.openWorkspace() }
         state.refreshMailAction = { [weak self] in self?.refreshMailContext() }
         state.closeAction = { [weak self] in self?.closePanel() }
@@ -510,7 +513,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         isRunningFlow = true
         toolbarButton.setSuppressed(true)
         state.stage = .generating
-        state.statusText = "Termin wird im ausgewählten Kalender angelegt"
+        state.statusText = "Termin wird direkt in Google Calendar angelegt"
 
         let selectedCalendarName = state.calendarOptions.first(where: { $0.id == state.selectedCalendarID })?.title ?? "Kalender"
         calendarManager.createEvent(
@@ -529,7 +532,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     formatter.locale = Locale(identifier: "de_DE")
                     formatter.dateStyle = .medium
                     formatter.timeStyle = .short
-                    self.state.successMessage = "„\(title)“ wurde am \(formatter.string(from: self.state.calendarStart)) im Kalender „\(selectedCalendarName)“ angelegt."
+                    self.state.successMessage = "„\(title)“ wurde am \(formatter.string(from: self.state.calendarStart)) direkt in Google Calendar · „\(selectedCalendarName)“ angelegt."
                     self.state.stage = .success
                     self.panel.show()
                 case .failure(let error):
@@ -541,7 +544,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func loadCalendarOptions() {
         state.calendarOptions = []
-        state.calendarListStatus = "Kalender werden geladen …"
+        state.selectedCalendarID = ""
+        state.googleConnectedEmail = calendarManager.connectedEmail() ?? ""
+
+        guard calendarManager.isConfigured() else {
+            state.googleNeedsOAuthCredentials = true
+            state.googleOAuthStatus = "Einmalig Google OAuth einrichten."
+            state.calendarListStatus = "Google Calendar ist noch nicht verbunden."
+            return
+        }
+
+        state.googleNeedsOAuthCredentials = false
+        guard let email = calendarManager.connectedEmail() else {
+            state.googleOAuthStatus = "Noch nicht mit Google verbunden."
+            state.calendarListStatus = "Bitte mit lennard@minubo.com verbinden."
+            return
+        }
+
+        guard email.caseInsensitiveCompare(CalendarManager.targetEmail) == .orderedSame else {
+            calendarManager.disconnect()
+            state.googleConnectedEmail = ""
+            state.googleOAuthStatus = "Bitte mit lennard@minubo.com verbinden."
+            state.calendarListStatus = "Falsches Google-Konto."
+            return
+        }
+
+        state.googleConnectedEmail = email
+        state.googleOAuthStatus = "Verbunden mit \(email)"
+        state.calendarListStatus = "Google-Kalender werden geladen …"
 
         calendarManager.loadCalendarOptions { [weak self] result in
             DispatchQueue.main.async {
@@ -551,7 +581,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self.state.calendarOptions = options
                     if options.isEmpty {
                         self.state.selectedCalendarID = ""
-                        self.state.calendarListStatus = "Keine beschreibbaren minubo-Kalender gefunden."
+                        self.state.calendarListStatus = "Keine beschreibbaren Google-Kalender gefunden."
                         return
                     }
 
@@ -567,8 +597,56 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 case .failure(let error):
                     self.state.selectedCalendarID = ""
                     self.state.calendarListStatus = error.localizedDescription
+                    self.state.googleOAuthStatus = error.localizedDescription
                 }
             }
+        }
+    }
+
+    private func connectGoogleCalendar() {
+        let clientID = state.googleClientIDDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        let clientSecret = state.googleClientSecretDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if !calendarManager.isConfigured() && (clientID.isEmpty || clientSecret.isEmpty) {
+            state.googleNeedsOAuthCredentials = true
+            state.googleOAuthStatus = "Bitte Client-ID und Client Secret eintragen."
+            return
+        }
+
+        state.googleIsConnecting = true
+        state.googleOAuthStatus = "Google-Anmeldung wird im Browser geöffnet …"
+
+        calendarManager.connect(clientID: clientID, clientSecret: clientSecret) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.state.googleIsConnecting = false
+                switch result {
+                case .success(let email):
+                    self.state.googleConnectedEmail = email
+                    self.state.googleNeedsOAuthCredentials = false
+                    self.state.googleClientSecretDraft = ""
+                    self.state.googleOAuthStatus = "Verbunden mit \(email)"
+                    self.loadCalendarOptions()
+                case .failure(let error):
+                    self.state.googleOAuthStatus = error.localizedDescription
+                    self.state.calendarListStatus = error.localizedDescription
+                }
+            }
+        }
+    }
+
+    private func disconnectGoogleCalendar() {
+        calendarManager.disconnect()
+        state.googleConnectedEmail = ""
+        state.calendarOptions = []
+        state.selectedCalendarID = ""
+        state.googleOAuthStatus = "Google Calendar wurde getrennt."
+        state.calendarListStatus = "Bitte erneut mit lennard@minubo.com verbinden."
+    }
+
+    private func openGoogleCloudCredentials() {
+        if let url = URL(string: "https://console.cloud.google.com/apis/credentials") {
+            NSWorkspace.shared.open(url)
         }
     }
 

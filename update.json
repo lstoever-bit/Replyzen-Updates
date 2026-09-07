@@ -1,7 +1,7 @@
 {
-  "version": "1.5.0",
-  "build": 6,
+  "version": "1.6.0",
+  "build": 7,
   "download_url": "Replyzen-update.zip",
-  "sha256": "a765a0073a97282c22e3376aa507299d591c17fe6db8a076415e20a4dfa3e502",
-  "notes": "Replyzen 1.5: Termin-Body extrem kompakt; Auswahl des Zielkalenders innerhalb des minubo-Kontos."
+  "sha256": "a7e40d01aa878c818436ab2090bea76150835011f675ac8a35991f6ebd7bc101",
+  "notes": "Replyzen 1.6: direkte Google-Calendar-API mit OAuth; Kalenderauswahl und kompakter Termin-Body."
 }
