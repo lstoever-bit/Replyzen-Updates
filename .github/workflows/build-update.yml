@@ -33,7 +33,7 @@ jobs:
         run: |
           cp patch15/replyzen-v1.5.patch replyzen-v1.5.patch
           cd buildsrc
-          patch -p2 < ../replyzen-v1.5.patch
+          patch -p1 < ../replyzen-v1.5.patch
       - name: Build update package
         run: |
           cd buildsrc
