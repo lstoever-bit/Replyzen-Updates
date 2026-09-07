@@ -24,7 +24,7 @@ final class RichTextEditorController: ObservableObject {
         guard let textView, let storage = textView.textStorage else { return }
         let range = effectiveSelection(in: textView)
         guard range.length > 0 else {
-            textView.typingAttributes = [.font: NSFont.systemFont(ofSize: 14)]
+            textView.typingAttributes = [.font: MailTypography.baseFont]
             return
         }
         storage.beginEditing()
@@ -33,7 +33,7 @@ final class RichTextEditorController: ObservableObject {
         storage.removeAttribute(.backgroundColor, range: range)
         storage.removeAttribute(.underlineStyle, range: range)
         storage.removeAttribute(.strikethroughStyle, range: range)
-        storage.addAttribute(.font, value: NSFont.systemFont(ofSize: 14), range: range)
+        storage.addAttribute(.font, value: MailTypography.baseFont, range: range)
         storage.endEditing()
         textView.didChangeText()
     }
@@ -44,7 +44,7 @@ final class RichTextEditorController: ObservableObject {
         let manager = NSFontManager.shared
 
         if selected.length == 0 {
-            let current = (textView.typingAttributes[.font] as? NSFont) ?? NSFont.systemFont(ofSize: 14)
+            let current = (textView.typingAttributes[.font] as? NSFont) ?? MailTypography.baseFont
             let hasTrait = manager.traits(of: current).contains(trait)
             let converted = hasTrait
                 ? manager.convert(current, toNotHaveTrait: trait)
@@ -55,7 +55,7 @@ final class RichTextEditorController: ObservableObject {
 
         var firstTraitState: Bool?
         storage.enumerateAttribute(.font, in: selected) { value, _, stop in
-            let font = (value as? NSFont) ?? NSFont.systemFont(ofSize: 14)
+            let font = (value as? NSFont) ?? MailTypography.baseFont
             firstTraitState = manager.traits(of: font).contains(trait)
             stop.pointee = true
         }
@@ -63,7 +63,7 @@ final class RichTextEditorController: ObservableObject {
 
         storage.beginEditing()
         storage.enumerateAttribute(.font, in: selected) { value, range, _ in
-            let font = (value as? NSFont) ?? NSFont.systemFont(ofSize: 14)
+            let font = (value as? NSFont) ?? MailTypography.baseFont
             let converted = removeTrait
                 ? manager.convert(font, toNotHaveTrait: trait)
                 : manager.convert(font, toHaveTrait: trait)
@@ -135,7 +135,7 @@ final class RichTextEditorController: ObservableObject {
                 if start < storage.length {
                     attrs = storage.attributes(at: start, effectiveRange: nil)
                 } else {
-                    attrs = [.font: NSFont.systemFont(ofSize: 14)]
+                    attrs = [.font: MailTypography.baseFont]
                 }
                 storage.insert(NSAttributedString(string: prefix, attributes: attrs), at: start)
             }
@@ -263,7 +263,7 @@ private struct RichTextEditorBridge: NSViewRepresentable {
         textView.isRichText = true
         textView.allowsUndo = true
         textView.drawsBackground = false
-        textView.font = NSFont.systemFont(ofSize: 14)
+        textView.font = MailTypography.baseFont
         textView.textContainerInset = NSSize(width: 8, height: 8)
         textView.isVerticallyResizable = true
         textView.isHorizontallyResizable = false
@@ -297,30 +297,23 @@ private struct RichTextEditorBridge: NSViewRepresentable {
             isApplyingExternalValue = true
             defer { isApplyingExternalValue = false }
 
-            if !parent.html.isEmpty,
-               let data = parent.html.data(using: .utf8),
-               let attributed = try? NSAttributedString(
-                    data: data,
-                    options: [
-                        .documentType: NSAttributedString.DocumentType.html,
-                        .characterEncoding: String.Encoding.utf8.rawValue
-                    ],
-                    documentAttributes: nil
-               ) {
-                textView.textStorage?.setAttributedString(attributed)
-            } else {
-                textView.textStorage?.setAttributedString(
-                    NSAttributedString(
-                        string: parent.plainText,
-                        attributes: [.font: NSFont.systemFont(ofSize: 14)]
-                    )
-                )
-            }
+            textView.textStorage?.setAttributedString(
+                MailTypography.attributedString(plainText: parent.plainText, html: parent.html)
+            )
+            textView.typingAttributes = [.font: MailTypography.baseFont]
         }
 
         func textDidChange(_ notification: Notification) {
             guard !isApplyingExternalValue,
                   let textView = notification.object as? NSTextView else { return }
+            isApplyingExternalValue = true
+            defer { isApplyingExternalValue = false }
+            if let storage = textView.textStorage {
+                MailTypography.normalizeFonts(in: storage)
+            }
+            textView.typingAttributes[.font] = MailTypography.font(
+                preserving: textView.typingAttributes[.font] as? NSFont
+            )
             parent.plainText = textView.string
             parent.html = Self.html(from: textView.attributedString())
         }

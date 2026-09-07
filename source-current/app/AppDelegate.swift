@@ -444,7 +444,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func insertQuickReply(_ reply: String, snapshot: OutlookAccessibility.Snapshot) {
-        copyToPasteboard(reply)
+        copyMailToPasteboard(plainText: reply, html: "")
         panel.hide()
         outlook.activateOutlook(pid: snapshot.pid)
 
@@ -453,7 +453,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                 guard let self else { return }
-                self.copyToPasteboard(reply)
+                self.copyMailToPasteboard(plainText: reply, html: "")
                 self.keyboard.sendCommandV()
                 self.isRunningFlow = false
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
@@ -1652,28 +1652,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func copyMailToPasteboard(plainText: String, html: String) {
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setString(plainText, forType: .string)
-
-        let cleanedHTML = html.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !cleanedHTML.isEmpty, let htmlData = cleanedHTML.data(using: .utf8) else { return }
-        pasteboard.setData(htmlData, forType: .html)
-
-        if let attributed = try? NSAttributedString(
-            data: htmlData,
-            options: [
-                .documentType: NSAttributedString.DocumentType.html,
-                .characterEncoding: String.Encoding.utf8.rawValue
-            ],
-            documentAttributes: nil
-        ),
-           let rtf = try? attributed.data(
-                from: NSRange(location: 0, length: attributed.length),
-                documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf]
-           ) {
-            pasteboard.setData(rtf, forType: .rtf)
-        }
+        MailTypography.write(plainText: plainText, html: html)
     }
 
     private func copyToPasteboard(_ text: String) {
