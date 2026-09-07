@@ -485,6 +485,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         state.instructionHTML = ""
         state.reminderEnabled = false
+        state.reminderTime = "06:00"
 
         guard keychain.loadAPIKey() != nil else {
             toolbarButton.setSuppressed(true)
@@ -1081,8 +1082,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard state.reminderEnabled else { return nil }
         let day = state.reminderDay.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let time = state.reminderTime.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard ["mon", "tue", "wed", "thu", "fri", "sat", "sun"].contains(day), !time.isEmpty else { return nil }
-        return "\(day)\(time)@fut.io"
+        guard ["mon", "tues", "wed", "thurs", "fri", "sat", "sun"].contains(day), !time.isEmpty else { return nil }
+
+        let compactTime = time.replacingOccurrences(of: ":", with: "")
+        guard compactTime.count == 4, compactTime.allSatisfy({ $0.isNumber }) else { return nil }
+        if compactTime == "0600" {
+            return "\(day)@fut.io"
+        }
+        return "\(day)\(compactTime)@fut.io"
     }
 
     private func insertGeneratedText() {

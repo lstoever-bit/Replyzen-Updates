@@ -354,20 +354,24 @@ struct OverlayView: View {
     }
 
     private var reminderDays: [(label: String, code: String)] {
-        [("Mo", "mon"), ("Di", "tue"), ("Mi", "wed"), ("Do", "thu"), ("Fr", "fri"), ("Sa", "sat"), ("So", "sun")]
+        [("Mo", "mon"), ("Di", "tues"), ("Mi", "wed"), ("Do", "thurs"), ("Fr", "fri"), ("Sa", "sat"), ("So", "sun")]
     }
 
     private var reminderTimes: [String] {
         (0...48).map { slot in
             if slot == 48 { return "24:00" }
             let hour = slot / 2
-            let minute = slot % 2 == 0 ? "00" : "30"
-            return "\(hour):\(minute)"
+            let minute = slot % 2 == 0 ? 0 : 30
+            return String(format: "%02d:%02d", hour, minute)
         }
     }
 
     private var reminderAddress: String {
-        "\(state.reminderDay)\(state.reminderTime)@fut.io"
+        let compactTime = state.reminderTime.replacingOccurrences(of: ":", with: "")
+        if compactTime == "0600" {
+            return "\(state.reminderDay)@fut.io"
+        }
+        return "\(state.reminderDay)\(compactTime)@fut.io"
     }
 
     private var modeSelector: some View {

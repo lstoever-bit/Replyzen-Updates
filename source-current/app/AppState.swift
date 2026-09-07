@@ -69,7 +69,7 @@ final class AppState: ObservableObject {
     @Published var newMailCompact: Bool = false
     @Published var reminderEnabled: Bool = false
     @Published var reminderDay: String = "wed"
-    @Published var reminderTime: String = "12:00"
+    @Published var reminderTime: String = "06:00"
     @Published var newMailSubject: String = ""
     @Published var selectedCommandName: String = "Custom"
     @Published var outputMode: OutputMode = .reply

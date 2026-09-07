@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 SRC="$ROOT/app"
 WORK="$ROOT/.build-ci"
 APP="$WORK/Replyzen.app"
-UPDATE_ZIP="$ROOT/Replyzen-update-1.30.zip"
+UPDATE_ZIP="$ROOT/Replyzen-update-1.31.zip"
 UPDATE_JSON="$ROOT/update.json"
 SWIFTC="$(xcrun --find swiftc)"
 SDK="$(xcrun --sdk macosx --show-sdk-path)"
@@ -54,8 +54,8 @@ cat > "$UPDATE_JSON" <<EOF
 {
   "version": "$APP_VERSION",
   "build": $APP_BUILD,
-  "download_url": "Replyzen-update-1.30.zip",
+  "download_url": "Replyzen-update-1.31.zip",
   "sha256": "$UPDATE_SHA",
-  "notes": "Replyzen 1.30: Reply verwendet immer Reply All. Optionaler Reminder in der Mail Ansicht mit Mo bis So und Uhrzeit 0:00 bis 24:00; bei Aktivierung wird automatisch z. B. wed12:00@fut.io in BCC gesetzt. Das macOS Menüleisten Icon wird aus dem Replyzen App Logo als transparente Template Maske erzeugt, damit kein weißes Quadrat mehr erscheint."
+  "notes": "Replyzen 1.31: FollowUpThen Reminder verwendet kompakte fut.io Formate ohne Doppelpunkt, z. B. tues1100@fut.io. 06:00 ist Standard; bei 06:00 wird die Uhrzeit weggelassen, z. B. tues@fut.io. Das Zeit Dropdown startet bei 06:00."
 }
 EOF
