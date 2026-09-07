@@ -39,16 +39,21 @@ jobs:
           cd buildsrc
           chmod +x Build-CI.sh
           ./Build-CI.sh
-      - name: Publish update files
+      - name: Publish update files and source snapshot
         run: |
           cp buildsrc/Replyzen-update.zip ./Replyzen-update.zip
           cp buildsrc/update.json ./update.json
+          rm -rf source-current
+          mkdir -p source-current/app
+          cp buildsrc/Build-CI.sh source-current/Build-CI.sh
+          cp buildsrc/app/*.swift source-current/app/
+          cp buildsrc/app/Info.plist source-current/app/Info.plist
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f Replyzen-update.zip update.json
+          git add -f Replyzen-update.zip update.json source-current
           if git diff --cached --quiet; then
             echo "No update artifact changes"
             exit 0
           fi
-          git commit -m "Build Replyzen 1.5 update"
+          git commit -m "Publish Replyzen 1.5 source snapshot"
           git push
