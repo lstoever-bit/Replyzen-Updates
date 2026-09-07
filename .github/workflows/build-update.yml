@@ -2,11 +2,9 @@ name: Build Replyzen Update
 
 on:
   push:
-    branches: [main]
+    branches: [replyzen-v1.4]
     paths:
-      - 'sourcefix/part-*.b64'
-      - 'source2/part-02.b64'
-      - 'source2/part-03.b64'
+      - 'patch14/part-*.patch'
       - '.github/workflows/build-update.yml'
   workflow_dispatch:
 
@@ -18,13 +16,18 @@ jobs:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
-      - name: Reassemble source
+      - name: Reassemble Replyzen 1.3 source
         run: |
-          rm -rf buildsrc Replyzen-source.zip
+          rm -rf buildsrc Replyzen-source.zip replyzen-v1.4.patch
           (cat sourcefix/part-*.b64; cat source2/part-02.b64 source2/part-03.b64) | tr -d '\n\r ' | /usr/bin/base64 -D > Replyzen-source.zip
           unzip -t Replyzen-source.zip
           mkdir buildsrc
           ditto -x -k Replyzen-source.zip buildsrc
+      - name: Apply Replyzen 1.4 patch
+        run: |
+          cat patch14/part-*.patch > replyzen-v1.4.patch
+          cd buildsrc
+          patch -p2 < ../replyzen-v1.4.patch
       - name: Build update package
         run: |
           cd buildsrc
@@ -41,5 +44,5 @@ jobs:
             echo "No update artifact changes"
             exit 0
           fi
-          git commit -m "Build Replyzen update"
+          git commit -m "Build Replyzen 1.4 update"
           git push
