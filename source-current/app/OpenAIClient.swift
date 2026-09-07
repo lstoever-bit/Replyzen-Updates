@@ -487,9 +487,9 @@ final class OpenAIClient {
     private func languageInstruction(for language: AppState.ReplyLanguage, purpose: String) -> String {
         switch language {
         case .german:
-            return "Write the entire \(purpose) in natural German. Do not switch to English unless the user explicitly asks for it."
+            return "FINAL OUTPUT LANGUAGE IS GERMAN. Write the entire \(purpose) in natural German. The USER INSTRUCTION may be written in any language; treat its language only as input and translate its requested meaning into German. Never switch the final email to another language because the instruction itself is written in that language. Preserve exact names, brands, URLs, email addresses and explicitly requested verbatim quotations."
         case .usEnglish:
-            return "Write the entire \(purpose) in natural US English. Use American spelling and phrasing. Do not switch to German unless the user explicitly asks for it."
+            return "FINAL OUTPUT LANGUAGE IS US ENGLISH. Write the entire \(purpose) in natural US English using American spelling and phrasing. The USER INSTRUCTION may be written in any language; treat its language only as input and translate its requested meaning into US English. Never switch the final email to German or another language because the instruction itself is written in that language. Preserve exact names, brands, URLs, email addresses and explicitly requested verbatim quotations."
         }
     }
 

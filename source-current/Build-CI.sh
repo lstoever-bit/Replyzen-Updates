@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 SRC="$ROOT/app"
 WORK="$ROOT/.build-ci"
 APP="$WORK/Replyzen.app"
-UPDATE_ZIP="$ROOT/Replyzen-update-1.25.zip"
+UPDATE_ZIP="$ROOT/Replyzen-update-1.26.zip"
 UPDATE_JSON="$ROOT/update.json"
 SWIFTC="$(xcrun --find swiftc)"
 SDK="$(xcrun --sdk macosx --show-sdk-path)"
@@ -54,8 +54,8 @@ cat > "$UPDATE_JSON" <<EOF
 {
   "version": "$APP_VERSION",
   "build": $APP_BUILD,
-  "download_url": "Replyzen-update-1.25.zip",
+  "download_url": "Replyzen-update-1.26.zip",
   "sha256": "$UPDATE_SHA",
-  "notes": "Replyzen 1.25: Mail ist jetzt wirklich eine einzige Form. Reply und New Mail schalten nur das Verhalten derselben Eingabemaske um. Die Überschrift über dem Textfeld ist entfernt. Wenn keine Outlook-Mail erkannt wird, ist Reply ausgeblendet und es erscheint nur ein kleiner Hinweis."
+  "notes": "Replyzen 1.26: Die ausgewählte Sprache ist jetzt strikt die Ausgabesprache. Eine deutsche Anweisung wird bei ausgewähltem US English automatisch als Inhalt verstanden und die fertige Mail auf US English formuliert, und umgekehrt."
 }
 EOF
