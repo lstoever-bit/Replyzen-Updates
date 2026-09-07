@@ -1,7 +1,7 @@
 {
-  "version": "1.10.0",
-  "build": 11,
-  "download_url": "Replyzen-update-1.10.zip",
-  "sha256": "0292445990c555376cb43c46640b74a636ae8f65e11acc57485243a6fb3ea5c1",
-  "notes": "Replyzen 1.10: Update-Cache behoben; Versionsprüfung und Download nutzen Cache-Busting, plus versionsspezifisches Update-Paket."
+  "version": "1.11.0",
+  "build": 12,
+  "download_url": "Replyzen-update-1.11.zip",
+  "sha256": "9c72bd248d840780ec0dcf8877e416db971b72af9ad3fc7fa10317c4924df25d",
+  "notes": "Replyzen 1.11: Fenstergröße passt sich automatisch an Inhalt, Modus und verfügbare Bildschirmfläche an; Scroll-Fallback verhindert abgeschnittene Buttons."
 }

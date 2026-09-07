@@ -28,13 +28,21 @@ struct OverlayView: View {
         case .startup:
             startupView
         case .instruction:
-            instructionView
+            ScrollView {
+                instructionView
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.bottom, 6)
+            }
         case .generating:
             loadingView(title: "Einen Moment", subtitle: generatingSubtitle)
         case .updating:
             loadingView(title: "Update wird installiert", subtitle: "Neue Version wird geladen und eingerichtet …")
         case .preview:
-            previewView
+            ScrollView {
+                previewView
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.bottom, 6)
+            }
         case .calendarPreview:
             ScrollView {
                 calendarPreviewView
