@@ -34,7 +34,7 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
         panel.isOpaque = false
         panel.hasShadow = true
         panel.isMovableByWindowBackground = true
-        panel.minSize = NSSize(width: 600, height: 420)
+        panel.minSize = NSSize(width: 680, height: 560)
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient, .ignoresCycle]
         panel.standardWindowButton(.zoomButton)?.isHidden = true
         panel.standardWindowButton(.miniaturizeButton)?.isHidden = true
@@ -231,7 +231,7 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
         case .instruction:
             switch state.outputMode {
             case .reply, .newMail:
-                return NSSize(width: 840, height: 760)
+                return NSSize(width: 900, height: 800)
             case .calendar, .payment:
                 return NSSize(width: 840, height: 640)
             }

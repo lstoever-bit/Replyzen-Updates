@@ -106,17 +106,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func configureStatusItem() {
-        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let url = Bundle.main.url(forResource: "ReplyzenLogo", withExtension: "png"),
            let image = NSImage(contentsOf: url) {
-            image.size = NSSize(width: 16, height: 16)
+            image.size = NSSize(width: 18, height: 18)
+            image.isTemplate = true
             item.button?.image = image
-        } else {
-            item.button?.image = NSImage(systemSymbolName: "envelope.badge", accessibilityDescription: "Replyzen")
+        } else if let fallback = NSImage(systemSymbolName: "envelope.badge", accessibilityDescription: "Replyzen") {
+            fallback.isTemplate = true
+            item.button?.image = fallback
         }
-        item.button?.title = "Replyzen"
-        item.button?.imagePosition = .imageLeading
-        item.button?.font = .systemFont(ofSize: 13, weight: .semibold)
+        item.button?.title = ""
+        item.button?.imagePosition = .imageOnly
         item.button?.toolTip = "Replyzen"
 
         let menu = NSMenu()

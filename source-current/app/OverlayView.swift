@@ -23,11 +23,8 @@ struct OverlayView: View {
         case .startup:
             startupView
         case .instruction:
-            ScrollView {
-                instructionView
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.bottom, 6)
-            }
+            instructionView
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         case .generating:
             loadingView(title: "Einen Moment", subtitle: generatingSubtitle)
         case .updating:
@@ -224,7 +221,7 @@ struct OverlayView: View {
                 RichTextMailEditor(
                     plainText: $state.instruction,
                     html: $state.instructionHTML,
-                    height: 136,
+                    height: 320,
                     showsHTMLBadge: false
                 )
             }
@@ -258,21 +255,11 @@ struct OverlayView: View {
                 }
             }
 
-            if state.outputMode == .reply || state.outputMode == .newMail {
-                HStack(spacing: 6) {
-                    Text("Mood: \(state.replyTone.displayName)")
-                    Text("·")
-                    Text(state.newMailCompact ? "Compact" : "Normal")
-                    Text("·")
-                    Text("Sprache: \(state.replyLanguage.displayName)")
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            } else if state.outputMode == .calendar {
+            if state.outputMode == .calendar {
                 Text("Sprache: \(state.replyLanguage.displayName)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-            } else {
+            } else if state.outputMode == .payment {
                 HStack(spacing: 6) {
                     Image(systemName: "doc.richtext")
                     Text("PDF wird direkt von OpenAI gelesen")
@@ -281,13 +268,24 @@ struct OverlayView: View {
                 .foregroundStyle(.secondary)
             }
 
-            HStack {
+            Spacer(minLength: 12)
+
+            Divider()
+
+            HStack(spacing: 12) {
                 Button("Schließen") { state.closeAction?() }
+                    .controlSize(.large)
+
                 Spacer()
+
                 Button(primaryActionTitle) { state.generateAction?() }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .frame(minWidth: 170)
                     .keyboardShortcut(.defaultAction)
                     .disabled(primaryActionDisabled)
             }
+            .padding(.top, 2)
         }
     }
 

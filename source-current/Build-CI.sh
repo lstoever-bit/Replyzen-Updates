@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 SRC="$ROOT/app"
 WORK="$ROOT/.build-ci"
 APP="$WORK/Replyzen.app"
-UPDATE_ZIP="$ROOT/Replyzen-update-1.28.zip"
+UPDATE_ZIP="$ROOT/Replyzen-update-1.29.zip"
 UPDATE_JSON="$ROOT/update.json"
 SWIFTC="$(xcrun --find swiftc)"
 SDK="$(xcrun --sdk macosx --show-sdk-path)"
@@ -54,8 +54,8 @@ cat > "$UPDATE_JSON" <<EOF
 {
   "version": "$APP_VERSION",
   "build": $APP_BUILD,
-  "download_url": "Replyzen-update-1.28.zip",
+  "download_url": "Replyzen-update-1.29.zip",
   "sha256": "$UPDATE_SHA",
-  "notes": "Replyzen 1.28: Das Outlook Overlay hat jetzt genau New, Reply und Decline. Das Replyzen Logo plus Name erscheinen in der macOS Menüleiste. Der kompakte WYSIWYG Editor sitzt direkt in der Mail Hauptansicht. Nach Erstellen wird kein zweites Vorschaufenster geöffnet, sondern die Mail wird direkt in Outlook vorbereitet. Fett, Kursiv und Listen werden als HTML und RTF an Outlook übergeben."
+  "notes": "Replyzen 1.29: Größeres WYSIWYG Textfeld in der Mail Hauptansicht, aufgeräumte GUI und feste Aktionsleiste unten mit Schließen links und Erstellen rechts. In der macOS Menüleiste erscheint nur noch das Replyzen Logo ohne Schriftzug; das Icon folgt automatisch dem Hell und Dunkelmodus."
 }
 EOF
