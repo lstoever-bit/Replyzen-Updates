@@ -2,7 +2,7 @@ name: Build ReplyZen Update
 
 on:
   push:
-    branches: [main, codex/replyzen-cleanup-1.43]
+    branches: [main, codex/replyzen-font-1.44]
     paths:
       - 'source-current/**'
       - 'maintenance/**'
@@ -23,28 +23,15 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Restore legacy resources once
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ ! -f source-current/app/Resources/ReplyzenLogo.png ]; then
-            LEGACY="$(mktemp -d)"
-            trap 'rm -rf "$LEGACY"' EXIT
-            (cat sourcefix/part-*.b64; cat source2/part-02.b64 source2/part-03.b64) | tr -d '\n\r ' | /usr/bin/base64 -D > "$LEGACY/source.zip"
-            unzip -t "$LEGACY/source.zip"
-            ditto -x -k "$LEGACY/source.zip" "$LEGACY/source"
-            mkdir -p source-current/app/Resources
-            cp -R "$LEGACY/source/app/Resources/." source-current/app/Resources/
-          fi
-      - name: Apply checked 1.43 source cleanup if needed
-        run: python3 maintenance/refactor_1_43.py source-current
-      - name: Run regression checks without API access
+      - name: Apply checked 1.44 typography wiring if needed
+        run: python3 maintenance/font_1_44.py source-current
+      - name: Run regression and typography checks without API access
         run: bash tests/run-tests.sh source-current
       - name: Build and verify native app
         run: bash source-current/Build-CI.sh
       - name: Verify updater archive and manifest
         run: python3 tests/verify_update.py source-current
-      - name: Save canonical source and publish main update only
+      - name: Save tested source and publish main update only
         env:
           BRANCH: ${{ github.ref_name }}
         shell: bash
@@ -62,12 +49,12 @@ jobs:
             git add -f "$PACKAGE" update.json "update-${VERSION%.0}.json"
           fi
           if ! git diff --cached --quiet; then
-            git commit -m "Build ReplyZen 1.43 and preserve tested source"
+            git commit -m "Build ReplyZen 1.44 Calibri Light typography"
             git push origin "HEAD:$BRANCH"
           fi
       - uses: actions/upload-artifact@v4
         with:
-          name: ReplyZen-1.43-build
+          name: ReplyZen-1.44-build
           path: |
             source-current/Replyzen-update-*.zip
             source-current/update.json
