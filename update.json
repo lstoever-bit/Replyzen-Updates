@@ -1,7 +1,7 @@
 {
-  "version": "1.13.0",
-  "build": 14,
-  "download_url": "Replyzen-update-1.13.zip",
-  "sha256": "ddcdf3bac10489c815bb3a71b0eadc180f6c46622313fed2a682771ea3267714",
-  "notes": "Replyzen 1.13: Termine verwenden standardmäßig immer die Zeitzone Europe/Berlin (CET/CEST), unabhängig von der aktuellen Mac-Zeitzone."
+  "version": "1.14.0",
+  "build": 15,
+  "download_url": "Replyzen-update-1.14.zip",
+  "sha256": "a4e9af2144ef859eb2e8e65a7c3d69a8cf086f98a82bfc1237051d0d9d9bfa60",
+  "notes": "Replyzen 1.14: schnellere Terminextraktion mit einem kleinen Extraction-Modell; Replyzen schwebt nur im Outlook-Kontext und verschwindet bei Wechsel zu anderen Apps."
 }

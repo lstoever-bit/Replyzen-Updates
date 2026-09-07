@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 SRC="$ROOT/app"
 WORK="$ROOT/.build-ci"
 APP="$WORK/Replyzen.app"
-UPDATE_ZIP="$ROOT/Replyzen-update-1.13.zip"
+UPDATE_ZIP="$ROOT/Replyzen-update-1.14.zip"
 UPDATE_JSON="$ROOT/update.json"
 SWIFTC="$(xcrun --find swiftc)"
 SDK="$(xcrun --sdk macosx --show-sdk-path)"
@@ -53,8 +53,8 @@ cat > "$UPDATE_JSON" <<EOF
 {
   "version": "$APP_VERSION",
   "build": $APP_BUILD,
-  "download_url": "Replyzen-update-1.13.zip",
+  "download_url": "Replyzen-update-1.14.zip",
   "sha256": "$UPDATE_SHA",
-  "notes": "Replyzen 1.13: Termine verwenden standardmäßig immer die Zeitzone Europe/Berlin (CET/CEST), unabhängig von der aktuellen Mac-Zeitzone."
+  "notes": "Replyzen 1.14: schnellere Terminextraktion mit einem kleinen Extraction-Modell; Replyzen schwebt nur im Outlook-Kontext und verschwindet bei Wechsel zu anderen Apps."
 }
 EOF

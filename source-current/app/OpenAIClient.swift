@@ -124,7 +124,11 @@ final class OpenAIClient {
         performRequest(
             apiKey: apiKey,
             instructions: systemInstructions,
-            input: "EMAIL THREAD:\n\(String(mailText.prefix(30_000)))"
+            input: "EMAIL THREAD:\n\(String(mailText.prefix(30_000)))",
+            model: "gpt-5.4-nano",
+            reasoningEffort: "none",
+            maxOutputTokens: 320,
+            lowVerbosity: true
         ) { result in
             switch result {
             case .success(let text):
@@ -173,6 +177,10 @@ final class OpenAIClient {
         apiKey: String,
         instructions: String,
         input: String,
+        model: String = "gpt-5-mini",
+        reasoningEffort: String? = nil,
+        maxOutputTokens: Int? = nil,
+        lowVerbosity: Bool = false,
         completion: @escaping (Result<String, Error>) -> Void
     ) {
         guard let url = URL(string: "https://api.openai.com/v1/responses") else {
@@ -180,12 +188,21 @@ final class OpenAIClient {
             return
         }
 
-        let payload: [String: Any] = [
-            "model": "gpt-5-mini",
+        var payload: [String: Any] = [
+            "model": model,
             "store": false,
             "instructions": instructions,
             "input": input
         ]
+        if let reasoningEffort {
+            payload["reasoning"] = ["effort": reasoningEffort]
+        }
+        if let maxOutputTokens {
+            payload["max_output_tokens"] = maxOutputTokens
+        }
+        if lowVerbosity {
+            payload["text"] = ["verbosity": "low"]
+        }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"

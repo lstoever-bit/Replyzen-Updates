@@ -7,6 +7,8 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
     private let state: AppState
     private var cancellables = Set<AnyCancellable>()
     private var resizeWorkItem: DispatchWorkItem?
+    private var workspaceActivationObserver: NSObjectProtocol?
+    private var wantsVisibleInOutlookContext = false
     var onClose: (() -> Void)?
 
     init(state: AppState, commands: CommandStore) {
@@ -40,6 +42,7 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
         super.init(window: panel)
         panel.delegate = self
         observeLayoutState()
+        observeWorkspaceContext()
     }
 
     required init?(coder: NSCoder) {
@@ -47,6 +50,7 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
     }
 
     func show(activate: Bool = true) {
+        wantsVisibleInOutlookContext = true
         resizeForCurrentState(animated: false)
         panel.orderFrontRegardless()
 
@@ -57,12 +61,57 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
     }
 
     func hide() {
+        wantsVisibleInOutlookContext = false
         panel.orderOut(nil)
+    }
+
+    private func hideForExternalApp() {
+        panel.orderOut(nil)
+    }
+
+    private func restoreForOutlookIfNeeded() {
+        guard wantsVisibleInOutlookContext else { return }
+        resizeForCurrentState(animated: false)
+        panel.orderFrontRegardless()
     }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         onClose?()
         return false
+    }
+
+    private func observeWorkspaceContext() {
+        workspaceActivationObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self,
+                  let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else { return }
+
+            let bundleID = app.bundleIdentifier ?? ""
+            if bundleID == "com.microsoft.Outlook" {
+                self.restoreForOutlookIfNeeded()
+                return
+            }
+
+            // Replyzen itself is allowed to stay visible while the user types in the panel.
+            if bundleID == Bundle.main.bundleIdentifier {
+                return
+            }
+
+            // Any other foreground app (browser, Finder, Slack, etc.) hides the panel,
+            // but remembers that it should return when Outlook becomes active again.
+            if self.panel.isVisible {
+                self.hideForExternalApp()
+            }
+        }
+    }
+
+    deinit {
+        if let workspaceActivationObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(workspaceActivationObserver)
+        }
     }
 
     private func observeLayoutState() {
