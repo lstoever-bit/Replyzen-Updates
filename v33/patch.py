@@ -63,7 +63,7 @@ p.write_text(s)
 # Build script: link NaturalLanguage and publish 1.23 package/manifest.
 p = root / "Build-CI.sh"
 s = p.read_text()
-s = s.replace("Replyzen-update-1.21.zip", "Replyzen-update-1.23.zip")
+s = re.sub(r"Replyzen-update-1\.\d+\.zip", "Replyzen-update-1.23.zip", s)
 s = s.replace("-framework PDFKit -framework Vision \\", "-framework PDFKit -framework Vision -framework NaturalLanguage \\")
 s = re.sub(
     r'"notes": ".*?"',
