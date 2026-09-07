@@ -1,7 +1,7 @@
 {
-  "version": "1.12.0",
-  "build": 13,
-  "download_url": "Replyzen-update-1.12.zip",
-  "sha256": "3ffbbfb3021ca3a9886dc2edf5ab1016184b520b854a7148eeaaae2728647a5f",
-  "notes": "Replyzen 1.12: Google-Schlüsselbundzugriff auf einen einzigen Eintrag konsolidiert; wiederholte macOS-Zugriffsabfragen werden nach einmaliger Migration vermieden."
+  "version": "1.13.0",
+  "build": 14,
+  "download_url": "Replyzen-update-1.13.zip",
+  "sha256": "ddcdf3bac10489c815bb3a71b0eadc180f6c46622313fed2a682771ea3267714",
+  "notes": "Replyzen 1.13: Termine verwenden standardmäßig immer die Zeitzone Europe/Berlin (CET/CEST), unabhängig von der aktuellen Mac-Zeitzone."
 }

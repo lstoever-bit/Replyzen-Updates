@@ -100,8 +100,10 @@ final class OpenAIClient {
         language: AppState.ReplyLanguage,
         completion: @escaping (Result<CalendarSuggestion, Error>) -> Void
     ) {
-        let now = ISO8601DateFormatter().string(from: Date())
-        let timezone = TimeZone.current.identifier
+        let nowFormatter = ISO8601DateFormatter()
+        nowFormatter.timeZone = CalendarManager.eventTimeZone
+        let now = nowFormatter.string(from: Date())
+        let timezone = CalendarManager.eventTimeZoneIdentifier
         let titleLanguage = language == .german ? "German" : "US English"
 
         let systemInstructions = [
@@ -115,7 +117,8 @@ final class OpenAIClient {
             "If a start time is clear but no end time or duration is given, set end to 30 minutes after start.",
             "confidence must be one of explicit, ambiguous, missing.",
             "Do not invent a date, time, attendee, location, or commitment.",
-            "Current time is \(now). The user's local timezone is \(timezone). Resolve explicit relative dates such as tomorrow using this context."
+            "Default calendar timezone is Europe/Berlin (Central European time: CET/CEST). Interpret date and time references in this timezone by default. If the email explicitly states another timezone, convert the resulting event time to Europe/Berlin.",
+            "Current time in \(timezone) is \(now). Resolve explicit relative dates such as tomorrow using this context."
         ].joined(separator: "\n")
 
         performRequest(

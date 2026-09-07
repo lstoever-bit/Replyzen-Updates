@@ -459,14 +459,20 @@ struct OverlayView: View {
                     Text("Start").font(.caption).foregroundStyle(.secondary)
                     DatePicker("", selection: $state.calendarStart, displayedComponents: [.date, .hourAndMinute])
                         .labelsHidden()
+                        .environment(\.timeZone, CalendarManager.eventTimeZone)
                 }
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Ende").font(.caption).foregroundStyle(.secondary)
                     DatePicker("", selection: $state.calendarEnd, displayedComponents: [.date, .hourAndMinute])
                         .labelsHidden()
+                        .environment(\.timeZone, CalendarManager.eventTimeZone)
                 }
                 Spacer()
             }
+
+            Text("Zeitzone: CET / Europe-Berlin")
+                .font(.caption)
+                .foregroundStyle(.secondary)
 
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 6) {

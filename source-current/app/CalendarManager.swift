@@ -11,6 +11,8 @@ struct CalendarOption: Identifiable, Equatable {
 
 final class CalendarManager {
     static let targetEmail = "lennard@minubo.com"
+    static let eventTimeZoneIdentifier = "Europe/Berlin"
+    static let eventTimeZone = TimeZone(identifier: eventTimeZoneIdentifier) ?? TimeZone(secondsFromGMT: 3600)!
 
     enum CalendarError: LocalizedError {
         case oauthNotConfigured
@@ -224,7 +226,7 @@ final class CalendarManager {
 
                 let formatter = ISO8601DateFormatter()
                 formatter.formatOptions = [.withInternetDateTime]
-                let timezone = TimeZone.current.identifier
+                let timezone = Self.eventTimeZoneIdentifier
                 let trimmedNotes = notes.trimmingCharacters(in: .whitespacesAndNewlines)
                 var body: [String: Any] = [
                     "summary": title.trimmingCharacters(in: .whitespacesAndNewlines),

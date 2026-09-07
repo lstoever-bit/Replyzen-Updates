@@ -570,6 +570,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 case .success:
                     let formatter = DateFormatter()
                     formatter.locale = Locale(identifier: "de_DE")
+                    formatter.timeZone = CalendarManager.eventTimeZone
                     formatter.dateStyle = .medium
                     formatter.timeStyle = .short
                     self.state.successMessage = "„\(title)“ wurde am \(formatter.string(from: self.state.calendarStart)) direkt in Google Calendar · „\(selectedCalendarName)“ angelegt."
@@ -700,7 +701,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func nextRoundedHour() -> Date {
-        let calendar = Calendar.current
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = CalendarManager.eventTimeZone
         let now = Date().addingTimeInterval(60 * 60)
         var components = calendar.dateComponents([.year, .month, .day, .hour], from: now)
         components.minute = 0
