@@ -485,27 +485,14 @@ struct OverlayView: View {
                 .font(.title2.bold())
 
             if state.outputMode == .newMail {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Betreff").font(.caption).foregroundStyle(.secondary)
-                    TextField("Betreff", text: $state.newMailSubject)
-                        .textFieldStyle(.roundedBorder)
-                }
-
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Mailtext").font(.caption).foregroundStyle(.secondary)
-                    TextEditor(text: $state.reply)
-                        .font(.body)
-                        .frame(height: 190)
-                        .padding(8)
-                        .background(.background.opacity(0.7), in: RoundedRectangle(cornerRadius: 12))
-                }
-            } else {
-                TextEditor(text: $state.reply)
-                    .font(.body)
-                    .frame(height: 190)
-                    .padding(8)
-                    .background(.background.opacity(0.7), in: RoundedRectangle(cornerRadius: 12))
+                TextField("Betreff", text: $state.newMailSubject)
+                    .textFieldStyle(.roundedBorder)
             }
+
+            RichTextMailEditor(
+                plainText: $state.reply,
+                html: $state.replyHTML
+            )
 
             HStack {
                 Button("Zurück") {

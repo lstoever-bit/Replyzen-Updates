@@ -213,7 +213,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func insertQuickReply(_ reply: String, snapshot: OutlookAccessibility.Snapshot) {
-        copyToPasteboard(reply)
+        copyMailToPasteboard(plainText: reply, html: state.replyHTML)
         panel.hide()
         outlook.activateOutlook(pid: snapshot.pid)
 
@@ -589,6 +589,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
                 switch result {
                 case .success(let text):
+                    self.state.replyHTML = ""
                     self.state.reply = text
                     self.state.stage = .preview
                     self.panel.show()
@@ -627,6 +628,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 switch result {
                 case .success(let draft):
                     self.state.newMailSubject = draft.subject.trimmingCharacters(in: .whitespacesAndNewlines)
+                    self.state.replyHTML = ""
                     self.state.reply = draft.body.trimmingCharacters(in: .whitespacesAndNewlines)
                     self.state.stage = .preview
                     self.panel.show()
@@ -1008,7 +1010,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard !reply.isEmpty else { return }
 
         guard outlook.isTrusted() else {
-            copyToPasteboard(reply)
+            copyMailToPasteboard(plainText: reply, html: state.replyHTML)
             showError("Replyzen braucht Bedienungshilfen, um den Text automatisch in Outlook einzusetzen. Der Text wurde in die Zwischenablage kopiert.")
             return
         }
@@ -1038,16 +1040,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func insertNewMail() {
         let subject = state.newMailSubject.trimmingCharacters(in: .whitespacesAndNewlines)
         let body = state.reply.trimmingCharacters(in: .whitespacesAndNewlines)
+        let html = state.replyHTML
         guard !body.isEmpty else { return }
 
         guard let pid = outlook.runningPID() else {
-            copyToPasteboard(body)
+            copyMailToPasteboard(plainText: body, html: html)
             showError("Microsoft Outlook läuft nicht. Der Mailtext wurde in die Zwischenablage kopiert.")
             return
         }
 
         guard outlook.isTrusted() else {
-            copyToPasteboard(body)
+            copyMailToPasteboard(plainText: body, html: html)
             outlook.requestTrustPrompt()
             showError("Replyzen braucht Bedienungshilfen, um automatisch eine neue Outlook-Mail zu befüllen. Der Mailtext wurde in die Zwischenablage kopiert.")
             return
@@ -1063,24 +1066,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
             self?.keyboard.sendCommandN()
-            self?.populateNewMailDraft(subject: subject, body: body, attempt: 0)
+            self?.populateNewMailDraft(subject: subject, body: body, html: html, attempt: 0)
         }
     }
 
-    private func populateNewMailDraft(subject: String, body: String, attempt: Int) {
+    private func populateNewMailDraft(subject: String, body: String, html: String, attempt: Int) {
         let delay = attempt == 0 ? 0.8 : 0.22
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             guard let self else { return }
 
             let subjectDone = subject.isEmpty || self.outlook.setComposeSubjectValue(subject)
-            if self.outlook.setComposeBodyValue(body) {
+            // Accessibility can set plain text directly, but rich formatting must be
+            // pasted from the HTML/RTF clipboard. Keep the direct path only when
+            // no rich HTML has been produced.
+            if html.isEmpty, self.outlook.setComposeBodyValue(body) {
                 self.finishNewMailInsertion()
                 return
             }
 
             // Give Outlook a short moment to finish constructing the compose window, but do not wait for many retries.
             if attempt < 2 {
-                self.populateNewMailDraft(subject: subject, body: body, attempt: attempt + 1)
+                self.populateNewMailDraft(subject: subject, body: body, html: html, attempt: attempt + 1)
                 return
             }
 
@@ -1097,7 +1103,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.keyboard.sendTab()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) { [weak self] in
                     guard let self else { return }
-                    self.copyToPasteboard(body)
+                    self.copyMailToPasteboard(plainText: body, html: html)
                     self.keyboard.sendCommandV()
                     self.finishNewMailInsertion()
                 }
@@ -1105,11 +1111,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
 
             if self.outlook.focusComposeBodyField() {
-                self.copyToPasteboard(body)
+                self.copyMailToPasteboard(plainText: body, html: html)
                 self.keyboard.sendCommandV()
                 self.finishNewMailInsertion()
             } else {
-                self.copyToPasteboard(body)
+                self.copyMailToPasteboard(plainText: body, html: html)
                 self.isRunningFlow = false
                 self.showError("Der Mailtext konnte nicht automatisch eingesetzt werden. Er liegt in der Zwischenablage.")
             }
@@ -1121,6 +1127,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         state.successMessage = "Neue Outlook-Mail wurde mit Betreff und Mailtext vorbereitet."
         state.stage = .success
         panel.show()
+    }
+
+    private func copyMailToPasteboard(plainText: String, html: String) {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(plainText, forType: .string)
+
+        let cleanedHTML = html.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanedHTML.isEmpty, let htmlData = cleanedHTML.data(using: .utf8) else { return }
+        pasteboard.setData(htmlData, forType: .html)
+
+        if let attributed = try? NSAttributedString(
+            data: htmlData,
+            options: [
+                .documentType: NSAttributedString.DocumentType.html,
+                .characterEncoding: String.Encoding.utf8.rawValue
+            ],
+            documentAttributes: nil
+        ),
+           let rtf = try? attributed.data(
+                from: NSRange(location: 0, length: attributed.length),
+                documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf]
+           ) {
+            pasteboard.setData(rtf, forType: .rtf)
+        }
     }
 
     private func copyToPasteboard(_ text: String) {
