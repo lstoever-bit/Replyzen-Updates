@@ -57,6 +57,7 @@ final class AppState: ObservableObject {
 
     @Published var stage: Stage = .idle
     @Published var instruction: String = ""
+    @Published var instructionHTML: String = ""
     @Published var reply: String = ""
     @Published var replyHTML: String = ""
     @Published var errorMessage: String = ""

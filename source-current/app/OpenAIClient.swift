@@ -6,40 +6,60 @@ final class OpenAIClient {
         var errorDescription: String? { message }
     }
 
+    struct ReplyDraft: Decodable {
+        let body: String
+        let html: String?
+    }
+
     func generateReply(
         apiKey: String,
         mailText: String,
         instruction: String,
+        instructionHTML: String,
         tone: ReplyTone,
         language: AppState.ReplyLanguage,
         compact: Bool,
-        completion: @escaping (Result<String, Error>) -> Void
+        completion: @escaping (Result<ReplyDraft, Error>) -> Void
     ) {
         var systemInstructions = [
             "Draft an email reply for the user.",
+            "Return ONLY valid JSON with exactly these keys: body, html.",
+            "body is the plain text final reply.",
+            "html is the same final reply as a clean email safe HTML fragment. Use only p, br, strong, em, ul, ol and li. Do not use CSS, script, html or body tags.",
+            "If the user's rich text instruction intentionally uses bold, italic, bullets or numbering, preserve that formatting in the final email where it makes sense.",
             "Be concise, natural, and appropriate for email.",
             tone.apiInstruction,
             restrainedDashInstruction,
             languageInstruction(for: language, purpose: "reply"),
-            restrainedDashInstruction,
-            "Follow the user's instruction precisely.",
+            "Follow the user's instruction precisely. The language of the instruction is input only and must never override the selected output language.",
             "Do not invent facts, promises, dates, attachments, or commitments.",
             "Do not add a subject line.",
-            "Do not add a signature or the user's name.",
-            "Return only the reply text."
+            "Do not add a signature or the user's name."
         ]
         if compact {
             systemInstructions.append("COMPACT MODE IS ON: make the reply as short as possible while preserving the requested meaning. Prefer 1 to 3 short sentences and normally stay under 70 words.")
         }
 
+        let richInstruction = instructionHTML.trimmingCharacters(in: .whitespacesAndNewlines)
+        let input = "USER INSTRUCTION PLAIN:\n\(instruction)" +
+            (richInstruction.isEmpty ? "" : "\n\nUSER INSTRUCTION HTML FORMATTING CUES:\n\(richInstruction)") +
+            "\n\nEMAIL CONTENT:\n\(String(mailText.prefix(30_000)))"
+
         performRequest(
             apiKey: apiKey,
             instructions: systemInstructions.joined(separator: "\n"),
-            input: "USER INSTRUCTION:\n\(instruction)\n\nEMAIL CONTENT:\n\(String(mailText.prefix(30_000)))",
-            maxOutputTokens: compact ? 260 : 520,
-            lowVerbosity: true,
-            completion: completion
-        )
+            input: input,
+            maxOutputTokens: compact ? 340 : 700,
+            lowVerbosity: true
+        ) { result in
+            switch result {
+            case .success(let text):
+                do { completion(.success(try Self.decodeReplyDraft(text))) }
+                catch { completion(.failure(error)) }
+            case .failure(let error):
+                completion(.failure(error))
+            }
+        }
     }
 
     func generateQuickDecline(
@@ -73,11 +93,13 @@ final class OpenAIClient {
     struct NewMailDraft: Decodable {
         let subject: String
         let body: String
+        let html: String?
     }
 
     func generateNewMail(
         apiKey: String,
         instruction: String,
+        instructionHTML: String,
         tone: ReplyTone,
         language: AppState.ReplyLanguage,
         compact: Bool,
@@ -85,34 +107,38 @@ final class OpenAIClient {
     ) {
         var systemInstructions = [
             "Draft a new email for the user based only on the user's instruction.",
-            "Return ONLY valid JSON with exactly these keys: subject, body.",
-            "subject: write a short, useful email subject in the selected output language, ideally 2-7 words. Do not prefix it with Subject:, Betreff:, Re:, or Fwd:.",
-            "body: write the actual email body only. Do not repeat the subject in the body.",
+            "Return ONLY valid JSON with exactly these keys: subject, body, html.",
+            "subject: write a short useful email subject in the selected output language, ideally 2 to 7 words. Do not prefix it with Subject, Betreff, Re or Fwd.",
+            "body: write the actual email body only as plain text. Do not repeat the subject in the body.",
+            "html: the same final body as a clean email safe HTML fragment. Use only p, br, strong, em, ul, ol and li. Do not use CSS, script, html or body tags.",
+            "If the user's rich text instruction intentionally uses bold, italic, bullets or numbering, preserve that formatting in the final email where it makes sense.",
             "Be concise, natural, and appropriate for email.",
             tone.apiInstruction,
             languageInstruction(for: language, purpose: "email subject and body"),
-            "Follow the user's instruction precisely.",
+            restrainedDashInstruction,
+            "Follow the user's instruction precisely. The language of the instruction is input only and must never override the selected output language.",
             "Do not invent facts, promises, dates, attachments, recipients, or commitments that the user did not provide.",
             "Do not add a signature or the user's name unless the user explicitly asks for it."
         ]
         if compact {
-            systemInstructions.append("COMPACT MODE IS ON: make the body as short as possible while preserving the requested meaning. Prefer 2-4 short sentences and normally stay under 80 words.")
+            systemInstructions.append("COMPACT MODE IS ON: make the body as short as possible while preserving the requested meaning. Prefer 2 to 4 short sentences and normally stay under 80 words.")
         }
+
+        let richInstruction = instructionHTML.trimmingCharacters(in: .whitespacesAndNewlines)
+        let input = "USER INSTRUCTION PLAIN:\n\(instruction)" +
+            (richInstruction.isEmpty ? "" : "\n\nUSER INSTRUCTION HTML FORMATTING CUES:\n\(richInstruction)")
 
         performRequest(
             apiKey: apiKey,
             instructions: systemInstructions.joined(separator: "\n"),
-            input: "USER INSTRUCTION:\n\(instruction)",
-            maxOutputTokens: compact ? 320 : 700,
+            input: input,
+            maxOutputTokens: compact ? 380 : 760,
             lowVerbosity: true
         ) { result in
             switch result {
             case .success(let text):
-                do {
-                    completion(.success(try Self.decodeNewMailDraft(text)))
-                } catch {
-                    completion(.failure(error))
-                }
+                do { completion(.success(try Self.decodeNewMailDraft(text))) }
+                catch { completion(.failure(error)) }
             case .failure(let error):
                 completion(.failure(error))
             }
@@ -121,6 +147,33 @@ final class OpenAIClient {
 
     private var restrainedDashInstruction: String {
         "Avoid hyphens, en dashes, and em dashes in normal prose. Use them only when absolutely necessary for correctness or when preserving exact source text such as names, dates, URLs, email addresses, or reference numbers. Prefer commas, periods, or separate sentences instead."
+    }
+
+    private static func decodeReplyDraft(_ text: String) throws -> ReplyDraft {
+        var cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if cleaned.hasPrefix("```") {
+            let lines = cleaned.split(separator: "\n", omittingEmptySubsequences: false)
+            if lines.count >= 3 {
+                cleaned = lines.dropFirst().dropLast().joined(separator: "\n")
+                if cleaned.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("json") {
+                    cleaned = String(cleaned.dropFirst(4)).trimmingCharacters(in: .whitespacesAndNewlines)
+                }
+            }
+        }
+        guard let data = cleaned.data(using: .utf8) else {
+            throw APIError(message: "OpenAI hat keinen gültigen Antwortentwurf geliefert.")
+        }
+        do {
+            let draft = try JSONDecoder().decode(ReplyDraft.self, from: data)
+            guard !draft.body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                throw APIError(message: "OpenAI hat keinen Antworttext geliefert.")
+            }
+            return draft
+        } catch let error as APIError {
+            throw error
+        } catch {
+            throw APIError(message: "OpenAI hat den Antwortentwurf nicht im erwarteten Format geliefert.")
+        }
     }
 
     private static func decodeNewMailDraft(_ text: String) throws -> NewMailDraft {

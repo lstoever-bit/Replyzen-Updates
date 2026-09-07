@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 SRC="$ROOT/app"
 WORK="$ROOT/.build-ci"
 APP="$WORK/Replyzen.app"
-UPDATE_ZIP="$ROOT/Replyzen-update-1.27.zip"
+UPDATE_ZIP="$ROOT/Replyzen-update-1.28.zip"
 UPDATE_JSON="$ROOT/update.json"
 SWIFTC="$(xcrun --find swiftc)"
 SDK="$(xcrun --sdk macosx --show-sdk-path)"
@@ -54,8 +54,8 @@ cat > "$UPDATE_JSON" <<EOF
 {
   "version": "$APP_VERSION",
   "build": $APP_BUILD,
-  "download_url": "Replyzen-update-1.27.zip",
+  "download_url": "Replyzen-update-1.28.zip",
   "sha256": "$UPDATE_SHA",
-  "notes": "Replyzen 1.27: Der Mailentwurf hat jetzt einen sehr kompakten WYSIWYG HTML Editor mit Fett, Kursiv, Aufzählungen, Nummerierung und Formatierung entfernen. Die Formatierung wird als HTML/RTF in Outlook übernommen. Der strikte Sprachfix aus 1.26 ist enthalten."
+  "notes": "Replyzen 1.28: Das Outlook Overlay hat jetzt genau New, Reply und Decline. Das Replyzen Logo plus Name erscheinen in der macOS Menüleiste. Der kompakte WYSIWYG Editor sitzt direkt in der Mail Hauptansicht. Nach Erstellen wird kein zweites Vorschaufenster geöffnet, sondern die Mail wird direkt in Outlook vorbereitet. Fett, Kursiv und Listen werden als HTML und RTF an Outlook übergeben."
 }
 EOF

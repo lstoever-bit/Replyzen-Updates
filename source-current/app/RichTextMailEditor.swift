@@ -157,6 +157,8 @@ final class RichTextEditorController: ObservableObject {
 struct RichTextMailEditor: View {
     @Binding var plainText: String
     @Binding var html: String
+    var height: CGFloat = 176
+    var showsHTMLBadge: Bool = true
     @StateObject private var controller = RichTextEditorController()
 
     var body: some View {
@@ -193,9 +195,11 @@ struct RichTextMailEditor: View {
                 .help("Formatierung entfernen")
 
                 Spacer()
-                Text("HTML")
-                    .font(.system(size: 9, weight: .medium))
-                    .foregroundStyle(.tertiary)
+                if showsHTMLBadge {
+                    Text("HTML")
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundStyle(.tertiary)
+                }
             }
             .padding(.horizontal, 8)
             .frame(height: 30)
@@ -209,7 +213,7 @@ struct RichTextMailEditor: View {
                 controller: controller
             )
         }
-        .frame(height: 176)
+        .frame(height: height)
         .background(.background.opacity(0.72))
         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         .overlay(

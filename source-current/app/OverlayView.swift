@@ -221,22 +221,12 @@ struct OverlayView: View {
                 .padding(14)
                 .background(.background.opacity(0.55), in: RoundedRectangle(cornerRadius: 12))
             } else {
-                TextEditor(text: $state.instruction)
-                    .font(.body)
-                    .frame(height: 122)
-                    .padding(8)
-                    .background(.background.opacity(0.7), in: RoundedRectangle(cornerRadius: 12))
-                    .overlay(alignment: .topLeading) {
-                        if state.instruction.isEmpty {
-                            Text(state.outputMode == .reply
-                                 ? "z. B. Sehr kurz, freundlich und direkt antworten."
-                                 : "z. B. Schreibe eine kurze Mail an Max und frage nach einem Termin nächste Woche.")
-                                .foregroundStyle(.tertiary)
-                                .padding(.leading, 14)
-                                .padding(.top, 16)
-                                .allowsHitTesting(false)
-                        }
-                    }
+                RichTextMailEditor(
+                    plainText: $state.instruction,
+                    html: $state.instructionHTML,
+                    height: 136,
+                    showsHTMLBadge: false
+                )
             }
 
             HStack(spacing: 10) {
@@ -451,6 +441,7 @@ struct OverlayView: View {
             if trimmed == "Kurz, freundlich und direkt antworten." ||
                trimmed == "Reply briefly, friendly and directly." {
                 state.instruction = ""
+                state.instructionHTML = ""
             }
             state.newMailSubject = ""
         case .reply:
@@ -458,6 +449,7 @@ struct OverlayView: View {
                 state.instruction = state.replyLanguage == .german
                     ? "Kurz, freundlich und direkt antworten."
                     : "Reply briefly, friendly and directly."
+                state.instructionHTML = ""
             }
         case .calendar, .payment:
             break

@@ -4,18 +4,20 @@ import ApplicationServices
 final class OutlookToolbarButtonController: NSObject {
     private let outlook: OutlookAccessibility
     private let panel: NSPanel
-    private let button: NSButton
+    private let newButton: NSButton
+    private let replyButton: NSButton
     private let declineButton: NSButton
     private var timer: Timer?
     private var isSuppressed = false
 
-    var action: (() -> Void)?
+    var newAction: (() -> Void)?
+    var replyAction: (() -> Void)?
     var declineAction: (() -> Void)?
 
     init(outlook: OutlookAccessibility) {
         self.outlook = outlook
 
-        let size = NSSize(width: 206, height: 34)
+        let size = NSSize(width: 250, height: 34)
         panel = NSPanel(
             contentRect: NSRect(origin: .zero, size: size),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -31,37 +33,27 @@ final class OutlookToolbarButtonController: NSObject {
         effect.layer?.cornerRadius = 9
         effect.layer?.masksToBounds = true
 
-        button = NSButton(frame: NSRect(x: 4, y: 3, width: 112, height: 28))
-        button.title = "Replyzen"
-        button.bezelStyle = .rounded
-        button.font = .systemFont(ofSize: 12.5, weight: .semibold)
-        button.alignment = .center
-        button.target = nil
-        button.action = nil
-        button.isBordered = false
-        button.setButtonType(.momentaryPushIn)
-        button.toolTip = "Replyzen"
-
-        if let logoURL = Bundle.main.url(forResource: "ReplyzenLogo", withExtension: "png"),
-           let logo = NSImage(contentsOf: logoURL) {
-            logo.size = NSSize(width: 18, height: 18)
-            button.image = logo
+        func makeButton(title: String, symbol: String, x: CGFloat, width: CGFloat, help: String) -> NSButton {
+            let button = NSButton(frame: NSRect(x: x, y: 3, width: width, height: 28))
+            button.title = title
+            button.bezelStyle = .rounded
+            button.font = .systemFont(ofSize: 12.5, weight: .semibold)
+            button.alignment = .center
+            button.isBordered = false
+            button.setButtonType(.momentaryPushIn)
+            button.toolTip = help
+            button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: title)
             button.imagePosition = .imageLeading
             button.imageScaling = .scaleProportionallyDown
+            return button
         }
 
-        declineButton = NSButton(frame: NSRect(x: 120, y: 3, width: 82, height: 28))
-        declineButton.title = "Absage"
-        declineButton.bezelStyle = .rounded
-        declineButton.font = .systemFont(ofSize: 12.5, weight: .semibold)
-        declineButton.alignment = .center
-        declineButton.isBordered = false
-        declineButton.setButtonType(.momentaryPushIn)
-        declineButton.toolTip = "Freundliche knappe Absage direkt als Outlook-Antwort einsetzen"
-        declineButton.image = NSImage(systemSymbolName: "xmark.circle", accessibilityDescription: "Absage")
-        declineButton.imagePosition = .imageLeading
+        newButton = makeButton(title: "New", symbol: "square.and.pencil", x: 4, width: 72, help: "Neue Mail mit Replyzen")
+        replyButton = makeButton(title: "Reply", symbol: "arrowshape.turn.up.left.fill", x: 84, width: 76, help: "Auf die aktuelle Mail antworten")
+        declineButton = makeButton(title: "Decline", symbol: "xmark.circle", x: 168, width: 78, help: "Freundliche kurze Absage direkt als Antwort einsetzen")
 
-        effect.addSubview(button)
+        effect.addSubview(newButton)
+        effect.addSubview(replyButton)
         effect.addSubview(declineButton)
 
         panel.contentView = effect
@@ -76,17 +68,17 @@ final class OutlookToolbarButtonController: NSObject {
 
         super.init()
 
-        button.target = self
-        button.action = #selector(buttonClicked)
+        newButton.target = self
+        newButton.action = #selector(newClicked)
+        replyButton.target = self
+        replyButton.action = #selector(replyClicked)
         declineButton.target = self
-        declineButton.action = #selector(declineButtonClicked)
+        declineButton.action = #selector(declineClicked)
     }
 
     func start() {
         timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 0.35, repeats: true) { [weak self] _ in
-            self?.update()
-        }
+        timer = Timer.scheduledTimer(withTimeInterval: 0.35, repeats: true) { [weak self] _ in self?.update() }
         RunLoop.main.add(timer!, forMode: .common)
         update()
     }
@@ -99,20 +91,12 @@ final class OutlookToolbarButtonController: NSObject {
 
     func setSuppressed(_ suppressed: Bool) {
         isSuppressed = suppressed
-        if suppressed {
-            panel.orderOut(nil)
-        } else {
-            update()
-        }
+        if suppressed { panel.orderOut(nil) } else { update() }
     }
 
-    @objc private func buttonClicked() {
-        action?()
-    }
-
-    @objc private func declineButtonClicked() {
-        declineAction?()
-    }
+    @objc private func newClicked() { newAction?() }
+    @objc private func replyClicked() { replyAction?() }
+    @objc private func declineClicked() { declineAction?() }
 
     private func update() {
         guard !isSuppressed,

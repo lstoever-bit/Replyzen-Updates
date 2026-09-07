@@ -22,6 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var isLoadingMail = false
     private var availableUpdate: UpdateManager.AvailableUpdate?
     private var updateMenuItem: NSMenuItem?
+    private var requestedMailMode: AppState.OutputMode?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -105,8 +106,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func configureStatusItem() {
-        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        item.button?.image = NSImage(systemSymbolName: "sparkles", accessibilityDescription: "Replyzen")
+        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        if let url = Bundle.main.url(forResource: "ReplyzenLogo", withExtension: "png"),
+           let image = NSImage(contentsOf: url) {
+            image.size = NSSize(width: 16, height: 16)
+            item.button?.image = image
+        } else {
+            item.button?.image = NSImage(systemSymbolName: "envelope.badge", accessibilityDescription: "Replyzen")
+        }
+        item.button?.title = "Replyzen"
+        item.button?.imagePosition = .imageLeading
+        item.button?.font = .systemFont(ofSize: 13, weight: .semibold)
+        item.button?.toolTip = "Replyzen"
 
         let menu = NSMenu()
 
@@ -149,9 +160,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func configureToolbarButton() {
-        toolbarButton.action = { [weak self] in self?.openWorkspace() }
+        toolbarButton.newAction = { [weak self] in self?.openNewMailWorkspace() }
+        toolbarButton.replyAction = { [weak self] in self?.openReplyWorkspace() }
         toolbarButton.declineAction = { [weak self] in self?.quickDecline() }
         toolbarButton.start()
+    }
+
+    private func openNewMailWorkspace() {
+        requestedMailMode = .newMail
+        openWorkspace()
+    }
+
+    private func openReplyWorkspace() {
+        requestedMailMode = .reply
+        openWorkspace()
     }
 
     private func quickDecline() {
@@ -213,7 +235,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func insertQuickReply(_ reply: String, snapshot: OutlookAccessibility.Snapshot) {
-        copyMailToPasteboard(plainText: reply, html: state.replyHTML)
+        copyToPasteboard(reply)
         panel.hide()
         outlook.activateOutlook(pid: snapshot.pid)
 
@@ -397,11 +419,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        // Replyzen has one unified Mail form. While Outlook context is being
-        // checked it starts as New Mail. If a readable message is found below,
-        // the same form switches to Reply automatically.
-        state.outputMode = .newMail
-        state.instruction = ""
+        // One unified Mail form. New and Reply only choose the behavior of the
+        // same form. The Outlook overlay can request either mode explicitly.
+        if requestedMailMode == .reply {
+            state.outputMode = .reply
+            state.instruction = defaultReplyInstruction(for: state.replyLanguage)
+        } else {
+            state.outputMode = .newMail
+            state.instruction = ""
+        }
+        state.instructionHTML = ""
 
         guard keychain.loadAPIKey() != nil else {
             toolbarButton.setSuppressed(true)
@@ -491,10 +518,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self.state.mailText = mail
                     self.state.mailStatus = .available
 
-                    // A readable message means Reply becomes available in the
-                    // same Mail form. Select it automatically unless the user has
-                    // already started writing a New Mail instruction while loading.
-                    if self.state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    // Respect an explicit New or Reply click from the Outlook overlay.
+                    if self.requestedMailMode == .reply {
+                        self.state.outputMode = .reply
+                    } else if self.requestedMailMode == .newMail {
+                        self.state.outputMode = .newMail
+                    } else if self.state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                         self.state.outputMode = .reply
                     }
 
@@ -508,11 +537,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         if self.state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
                            self.isDefaultReplyInstruction(self.state.instruction) {
                             self.state.instruction = self.defaultReplyInstruction(for: self.state.replyLanguage)
+                            self.state.instructionHTML = ""
                         }
                         // The lightweight suggestion is selected so typing replaces
                         // it immediately.
                         self.panel.selectInstructionTextSoon()
                     }
+                    self.requestedMailMode = nil
                 }
             } catch {
                 DispatchQueue.main.async {
@@ -538,7 +569,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self.state.outputMode = .newMail
                     if self.isDefaultReplyInstruction(self.state.instruction) {
                         self.state.instruction = ""
+                        self.state.instructionHTML = ""
                     }
+                    self.requestedMailMode = nil
                 }
             }
         }
@@ -579,6 +612,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             apiKey: apiKey,
             mailText: state.mailText,
             instruction: instruction,
+            instructionHTML: state.instructionHTML,
             tone: state.replyTone,
             language: state.replyLanguage,
             compact: state.newMailCompact
@@ -588,11 +622,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.isRunningFlow = false
 
                 switch result {
-                case .success(let text):
-                    self.state.replyHTML = ""
-                    self.state.reply = text
-                    self.state.stage = .preview
-                    self.panel.show()
+                case .success(let draft):
+                    self.state.reply = draft.body.trimmingCharacters(in: .whitespacesAndNewlines)
+                    self.state.replyHTML = draft.html?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                    self.insertReply()
                 case .failure(let error):
                     self.showError(error.localizedDescription)
                 }
@@ -617,6 +650,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         openAI.generateNewMail(
             apiKey: apiKey,
             instruction: instruction,
+            instructionHTML: state.instructionHTML,
             tone: state.replyTone,
             language: state.replyLanguage,
             compact: state.newMailCompact
@@ -628,10 +662,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 switch result {
                 case .success(let draft):
                     self.state.newMailSubject = draft.subject.trimmingCharacters(in: .whitespacesAndNewlines)
-                    self.state.replyHTML = ""
                     self.state.reply = draft.body.trimmingCharacters(in: .whitespacesAndNewlines)
-                    self.state.stage = .preview
-                    self.panel.show()
+                    self.state.replyHTML = draft.html?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                    self.insertNewMail()
                 case .failure(let error):
                     self.showError(error.localizedDescription)
                 }
@@ -1020,7 +1053,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         isRunningFlow = true
         toolbarButton.setSuppressed(true)
 
-        copyToPasteboard(reply)
+        copyMailToPasteboard(plainText: reply, html: state.replyHTML)
         panel.hide()
         outlook.activateOutlook(pid: snapshot.pid)
 
@@ -1031,8 +1064,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 guard let self else { return }
                 self.keyboard.sendCommandV()
                 self.isRunningFlow = false
-                self.state.stage = .success
-                self.panel.show()
+                self.state.stage = .idle
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                    self.toolbarButton.setSuppressed(false)
+                }
             }
         }
     }
@@ -1124,9 +1159,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func finishNewMailInsertion() {
         isRunningFlow = false
-        state.successMessage = "Neue Outlook-Mail wurde mit Betreff und Mailtext vorbereitet."
-        state.stage = .success
-        panel.show()
+        state.stage = .idle
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+            self?.toolbarButton.setSuppressed(false)
+        }
     }
 
     private func copyMailToPasteboard(plainText: String, html: String) {
