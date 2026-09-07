@@ -1,0 +1,367 @@
+diff -uNr v14/Build-CI.sh v15/Build-CI.sh
+--- v14/Build-CI.sh	2026-09-07 04:21:02.000000000 +0000
++++ v15/Build-CI.sh	2026-09-07 04:32:22.091247260 +0000
+@@ -55,6 +55,6 @@
+   "build": $APP_BUILD,
+   "download_url": "Replyzen-update.zip",
+   "sha256": "$UPDATE_SHA",
+-  "notes": "Replyzen 1.4: Summary durch Termin ersetzt. Erstellt aus dem Outlook-Mailverlauf einen minimalen Termintitel und legt den Termin im minubo-Kalender an."
++  "notes": "Replyzen 1.5: Termin-Body extrem kompakt; Auswahl des Zielkalenders innerhalb des minubo-Kontos."
+ }
+ EOF
+diff -uNr v14/app/AppDelegate.swift v15/app/AppDelegate.swift
+--- v14/app/AppDelegate.swift	2026-09-07 04:21:04.000000000 +0000
++++ v15/app/AppDelegate.swift	2026-09-07 04:32:21.493165476 +0000
+@@ -466,6 +466,7 @@
+                 switch result {
+                 case .success(let suggestion):
+                     self.state.calendarTitle = suggestion.title.trimmingCharacters(in: .whitespacesAndNewlines)
++                    self.state.calendarNotes = suggestion.description.trimmingCharacters(in: .whitespacesAndNewlines)
+                     let parsedStart = self.parseISODate(suggestion.start)
+                     let parsedEnd = self.parseISODate(suggestion.end)
+ 
+@@ -483,6 +484,7 @@
+                     }
+ 
+                     self.state.stage = .calendarPreview
++                    self.loadCalendarOptions()
+                     self.panel.show()
+                 case .failure(let error):
+                     self.showError(error.localizedDescription)
+@@ -499,15 +501,24 @@
+             return
+         }
+ 
++        guard !state.selectedCalendarID.isEmpty else {
++            showError("Bitte zuerst einen Kalender auswählen.")
++            return
++        }
++        UserDefaults.standard.set(state.selectedCalendarID, forKey: "Replyzen.SelectedMinuboCalendarID")
++
+         isRunningFlow = true
+         toolbarButton.setSuppressed(true)
+         state.stage = .generating
+-        state.statusText = "Termin wird im minubo-Kalender angelegt"
++        state.statusText = "Termin wird im ausgewählten Kalender angelegt"
+ 
++        let selectedCalendarName = state.calendarOptions.first(where: { $0.id == state.selectedCalendarID })?.title ?? "Kalender"
+         calendarManager.createEvent(
+             title: title,
++            notes: state.calendarNotes,
+             start: state.calendarStart,
+-            end: state.calendarEnd
++            end: state.calendarEnd,
++            calendarIdentifier: state.selectedCalendarID
+         ) { [weak self] result in
+             DispatchQueue.main.async {
+                 guard let self else { return }
+@@ -518,7 +529,7 @@
+                     formatter.locale = Locale(identifier: "de_DE")
+                     formatter.dateStyle = .medium
+                     formatter.timeStyle = .short
+-                    self.state.successMessage = "„\(title)“ wurde am \(formatter.string(from: self.state.calendarStart)) im Google-Kalender lennard@minubo.com angelegt."
++                    self.state.successMessage = "„\(title)“ wurde am \(formatter.string(from: self.state.calendarStart)) im Kalender „\(selectedCalendarName)“ angelegt."
+                     self.state.stage = .success
+                     self.panel.show()
+                 case .failure(let error):
+@@ -526,6 +537,39 @@
+                 }
+             }
+         }
++    }
++
++    private func loadCalendarOptions() {
++        state.calendarOptions = []
++        state.calendarListStatus = "Kalender werden geladen …"
++
++        calendarManager.loadCalendarOptions { [weak self] result in
++            DispatchQueue.main.async {
++                guard let self else { return }
++                switch result {
++                case .success(let options):
++                    self.state.calendarOptions = options
++                    if options.isEmpty {
++                        self.state.selectedCalendarID = ""
++                        self.state.calendarListStatus = "Keine beschreibbaren minubo-Kalender gefunden."
++                        return
++                    }
++
++                    let savedID = UserDefaults.standard.string(forKey: "Replyzen.SelectedMinuboCalendarID") ?? ""
++                    if options.contains(where: { $0.id == savedID }) {
++                        self.state.selectedCalendarID = savedID
++                    } else if let preferred = options.first(where: { $0.title.lowercased() == "minubo" }) {
++                        self.state.selectedCalendarID = preferred.id
++                    } else {
++                        self.state.selectedCalendarID = options[0].id
++                    }
++                    self.state.calendarListStatus = ""
++                case .failure(let error):
++                    self.state.selectedCalendarID = ""
++                    self.state.calendarListStatus = error.localizedDescription
++                }
++            }
++        }
+     }
+ 
+     private func parseISODate(_ value: String?) -> Date? {
+diff -uNr v14/app/AppState.swift v15/app/AppState.swift
+--- v14/app/AppState.swift	2026-09-07 04:21:02.000000000 +0000
++++ v15/app/AppState.swift	2026-09-07 04:32:21.492743537 +0000
+@@ -63,9 +63,13 @@
+     @Published var outputMode: OutputMode = .reply
+     @Published var mailStatus: MailStatus = .notChecked
+     @Published var calendarTitle: String = ""
++    @Published var calendarNotes: String = ""
+     @Published var calendarStart: Date = Date()
+     @Published var calendarEnd: Date = Date().addingTimeInterval(30 * 60)
+     @Published var calendarWarning: String = ""
++    @Published var calendarOptions: [CalendarOption] = []
++    @Published var selectedCalendarID: String = ""
++    @Published var calendarListStatus: String = "Kalender werden geladen …"
+     @Published var successMessage: String = ""
+ 
+     var mailText: String = ""
+diff -uNr v14/app/CalendarManager.swift v15/app/CalendarManager.swift
+--- v14/app/CalendarManager.swift	2026-09-07 04:21:02.000000000 +0000
++++ v15/app/CalendarManager.swift	2026-09-07 04:32:21.019412138 +0000
+@@ -1,6 +1,12 @@
+ import Foundation
+ import EventKit
+ 
++struct CalendarOption: Identifiable, Equatable {
++    let id: String
++    let title: String
++    let sourceTitle: String
++}
++
+ final class CalendarManager {
+     static let targetCalendarID = "lennard@minubo.com"
+     static let targetCalendarName = "minubo"
+@@ -8,6 +14,7 @@
+     enum CalendarError: LocalizedError {
+         case accessDenied
+         case targetCalendarNotFound([String])
++        case selectedCalendarNotFound
+         case invalidDates
+         case saveFailed(String)
+ 
+@@ -17,7 +24,9 @@
+                 return "Replyzen braucht Kalenderzugriff. Bitte unter Systemeinstellungen → Datenschutz & Sicherheit → Kalender den Zugriff für Replyzen erlauben."
+             case .targetCalendarNotFound(let available):
+                 let suffix = available.isEmpty ? "" : " Gefundene beschreibbare Kalender: \(available.joined(separator: ", "))."
+-                return "Der Google-Kalender lennard@minubo.com (minubo) ist auf diesem Mac nicht verfügbar. Bitte das minubo-Google-Konto unter Systemeinstellungen → Internetaccounts hinzufügen und Kalender aktivieren." + suffix
++                return "Das Google-Konto lennard@minubo.com ist auf diesem Mac nicht als Kalenderquelle verfügbar. Bitte das minubo-Google-Konto unter Systemeinstellungen → Internetaccounts hinzufügen und Kalender aktivieren." + suffix
++            case .selectedCalendarNotFound:
++                return "Der ausgewählte Kalender ist nicht mehr verfügbar. Bitte einen anderen Kalender wählen."
+             case .invalidDates:
+                 return "Start- und Endzeit des Termins sind ungültig."
+             case .saveFailed(let message):
+@@ -28,10 +37,32 @@
+ 
+     private let store = EKEventStore()
+ 
++    func loadCalendarOptions(completion: @escaping (Result<[CalendarOption], Error>) -> Void) {
++        requestAccess { [weak self] granted in
++            guard let self else { return }
++            guard granted else {
++                completion(.failure(CalendarError.accessDenied))
++                return
++            }
++
++            do {
++                let calendars = try self.resolveMinuboCalendars()
++                let options = calendars
++                    .sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
++                    .map { CalendarOption(id: $0.calendarIdentifier, title: $0.title, sourceTitle: $0.source.title) }
++                completion(.success(options))
++            } catch {
++                completion(.failure(error))
++            }
++        }
++    }
++
+     func createEvent(
+         title: String,
++        notes: String,
+         start: Date,
+         end: Date,
++        calendarIdentifier: String,
+         completion: @escaping (Result<String, Error>) -> Void
+     ) {
+         guard end > start else {
+@@ -46,17 +77,24 @@
+                 return
+             }
+ 
++            guard let calendar = self.store.calendar(withIdentifier: calendarIdentifier),
++                  calendar.allowsContentModifications else {
++                completion(.failure(CalendarError.selectedCalendarNotFound))
++                return
++            }
++
+             do {
+-                let calendar = try self.resolveTargetCalendar()
+                 let event = EKEvent(eventStore: self.store)
+                 event.calendar = calendar
+                 event.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
++                let trimmedNotes = notes.trimmingCharacters(in: .whitespacesAndNewlines)
++                event.notes = trimmedNotes.isEmpty ? nil : trimmedNotes
+                 event.startDate = start
+                 event.endDate = end
+                 try self.store.save(event, span: .thisEvent, commit: true)
+                 completion(.success(calendar.title))
+             } catch {
+-                completion(.failure(error))
++                completion(.failure(CalendarError.saveFailed(error.localizedDescription)))
+             }
+         }
+     }
+@@ -69,8 +107,8 @@
+         }
+     }
+ 
+-    private func resolveTargetCalendar() throws -> EKCalendar {
+-        let calendars = store.calendars(for: .event).filter { $0.allowsContentModifications }
++    private func resolveMinuboCalendars() throws -> [EKCalendar] {
++        let writable = store.calendars(for: .event).filter { $0.allowsContentModifications }
+         let wantedEmail = Self.targetCalendarID.lowercased()
+         let wantedName = Self.targetCalendarName.lowercased()
+ 
+@@ -90,11 +128,16 @@
+             return value
+         }
+ 
+-        if let best = calendars.map({ ($0, score($0)) }).filter({ $0.1 > 0 }).max(by: { $0.1 < $1.1 })?.0 {
+-            return best
++        guard let anchor = writable
++            .map({ ($0, score($0)) })
++            .filter({ $0.1 > 0 })
++            .max(by: { $0.1 < $1.1 })?.0 else {
++            let available = writable.map { "\($0.title) [\($0.source.title)]" }.sorted()
++            throw CalendarError.targetCalendarNotFound(available)
+         }
+ 
+-        let available = calendars.map { "\($0.title) [\($0.source.title)]" }.sorted()
+-        throw CalendarError.targetCalendarNotFound(available)
++        let sourceID = anchor.source.sourceIdentifier
++        let sameAccount = writable.filter { $0.source.sourceIdentifier == sourceID }
++        return sameAccount.isEmpty ? [anchor] : sameAccount
+     }
+ }
+diff -uNr v14/app/Info.plist v15/app/Info.plist
+--- v14/app/Info.plist	2026-09-07 04:21:02.000000000 +0000
++++ v15/app/Info.plist	2026-09-07 04:32:22.091123263 +0000
+@@ -17,9 +17,9 @@
+     <key>CFBundlePackageType</key>
+     <string>APPL</string>
+     <key>CFBundleShortVersionString</key>
+-    <string>1.4.0</string>
++    <string>1.5.0</string>
+     <key>CFBundleVersion</key>
+-    <string>5</string>
++    <string>6</string>
+     <key>CFBundleIconFile</key>
+     <string>Replyzen.icns</string>
+     <key>LSMinimumSystemVersion</key>
+@@ -29,8 +29,8 @@
+     <key>NSHighResolutionCapable</key>
+     <true/>
+     <key>NSCalendarsUsageDescription</key>
+-    <string>Replyzen legt auf Wunsch Termine im minubo-Kalender an.</string>
++    <string>Replyzen legt auf Wunsch Termine in einem ausgewählten Kalender des minubo-Kontos an.</string>
+     <key>NSCalendarsFullAccessUsageDescription</key>
+-    <string>Replyzen braucht Kalenderzugriff, um Termine im minubo-Kalender anzulegen.</string>
++    <string>Replyzen braucht Kalenderzugriff, um Kalender des minubo-Kontos auszuwählen und Termine anzulegen.</string>
+ </dict>
+ </plist>
+diff -uNr v14/app/OpenAIClient.swift v15/app/OpenAIClient.swift
+--- v14/app/OpenAIClient.swift	2026-09-07 04:21:04.000000000 +0000
++++ v15/app/OpenAIClient.swift	2026-09-07 04:32:21.492945112 +0000
+@@ -88,6 +88,7 @@
+ 
+     struct CalendarSuggestion: Decodable {
+         let title: String
++        let description: String
+         let start: String?
+         let end: String?
+         let confidence: String?
+@@ -105,9 +106,10 @@
+ 
+         let systemInstructions = [
+             "Create a calendar event suggestion from the email thread.",
+-            "Return ONLY valid JSON with exactly these keys: title, start, end, confidence.",
++            "Return ONLY valid JSON with exactly these keys: title, description, start, end, confidence.",
+             "title: the shortest useful calendar title possible, ideally 1-4 words, maximum 6 words. No filler such as Meeting, Call, Appointment, Termin unless it is necessary to understand the event.",
+-            "Write the title in \(titleLanguage). Preserve important project or person names.",
++            "description: an extremely compact description of what the appointment is about. Prefer one short sentence or a few compact phrases, maximum 180 characters. No greeting, no sign-off, no generic filler, no repeated title. Include only information useful when opening the calendar event later.",
++            "Write title and description in \(titleLanguage). Preserve important project or person names.",
+             "start and end: ISO-8601 timestamps with timezone offset, or null.",
+             "Use a date/time only if one future appointment time is clearly agreed or clearly proposed in the thread. If several dates/times are possible or the timing is ambiguous, set start and end to null.",
+             "If a start time is clear but no end time or duration is given, set end to 30 minutes after start.",
+diff -uNr v14/app/OverlayView.swift v15/app/OverlayView.swift
+--- v14/app/OverlayView.swift	2026-09-07 04:21:04.000000000 +0000
++++ v15/app/OverlayView.swift	2026-09-07 04:32:34.413193019 +0000
+@@ -154,7 +154,7 @@
+                         Text("Termin aus Mail erstellen")
+                             .font(.title3.bold())
+                     }
+-                    Text("Replyzen erstellt aus dem Mailverlauf einen möglichst kurzen Titel und übernimmt einen eindeutig erkennbaren Terminzeitpunkt. Der Termin wird in lennard@minubo.com angelegt.")
++                    Text("Replyzen erstellt aus dem Mailverlauf einen möglichst kurzen Titel, einen extrem kompakten Termintext und übernimmt einen eindeutig erkennbaren Terminzeitpunkt. Den Zielkalender wählst du vor dem Anlegen aus.")
+                         .foregroundStyle(.secondary)
+                 }
+                 .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)
+@@ -394,6 +394,15 @@
+                     .textFieldStyle(.roundedBorder)
+             }
+ 
++            VStack(alignment: .leading, spacing: 6) {
++                Text("Worum geht es?").font(.caption).foregroundStyle(.secondary)
++                TextEditor(text: $state.calendarNotes)
++                    .font(.body)
++                    .frame(height: 58)
++                    .padding(6)
++                    .background(.background.opacity(0.7), in: RoundedRectangle(cornerRadius: 8))
++            }
++
+             HStack(spacing: 14) {
+                 VStack(alignment: .leading, spacing: 6) {
+                     Text("Start").font(.caption).foregroundStyle(.secondary)
+@@ -408,11 +417,24 @@
+                 Spacer()
+             }
+ 
+-            HStack(spacing: 7) {
+-                Image(systemName: "calendar")
+-                Text("Google Calendar: minubo · lennard@minubo.com")
+-                    .font(.callout)
+-                    .foregroundStyle(.secondary)
++            VStack(alignment: .leading, spacing: 6) {
++                Text("Kalender · lennard@minubo.com").font(.caption).foregroundStyle(.secondary)
++                if state.calendarOptions.isEmpty {
++                    HStack(spacing: 8) {
++                        ProgressView().controlSize(.small)
++                        Text(state.calendarListStatus)
++                            .font(.callout)
++                            .foregroundStyle(.secondary)
++                    }
++                } else {
++                    Picker("Kalender", selection: $state.selectedCalendarID) {
++                        ForEach(state.calendarOptions) { calendar in
++                            Text(calendar.title).tag(calendar.id)
++                        }
++                    }
++                    .labelsHidden()
++                    .frame(maxWidth: 320, alignment: .leading)
++                }
+             }
+ 
+             Spacer()
+@@ -422,7 +444,7 @@
+                 Spacer()
+                 Button("Im Kalender anlegen") { state.createCalendarAction?() }
+                     .keyboardShortcut(.defaultAction)
+-                    .disabled(state.calendarTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || state.calendarEnd <= state.calendarStart)
++                    .disabled(state.calendarTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || state.calendarEnd <= state.calendarStart || state.selectedCalendarID.isEmpty)
+             }
+         }
+     }
