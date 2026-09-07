@@ -5,15 +5,20 @@ final class KeychainStore {
     private let service = "com.lstoever.replyzen"
     private let legacyService = "com.lennard.outlookai"
     private let account = "openai-api-key"
+    private var cachedAPIKey: String?
 
     func loadAPIKey() -> String? {
+        if let cachedAPIKey { return cachedAPIKey }
+
         if let key = load(from: service) {
+            cachedAPIKey = key
             return key
         }
 
         // One-time migration from the previous Lennard Outlook AI app.
         if let legacyKey = load(from: legacyService) {
             _ = saveAPIKey(legacyKey)
+            cachedAPIKey = legacyKey
             return legacyKey
         }
 
@@ -36,12 +41,15 @@ final class KeychainStore {
         )
 
         if updateStatus == errSecSuccess {
+            cachedAPIKey = key
             return true
         }
 
         var add = base
         add[kSecValueData as String] = data
-        return SecItemAdd(add as CFDictionary, nil) == errSecSuccess
+        let saved = SecItemAdd(add as CFDictionary, nil) == errSecSuccess
+        if saved { cachedAPIKey = key }
+        return saved
     }
 
     private func load(from serviceName: String) -> String? {

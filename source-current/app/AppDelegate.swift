@@ -221,7 +221,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         toolbarButton.replyAllAction = { [weak self] in self?.openReplyWorkspace(replyAll: true) }
         toolbarButton.forwardAction = { [weak self] in self?.openForwardWorkspace() }
         toolbarButton.cancelAction = { [weak self] in self?.quickDecline() }
-        toolbarButton.calendarAction = { [weak self] in self?.openCalendarWorkspace() }
+        toolbarButton.calendarAction = { [weak self] in self?.createCalendarFromOverlay() }
         toolbarButton.start()
     }
 
@@ -243,10 +243,59 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         openWorkspace()
     }
 
-    private func openCalendarWorkspace() {
-        requestedMailMode = .calendar
-        replyAllForCurrentDraft = true
-        openWorkspace()
+    private func createCalendarFromOverlay() {
+        guard !isRunningFlow else { return }
+        guard let apiKey = keychain.loadAPIKey() else {
+            toolbarButton.setSuppressed(true)
+            state.apiKeyDraft = ""
+            state.stage = .apiKey
+            panel.show()
+            return
+        }
+        guard outlook.isTrusted() else {
+            outlook.requestTrustPrompt()
+            return
+        }
+
+        isRunningFlow = true
+        toolbarButton.setSuppressed(true)
+
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self else { return }
+
+            do {
+                var snapshot = try self.outlook.captureSnapshot(includeAllWindows: false)
+                var mail: String
+                do {
+                    mail = try self.outlook.readMail(from: snapshot)
+                } catch OutlookAccessibility.OutlookError.noMailText {
+                    snapshot = try self.outlook.captureSnapshot(includeAllWindows: true)
+                    mail = try self.outlook.readMail(from: snapshot)
+                }
+
+                DispatchQueue.main.async {
+                    self.activeSnapshot = snapshot
+                    self.state.mailText = mail
+                    self.state.mailStatus = .available
+                    self.state.outputMode = .calendar
+                    if let language = self.detectReplyLanguage(in: mail) {
+                        self.state.replyLanguage = language
+                    }
+                    // Keep the panel hidden while OpenAI works. The existing
+                    // calendar generator opens only the result window on success.
+                    self.generateCalendarSuggestion(apiKey: apiKey)
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.isRunningFlow = false
+                    self.toolbarButton.setSuppressed(false)
+                    self.showSimpleAlert(
+                        title: "Termin nicht erstellt",
+                        message: "Die geöffnete Outlook-Mail konnte nicht gelesen werden."
+                    )
+                }
+            }
+        }
     }
 
     private func quickDecline() {
@@ -810,11 +859,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func generateCalendarSuggestion() {
         guard let apiKey = keychain.loadAPIKey() else {
             state.stage = .apiKey
+            panel.show()
             return
         }
+        generateCalendarSuggestion(apiKey: apiKey)
+    }
 
+    private func generateCalendarSuggestion(apiKey: String) {
         guard !state.mailText.isEmpty else {
             state.mailStatus = .unavailable("Keine lesbare Outlook-Mail erkannt. Für einen Termin bitte eine Mail öffnen und erneut versuchen.")
+            isRunningFlow = false
+            toolbarButton.setSuppressed(false)
             return
         }
 
