@@ -141,6 +141,7 @@ struct OverlayView: View {
         case .reply: return "Ich erstelle deine Antwort …"
         case .newMail: return "Ich formuliere deine neue Mail …"
         case .calendar: return "Ich erstelle einen kurzen Termintitel und erkenne den Zeitpunkt …"
+        case .payment: return "Ich lese den PDF-Anhang und extrahiere die Überweisungsdaten …"
         }
     }
 
@@ -188,27 +189,7 @@ struct OverlayView: View {
                 Spacer()
             }
 
-            Picker("Modus", selection: $state.outputMode) {
-                ForEach(AppState.OutputMode.allCases) { mode in
-                    Text(mode.displayName).tag(mode)
-                }
-            }
-            .pickerStyle(.segmented)
-            .onChange(of: state.outputMode) { mode in
-                handleModeChange(mode)
-            }
-
-            HStack {
-                Spacer()
-                Button {
-                    state.extractPaymentAction?()
-                } label: {
-                    Label("Überweisung aus Mail + Anhang", systemImage: "banknote")
-                }
-                .controlSize(.small)
-                .disabled(!mailAvailable)
-                .help("Versucht Empfänger, IBAN, Betrag und Verwendungszweck aus Mail und lesbarem PDF/Bild-Anhang zu extrahieren")
-            }
+            modeSelector
 
             if state.outputMode != .newMail {
                 mailContextBanner
@@ -223,6 +204,20 @@ struct OverlayView: View {
                             .font(.title3.bold())
                     }
                     Text("Replyzen erstellt aus dem Mailverlauf einen möglichst kurzen Titel, einen extrem kompakten Termintext und übernimmt einen eindeutig erkennbaren Terminzeitpunkt. Den Zielkalender wählst du vor dem Anlegen aus.")
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)
+                .padding(14)
+                .background(.background.opacity(0.55), in: RoundedRectangle(cornerRadius: 12))
+            } else if state.outputMode == .payment {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "banknote")
+                            .font(.title2)
+                        Text("Überweisung aus Mail + PDF")
+                            .font(.title3.bold())
+                    }
+                    Text("Replyzen liest den PDF-Anhang standardmäßig direkt mit OpenAI und extrahiert daraus Empfänger, IBAN, BIC, Betrag, Währung und Verwendungszweck. Der Mailtext dient nur als zusätzlicher Kontext.")
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)
@@ -297,8 +292,10 @@ struct OverlayView: View {
 
                 Spacer()
 
-                languageButton("🇩🇪", language: .german, help: "Ausgabe auf Deutsch")
-                languageButton("🇺🇸", language: .usEnglish, help: "Ausgabe in US English")
+                if state.outputMode != .payment {
+                    languageButton("🇩🇪", language: .german, help: "Ausgabe auf Deutsch")
+                    languageButton("🇺🇸", language: .usEnglish, help: "Ausgabe in US English")
+                }
             }
 
             if state.outputMode == .reply {
@@ -321,10 +318,17 @@ struct OverlayView: View {
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            } else {
+            } else if state.outputMode == .calendar {
                 Text("Sprache: \(state.replyLanguage.displayName)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            } else {
+                HStack(spacing: 6) {
+                    Image(systemName: "doc.richtext")
+                    Text("PDF wird direkt von OpenAI gelesen")
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
 
             HStack {
@@ -335,6 +339,35 @@ struct OverlayView: View {
                     .disabled(primaryActionDisabled)
             }
         }
+    }
+
+    private var modeSelector: some View {
+        HStack(spacing: 8) {
+            modeButton(.reply, title: "Reply", systemImage: "arrowshape.turn.up.left.fill")
+            modeButton(.newMail, title: "New Mail", systemImage: "square.and.pencil")
+            modeButton(.calendar, title: "Termin", systemImage: "calendar.badge.plus")
+            modeButton(.payment, title: "Überweisung", systemImage: "banknote")
+        }
+    }
+
+    private func modeButton(_ mode: AppState.OutputMode, title: String, systemImage: String) -> some View {
+        Button {
+            guard state.outputMode != mode else { return }
+            state.outputMode = mode
+            handleModeChange(mode)
+        } label: {
+            HStack(spacing: 7) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 14, weight: .semibold))
+                Text(title)
+                    .font(.system(size: 14, weight: .semibold))
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, minHeight: 34)
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(state.outputMode == mode ? .accentColor : .gray.opacity(0.32))
+        .controlSize(.regular)
     }
 
     @ViewBuilder
@@ -383,6 +416,7 @@ struct OverlayView: View {
         case .reply: return "Antwort erstellen"
         case .newMail: return "Mail erstellen"
         case .calendar: return "Termin erstellen"
+        case .payment: return "Überweisung extrahieren"
         }
     }
 
@@ -392,7 +426,7 @@ struct OverlayView: View {
             return !mailAvailable || state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         case .newMail:
             return state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        case .calendar:
+        case .calendar, .payment:
             return !mailAvailable
         }
     }
@@ -414,7 +448,7 @@ struct OverlayView: View {
                let first = commands.commands.first {
                 applyCommand(first)
             }
-        case .calendar:
+        case .calendar, .payment:
             break
         }
     }
@@ -705,6 +739,7 @@ struct OverlayView: View {
         case .reply: return "Antwortvorschlag"
         case .newMail: return "Neue Mail"
         case .calendar: return "Termin"
+        case .payment: return "Überweisung"
         }
     }
 

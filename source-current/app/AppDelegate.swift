@@ -417,6 +417,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             generateNewMail()
         case .calendar:
             generateCalendarSuggestion()
+        case .payment:
+            generatePaymentSuggestion()
         }
     }
 
@@ -561,49 +563,78 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         guard !state.mailText.isEmpty, let snapshot = activeSnapshot else {
-            state.mailStatus = .unavailable("Keine lesbare Outlook-Mail erkannt. Für Überweisungsdaten bitte eine Mail öffnen und erneut versuchen.")
+            state.mailStatus = .unavailable("Keine lesbare Outlook-Mail erkannt. Für eine Überweisung bitte die Rechnungsmail öffnen und erneut versuchen.")
             return
         }
 
         isRunningFlow = true
         toolbarButton.setSuppressed(true)
         state.stage = .generating
-        state.statusText = "Replyzen liest Mail und versucht PDF/Bild-Anhänge lokal auszulesen"
+        state.statusText = "Replyzen sucht den PDF-Anhang …"
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
+
             let filenames = self.outlook.attachmentFilenames(from: snapshot)
-            let attachment = self.attachmentExtractor.extract(filenames: filenames)
-            let sourceStatus: String
-            if !attachment.usedFiles.isEmpty {
-                sourceStatus = "Anhang gelesen: " + attachment.usedFiles.joined(separator: ", ")
-            } else if filenames.isEmpty {
-                sourceStatus = "Kein lesbarer PDF/Bild-Anhang erkannt – Extraktion aus dem Mailtext."
+            let resolvedFiles = self.attachmentExtractor.resolveFiles(filenames: filenames)
+            let pdfFiles = resolvedFiles.filter { $0.pathExtension.lowercased() == "pdf" }
+            let selectedPDFs = Array(pdfFiles.prefix(3))
+
+            var fallbackText = ""
+            var sourceStatus: String
+
+            if !selectedPDFs.isEmpty {
+                sourceStatus = "PDF direkt mit OpenAI gelesen: " + selectedPDFs.map(\.lastPathComponent).joined(separator: ", ")
+                DispatchQueue.main.async {
+                    self.state.statusText = "PDF wird direkt an OpenAI übergeben und gelesen …"
+                }
             } else {
-                sourceStatus = "Anhang erkannt, aber nicht automatisch lesbar – Extraktion aus dem Mailtext."
+                let fallback = self.attachmentExtractor.extract(filenames: filenames)
+                fallbackText = fallback.text
+
+                let pdfMentioned = filenames.contains { $0.lowercased().hasSuffix(".pdf") }
+                if !fallback.usedFiles.isEmpty {
+                    sourceStatus = "Kein direkt zugängliches PDF; lokal gelesen: " + fallback.usedFiles.joined(separator: ", ")
+                } else if pdfMentioned {
+                    sourceStatus = "PDF-Anhang in Outlook erkannt, aber die lokale PDF-Datei war nicht zugänglich. Extraktion nur aus dem Mailtext."
+                } else {
+                    sourceStatus = "Kein PDF-Anhang erkannt. Extraktion aus dem Mailtext."
+                }
+                DispatchQueue.main.async {
+                    self.state.statusText = sourceStatus
+                }
             }
 
             self.openAI.createPaymentSuggestion(
                 apiKey: apiKey,
                 mailText: self.state.mailText,
-                attachmentText: attachment.text
+                fileURLs: selectedPDFs,
+                fallbackAttachmentText: fallbackText
             ) { [weak self] result in
                 DispatchQueue.main.async {
                     guard let self else { return }
                     self.isRunningFlow = false
+
                     switch result {
                     case .success(let suggestion):
-                        self.state.paymentRecipient = suggestion.recipient ?? ""
-                        self.state.paymentIBAN = (suggestion.iban ?? "").replacingOccurrences(of: " ", with: "").uppercased()
-                        self.state.paymentBIC = (suggestion.bic ?? "").replacingOccurrences(of: " ", with: "").uppercased()
-                        self.state.paymentAmount = suggestion.amount ?? ""
-                        self.state.paymentCurrency = (suggestion.currency ?? "EUR").uppercased()
-                        self.state.paymentPurpose = suggestion.purpose ?? ""
+                        self.state.paymentRecipient = suggestion.recipient?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                        self.state.paymentIBAN = suggestion.iban?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                        self.state.paymentBIC = suggestion.bic?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                        self.state.paymentAmount = suggestion.amount?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                        self.state.paymentCurrency = suggestion.currency?.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() ?? "EUR"
+                        self.state.paymentPurpose = suggestion.purpose?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
                         self.state.paymentSourceStatus = sourceStatus
-                        self.state.paymentWarning = "Bitte Empfänger, IBAN, Betrag und Verwendungszweck vor jeder Überweisung prüfen. Replyzen führt keine Zahlung aus."
-                        if suggestion.confidence == "low" {
-                            self.state.paymentWarning = "Unsichere oder widersprüchliche Daten erkannt. Bitte alle Felder besonders sorgfältig prüfen. Replyzen führt keine Zahlung aus."
+
+                        let confidence = suggestion.confidence?.lowercased() ?? "low"
+                        let missingCore = self.state.paymentRecipient.isEmpty || self.state.paymentIBAN.isEmpty || self.state.paymentAmount.isEmpty
+                        if selectedPDFs.isEmpty {
+                            self.state.paymentWarning = "Kein PDF wurde direkt von OpenAI gelesen. Bitte Empfänger, IBAN und Betrag besonders sorgfältig prüfen."
+                        } else if confidence == "low" || missingCore {
+                            self.state.paymentWarning = "Die Extraktion ist nicht eindeutig. Bitte die PDF-Rechnung mit den Feldern unten vergleichen."
+                        } else {
+                            self.state.paymentWarning = "Bitte IBAN, Betrag und Verwendungszweck vor einer Überweisung immer mit der PDF-Rechnung vergleichen."
                         }
+
                         self.state.stage = .paymentPreview
                         self.panel.show()
                     case .failure(let error):
@@ -809,7 +840,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             insertReply()
         case .newMail:
             insertNewMail()
-        case .calendar:
+        case .calendar, .payment:
             break
         }
     }

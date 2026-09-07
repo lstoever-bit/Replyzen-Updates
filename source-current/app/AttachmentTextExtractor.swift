@@ -9,6 +9,20 @@ final class AttachmentTextExtractor {
         let usedFiles: [String]
     }
 
+    func resolveFiles(filenames: [String]) -> [URL] {
+        var result: [URL] = []
+        var seen = Set<String>()
+
+        for filename in filenames.prefix(6) {
+            guard let url = findFile(named: filename) else { continue }
+            let key = url.standardizedFileURL.path.lowercased()
+            if seen.insert(key).inserted {
+                result.append(url)
+            }
+        }
+        return result
+    }
+
     func extract(filenames: [String]) -> Result {
         var chunks: [String] = []
         var used: [String] = []

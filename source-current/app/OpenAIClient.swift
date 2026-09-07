@@ -30,6 +30,8 @@ final class OpenAIClient {
             apiKey: apiKey,
             instructions: systemInstructions,
             input: "USER INSTRUCTION:\n\(instruction)\n\nEMAIL CONTENT:\n\(String(mailText.prefix(30_000)))",
+            maxOutputTokens: 520,
+            lowVerbosity: true,
             completion: completion
         )
     }
@@ -68,7 +70,7 @@ final class OpenAIClient {
             instructions: systemInstructions.joined(separator: "\n"),
             input: "USER INSTRUCTION:\n\(instruction)",
             maxOutputTokens: compact ? 320 : 700,
-            lowVerbosity: compact
+            lowVerbosity: true
         ) { result in
             switch result {
             case .success(let text):
@@ -178,7 +180,7 @@ final class OpenAIClient {
             apiKey: apiKey,
             instructions: systemInstructions,
             input: "SELECTED OUTPUT LANGUAGE: \(titleLanguage)\n\nEMAIL THREAD:\n\(String(mailText.prefix(30_000)))",
-            model: "gpt-5.4-nano",
+            model: "gpt-5.6-luna",
             reasoningEffort: "none",
             maxOutputTokens: 320,
             lowVerbosity: true
@@ -231,45 +233,194 @@ final class OpenAIClient {
     func createPaymentSuggestion(
         apiKey: String,
         mailText: String,
-        attachmentText: String,
+        fileURLs: [URL],
+        fallbackAttachmentText: String,
         completion: @escaping (Result<PaymentSuggestion, Error>) -> Void
     ) {
         let systemInstructions = [
-            "Extract bank transfer details from the supplied email and readable attachment text.",
+            "Extract bank transfer details from the supplied email and invoice PDF files.",
+            "The PDF invoice is the PRIMARY SOURCE. Read the PDF itself, including page layout, tables and scanned/visual content. Use the email only as supporting context.",
             "Return ONLY valid JSON with exactly these keys: recipient, iban, bic, amount, currency, purpose, confidence.",
             "Never invent or guess banking details. If a field is not clearly supported, return null for that field.",
-            "recipient: exact payee/account holder name if stated.",
+            "recipient: exact payee/account holder name from the invoice.",
             "iban: exact IBAN, preferably without spaces. Preserve every character accurately.",
             "bic: exact BIC/SWIFT if stated, otherwise null.",
-            "amount: exact payment amount using digits and decimal separator only, without currency symbol.",
+            "amount: exact amount that is currently payable, digits and decimal separator only, without currency symbol.",
             "currency: ISO currency code such as EUR only when supported by the source.",
-            "purpose: the shortest useful payment reference, prioritizing invoice number, customer number, reference number, or explicitly requested Verwendungszweck.",
+            "purpose: shortest useful payment reference, prioritizing the invoice number, customer/reference number or explicitly requested payment reference.",
             "confidence must be one of high, medium, low.",
-            "If email and attachment conflict on IBAN, recipient, or amount, set the conflicting field to null and confidence to low.",
-            "This is extraction only; do not suggest or initiate a payment."
+            "If the email conflicts with the invoice PDF, prefer the invoice PDF unless the email explicitly states corrected payment details. If there is still ambiguity, return null for the conflicting field and confidence low.",
+            "This is extraction only. Never initiate, authorize or imply that a payment has been made."
         ].joined(separator: "\n")
 
-        let input = "EMAIL:\n\(String(mailText.prefix(24_000)))\n\nREADABLE ATTACHMENT TEXT:\n\(String(attachmentText.prefix(24_000)))"
-        performRequest(
-            apiKey: apiKey,
-            instructions: systemInstructions,
-            input: input,
-            model: "gpt-5.4-nano",
-            reasoningEffort: "none",
-            maxOutputTokens: 280,
-            lowVerbosity: true
-        ) { result in
-            switch result {
-            case .success(let text):
-                do {
-                    completion(.success(try Self.decodePaymentSuggestion(text)))
-                } catch {
-                    completion(.failure(error))
-                }
+        let pdfs = Array(fileURLs.filter { $0.pathExtension.lowercased() == "pdf" }.prefix(3))
+        uploadFilesSequentially(apiKey: apiKey, urls: pdfs) { [weak self] uploadResult in
+            guard let self else { return }
+
+            switch uploadResult {
             case .failure(let error):
+                completion(.failure(error))
+
+            case .success(let fileIDs):
+                var contextText = "EMAIL CONTEXT:\n\(String(mailText.prefix(18_000)))"
+                if fileIDs.isEmpty && !fallbackAttachmentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    contextText += "\n\nFALLBACK LOCAL ATTACHMENT TEXT (only because no PDF file was available):\n\(String(fallbackAttachmentText.prefix(24_000)))"
+                }
+
+                var content: [[String: Any]] = [
+                    ["type": "input_text", "text": contextText]
+                ]
+                for fileID in fileIDs {
+                    content.append([
+                        "type": "input_file",
+                        "file_id": fileID,
+                        "detail": "auto"
+                    ])
+                }
+
+                let input: [[String: Any]] = [[
+                    "role": "user",
+                    "content": content
+                ]]
+
+                self.performRequest(
+                    apiKey: apiKey,
+                    instructions: systemInstructions,
+                    input: input,
+                    model: "gpt-5.6-luna",
+                    reasoningEffort: "none",
+                    maxOutputTokens: 320,
+                    lowVerbosity: true
+                ) { result in
+                    // Files uploaded for invoice parsing are temporary in practice: remove
+                    // them immediately after the response, even when parsing fails.
+                    fileIDs.forEach { self.deleteUploadedFile(apiKey: apiKey, fileID: $0) }
+
+                    switch result {
+                    case .success(let text):
+                        do {
+                            completion(.success(try Self.decodePaymentSuggestion(text)))
+                        } catch {
+                            completion(.failure(error))
+                        }
+                    case .failure(let error):
+                        completion(.failure(error))
+                    }
+                }
+            }
+        }
+    }
+
+    private func uploadFilesSequentially(
+        apiKey: String,
+        urls: [URL],
+        index: Int = 0,
+        collected: [String] = [],
+        completion: @escaping (Result<[String], Error>) -> Void
+    ) {
+        guard index < urls.count else {
+            completion(.success(collected))
+            return
+        }
+
+        uploadFile(apiKey: apiKey, url: urls[index]) { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case .success(let fileID):
+                self.uploadFilesSequentially(
+                    apiKey: apiKey,
+                    urls: urls,
+                    index: index + 1,
+                    collected: collected + [fileID],
+                    completion: completion
+                )
+            case .failure(let error):
+                collected.forEach { self.deleteUploadedFile(apiKey: apiKey, fileID: $0) }
                 completion(.failure(error))
             }
         }
+    }
+
+    private func uploadFile(
+        apiKey: String,
+        url: URL,
+        completion: @escaping (Result<String, Error>) -> Void
+    ) {
+        guard let endpoint = URL(string: "https://api.openai.com/v1/files") else {
+            completion(.failure(APIError(message: "Ungültige OpenAI-Datei-URL.")))
+            return
+        }
+
+        let fileData: Data
+        do {
+            fileData = try Data(contentsOf: url, options: .mappedIfSafe)
+        } catch {
+            completion(.failure(APIError(message: "Der PDF-Anhang konnte nicht gelesen werden: \(url.lastPathComponent)")))
+            return
+        }
+
+        let boundary = "Replyzen-\(UUID().uuidString)"
+        let safeFilename = url.lastPathComponent.replacingOccurrences(of: "\"", with: "_")
+        var body = Data()
+
+        func append(_ string: String) {
+            if let data = string.data(using: .utf8) {
+                body.append(data)
+            }
+        }
+
+        append("--\(boundary)\r\n")
+        append("Content-Disposition: form-data; name=\"purpose\"\r\n\r\n")
+        append("user_data\r\n")
+        append("--\(boundary)\r\n")
+        append("Content-Disposition: form-data; name=\"file\"; filename=\"\(safeFilename)\"\r\n")
+        append("Content-Type: application/pdf\r\n\r\n")
+        body.append(fileData)
+        append("\r\n--\(boundary)--\r\n")
+
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 45
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        request.httpBody = body
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error {
+                completion(.failure(error))
+                return
+            }
+            guard let http = response as? HTTPURLResponse, let data else {
+                completion(.failure(APIError(message: "Keine Antwort beim PDF-Upload von OpenAI erhalten.")))
+                return
+            }
+            guard (200..<300).contains(http.statusCode) else {
+                let message = Self.extractErrorMessage(from: data) ?? "OpenAI-PDF-Upload fehlgeschlagen (HTTP \(http.statusCode))."
+                completion(.failure(APIError(message: message)))
+                return
+            }
+
+            do {
+                let object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+                guard let fileID = object?["id"] as? String, !fileID.isEmpty else {
+                    throw APIError(message: "OpenAI hat keine Datei-ID für den PDF-Anhang geliefert.")
+                }
+                completion(.success(fileID))
+            } catch let error as APIError {
+                completion(.failure(error))
+            } catch {
+                completion(.failure(APIError(message: "Die OpenAI-Antwort auf den PDF-Upload war ungültig.")))
+            }
+        }.resume()
+    }
+
+    private func deleteUploadedFile(apiKey: String, fileID: String) {
+        guard let url = URL(string: "https://api.openai.com/v1/files/\(fileID)") else { return }
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.timeoutInterval = 15
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        URLSession.shared.dataTask(with: request).resume()
     }
 
     private static func decodePaymentSuggestion(_ text: String) throws -> PaymentSuggestion {
@@ -305,8 +456,8 @@ final class OpenAIClient {
     private func performRequest(
         apiKey: String,
         instructions: String,
-        input: String,
-        model: String = "gpt-5.4-mini",
+        input: Any,
+        model: String = "gpt-5.6-luna",
         reasoningEffort: String? = "none",
         maxOutputTokens: Int? = nil,
         lowVerbosity: Bool = false,

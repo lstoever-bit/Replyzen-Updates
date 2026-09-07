@@ -6,6 +6,7 @@ final class AppState: ObservableObject {
         case reply
         case newMail
         case calendar
+        case payment
 
         var id: String { rawValue }
 
@@ -14,6 +15,7 @@ final class AppState: ObservableObject {
             case .reply: return "Reply"
             case .newMail: return "New Mail"
             case .calendar: return "Termin"
+            case .payment: return "Überweisung"
             }
         }
     }
