@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'v20/**'
+      - 'v21/**'
       - '.github/workflows/build-update.yml'
   workflow_dispatch:
 
@@ -26,17 +26,17 @@ jobs:
           cp source-current/Build-CI.sh buildsrc/Build-CI.sh
           cp source-current/app/*.swift buildsrc/app/
           cp source-current/app/Info.plist buildsrc/app/Info.plist
-      - name: Apply Replyzen 1.10 updater cache fixes
+      - name: Apply Replyzen 1.11 adaptive window sizing
         run: |
-          python3 v20/patch.py buildsrc
+          python3 v21/patch.py buildsrc
       - name: Build update package
         run: |
           cd buildsrc
           chmod +x Build-CI.sh
           ./Build-CI.sh
-      - name: Publish Replyzen 1.10 update and source snapshot
+      - name: Publish Replyzen 1.11 update and source snapshot
         run: |
-          cp buildsrc/Replyzen-update-1.10.zip ./Replyzen-update-1.10.zip
+          cp buildsrc/Replyzen-update-1.11.zip ./Replyzen-update-1.11.zip
           cp buildsrc/update.json ./update.json
           rm -rf source-current
           mkdir -p source-current/app
@@ -45,10 +45,10 @@ jobs:
           cp buildsrc/app/Info.plist source-current/app/Info.plist
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f Replyzen-update-1.10.zip update.json source-current
+          git add -f Replyzen-update-1.11.zip update.json source-current
           if git diff --cached --quiet; then
             echo "No update artifact changes"
             exit 0
           fi
-          git commit -m "Build Replyzen 1.10 cache-safe updater"
+          git commit -m "Build Replyzen 1.11 adaptive window sizing"
           git push
