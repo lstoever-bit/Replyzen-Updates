@@ -232,6 +232,18 @@ struct RichTextMailEditor: View {
     }
 }
 
+private final class RichTextEditorTextView: NSTextView {
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        let relevant = event.modifierFlags.intersection([.command, .option, .control, .shift])
+        if relevant == .command,
+           event.charactersIgnoringModifiers?.lowercased() == "a" {
+            selectAll(nil)
+            return true
+        }
+        return super.performKeyEquivalent(with: event)
+    }
+}
+
 private struct RichTextEditorBridge: NSViewRepresentable {
     @Binding var plainText: String
     @Binding var html: String
@@ -247,7 +259,7 @@ private struct RichTextEditorBridge: NSViewRepresentable {
         scrollView.borderType = .noBorder
         scrollView.drawsBackground = false
 
-        let textView = NSTextView()
+        let textView = RichTextEditorTextView()
         textView.isRichText = true
         textView.allowsUndo = true
         textView.drawsBackground = false
