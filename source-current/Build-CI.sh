@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 SRC="$ROOT/app"
 WORK="$ROOT/.build-ci"
 APP="$WORK/Replyzen.app"
-UPDATE_ZIP="$ROOT/Replyzen-update-1.34.zip"
+UPDATE_ZIP="$ROOT/Replyzen-update-1.35.zip"
 UPDATE_JSON="$ROOT/update.json"
 SWIFTC="$(xcrun --find swiftc)"
 SDK="$(xcrun --sdk macosx --show-sdk-path)"
@@ -54,8 +54,8 @@ cat > "$UPDATE_JSON" <<EOF
 {
   "version": "$APP_VERSION",
   "build": $APP_BUILD,
-  "download_url": "Replyzen-update-1.34.zip",
+  "download_url": "Replyzen-update-1.35.zip",
   "sha256": "$UPDATE_SHA",
-  "notes": "Replyzen 1.34: New, Reply und Forward verwenden dieselbe Mail Form mit WYSIWYG, Mood, Compact, Sprache und Reminder. Forward wird jetzt wie Reply/New Mail mit OpenAI formuliert und danach als nativer Outlook Forward ohne Empfänger eingesetzt; Thread und Anhänge bleiben erhalten. Termin wurde aus der Replyzen Hauptnavigation entfernt und ist nur noch als Termin Button hinter Cancel im Outlook Overlay verfügbar."
+  "notes": "Replyzen 1.35: Das Outlook Overlay sitzt wieder ein kleines Stück höher, ohne den Suchschlitz zu überdecken, und hebt sich mit einem sehr dezenten eigenen Hintergrund vom Standardgrau ab. Enthält weiterhin die einheitliche Mail Form für New, Reply und Forward sowie Termin nur im Outlook Overlay hinter Cancel."
 }
 EOF

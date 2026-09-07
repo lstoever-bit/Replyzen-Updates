@@ -38,6 +38,9 @@ final class OutlookToolbarButtonController: NSObject {
         effect.wantsLayer = true
         effect.layer?.cornerRadius = 9
         effect.layer?.masksToBounds = true
+        // Keep the native translucent Outlook feel, but separate the Replyzen bar
+        // very slightly from Outlook's default toolbar gray.
+        effect.layer?.backgroundColor = NSColor.controlBackgroundColor.withAlphaComponent(0.22).cgColor
 
         func makeButton(title: String, symbol: String, x: CGFloat, width: CGFloat, help: String) -> NSButton {
             let button = NSButton(frame: NSRect(x: x, y: 3, width: width, height: 28))
@@ -131,7 +134,7 @@ final class OutlookToolbarButtonController: NSObject {
 
         let size = panel.frame.size
         let x = frame.maxX - size.width - 122
-        let y = frame.maxY - size.height - 48
+        let y = frame.maxY - size.height - 38
         panel.setFrameOrigin(NSPoint(x: x, y: y))
         panel.orderFrontRegardless()
     }
