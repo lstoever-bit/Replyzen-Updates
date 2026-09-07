@@ -13,7 +13,7 @@ final class OutlookToolbarButtonController: NSObject {
     init(outlook: OutlookAccessibility) {
         self.outlook = outlook
 
-        let size = NSSize(width: 66, height: 32)
+        let size = NSSize(width: 112, height: 34)
         panel = NSPanel(
             contentRect: NSRect(origin: .zero, size: size),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -30,13 +30,24 @@ final class OutlookToolbarButtonController: NSObject {
         effect.layer?.masksToBounds = true
 
         button = NSButton(frame: effect.bounds.insetBy(dx: 4, dy: 3))
-        button.title = "✨ AI"
+        button.title = "Replyzen"
         button.bezelStyle = .rounded
         button.font = .systemFont(ofSize: 12.5, weight: .semibold)
+        button.alignment = .center
         button.target = nil
         button.action = nil
         button.isBordered = false
         button.setButtonType(.momentaryPushIn)
+        button.toolTip = "Replyzen"
+
+        if let logoURL = Bundle.main.url(forResource: "ReplyzenLogo", withExtension: "png"),
+           let logo = NSImage(contentsOf: logoURL) {
+            logo.size = NSSize(width: 18, height: 18)
+            button.image = logo
+            button.imagePosition = .imageLeading
+            button.imageScaling = .scaleProportionallyDown
+        }
+
         effect.addSubview(button)
 
         panel.contentView = effect
