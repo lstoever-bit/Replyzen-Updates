@@ -17,7 +17,7 @@ for path in (root/'app').glob('*.swift'):
         key=json.loads(match[1])
         assert key in catalog,(path.name,key)
 # UI text must either use the catalog or be an intentional brand/code/autonym.
-allowed={'ReplyZen','IBAN','BIC','EUR','DE','EN','Google Calendar · lennard@minubo.com','sk-…',''}
+allowed={'ReplyZen','IBAN','BIC','EUR','DE','EN','ES','Google Calendar · lennard@minubo.com','sk-…',''}
 remaining=[]
 for name in ['OverlayView.swift','MailWorkspaceView.swift','WorkspaceComponents.swift','EditorToolbar.swift']:
     text=(root/'app'/name).read_text()
