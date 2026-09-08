@@ -1,0 +1,5 @@
+{
+  "de": "ReplyZen 1.47: Die gesamte App-Oberfläche ist jetzt in US English, Deutsch und Español verfügbar. Die Sprache lässt sich über Einstellungen oder das Zahnrad umstellen und wird gespeichert. Menüs, Outlook-Overlay, Tooltips, Hinweise und app-eigene Fehlermeldungen wechseln mit. Die E-Mail-Ausgabesprache, Entwürfe und Formatierungen bleiben unverändert.",
+  "en-US": "ReplyZen 1.47: The app interface now supports US English, German, and Spanish. Change the language in Settings or through the gear icon; your choice is saved. Menus, the Outlook overlay, tooltips, messages, and app-owned errors follow your selection. Email output language, drafts, and formatting are preserved.",
+  "es": "ReplyZen 1.47: La interfaz ahora está disponible en inglés de EE. UU., alemán y español. Cambia el idioma en Configuración o mediante el icono de engranaje; tu elección se guarda. Los menús, la barra de Outlook, las ayudas, los avisos y los errores propios de la aplicación cambian de idioma. Se conservan el idioma de los correos, los borradores y su formato."
+}

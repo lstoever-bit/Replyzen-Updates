@@ -1,0 +1,91 @@
+# Source | en-US | es | de override (optional)
+ReplyZen öffnen   ⌃⌥R|Open ReplyZen   ⌃⌥R|Abrir ReplyZen   ⌃⌥R
+Bei Anmeldung starten|Launch at login|Abrir al iniciar sesión
+API-Key ändern…|Change API key…|Cambiar clave de API…
+Nach Updates suchen…|Check for updates…|Buscar actualizaciones…
+Update-Quelle…|Update source…|Origen de las actualizaciones…
+Beenden|Quit|Salir
+Termin nicht erstellt|Event not created|No se ha creado el evento
+Die geöffnete Outlook-Mail konnte nicht gelesen werden.|The open Outlook email could not be read.|No se ha podido leer el correo abierto en Outlook.
+Überweisung nicht erkannt|Transfer details not detected|No se han detectado datos de transferencia
+Absage fehlgeschlagen|Could not create decline|No se ha podido crear la respuesta de rechazo
+Replyzen · Update-Quelle|ReplyZen · Update source|ReplyZen · Origen de las actualizaciones|ReplyZen · Update-Quelle
+Replyzen nutzt standardmäßig den offiziellen Update-Kanal. Hier kannst du die HTTPS-Adresse zu update.json bei Bedarf ändern.|ReplyZen uses the official update channel by default. You can change the HTTPS address for update.json here.|ReplyZen utiliza el canal oficial de actualizaciones por defecto. Aquí puedes cambiar la dirección HTTPS de update.json.
+Ungültige Update-URL|Invalid update URL|URL de actualización no válida
+Bitte eine vollständige HTTPS-Adresse zu update.json eintragen.|Enter a full HTTPS address for update.json.|Introduce una dirección HTTPS completa para update.json.
+Update-Quelle gespeichert|Update source saved|Origen de actualizaciones guardado
+Künftig prüft die App beim Start automatisch auf neue Versionen. Installiert wird erst nach deinem Klick auf „Installieren“. |The app will check for updates automatically at startup. Updates are only installed after you click Install.|La aplicación buscará actualizaciones al iniciarse. Solo se instalarán cuando pulses Instalar.
+Update verfügbar: {0}…|Update available: {0}…|Actualización disponible: {0}…
+Du verwendest bereits die aktuelle Version {0}.|You are already using the latest version, {0}.|Ya estás usando la versión más reciente, {0}.
+Update-Prüfung fehlgeschlagen|Could not check for updates|No se han podido buscar actualizaciones
+Replyzen {0} ist verfügbar|ReplyZen {0} is available|ReplyZen {0} está disponible|ReplyZen {0} ist verfügbar
+Die neue Version kann jetzt automatisch geladen und installiert werden.|The new version is ready to download and install.|La nueva versión está lista para descargar e instalar.
+Installieren|Install|Instalar
+Später|Later|Más tarde
+Version {0} wird heruntergeladen|Downloading version {0}|Descargando la versión {0}
+Update ist vorbereitet – App startet gleich neu|Update ready. The app will restart shortly.|Actualización preparada. La aplicación se reiniciará en breve.
+Keine Outlook-Mail verfügbar. Reply ist ausgeblendet.|No Outlook email available. Reply is hidden.|No hay ningún correo de Outlook disponible. La opción Responder está oculta.|Keine Outlook-Mail verfügbar. Antworten ist ausgeblendet.
+Outlook läuft gerade nicht. New Mail funktioniert trotzdem.|Outlook is not running. You can still create a new email.|Outlook no está abierto. Aun así, puedes crear un correo nuevo.|Outlook läuft gerade nicht. Neue Mail funktioniert trotzdem.
+Keine lesbare Outlook-Mail erkannt. New Mail funktioniert trotzdem.|No readable Outlook email detected. You can still create a new email.|No se ha detectado ningún correo legible en Outlook. Aun así, puedes crear un correo nuevo.|Keine lesbare Outlook-Mail erkannt. Neue Mail funktioniert trotzdem.
+Mail-Kontext konnte nicht geladen werden. New Mail funktioniert trotzdem.|Email context could not be loaded. You can still create a new email.|No se ha podido cargar el contexto del correo. Aun así, puedes crear un correo nuevo.|Mail-Kontext konnte nicht geladen werden. Neue Mail funktioniert trotzdem.
+Keine lesbare Outlook-Mail erkannt. Nutze New Mail oder versuche es erneut.|No readable Outlook email detected. Create a new email or try again.|No se ha detectado ningún correo legible en Outlook. Crea un correo nuevo o vuelve a intentarlo.|Keine lesbare Outlook-Mail erkannt. Nutze Neue Mail oder versuche es erneut.
+OpenAI verarbeitet die Mail|OpenAI is processing the email|OpenAI está procesando el correo
+OpenAI formuliert eine neue Mail|OpenAI is drafting a new email|OpenAI está redactando un correo nuevo
+Keine lesbare Outlook-Mail erkannt. Für Forward bitte eine Mail öffnen und erneut versuchen.|No readable Outlook email detected. To forward, open an email and try again.|No se ha detectado ningún correo legible. Para reenviar, abre un correo en Outlook y vuelve a intentarlo.|Keine lesbare Outlook-Mail erkannt. Zum Weiterleiten eine Mail öffnen und erneut versuchen.
+OpenAI formuliert den Forward Text|OpenAI is drafting the forwarding note|OpenAI está redactando la nota de reenvío|OpenAI formuliert den Weiterleitungstext
+Keine lesbare Outlook-Mail erkannt. Für einen Termin bitte eine Mail öffnen und erneut versuchen.|No readable Outlook email detected. To create an event, open an email and try again.|No se ha detectado ningún correo legible. Para crear un evento, abre un correo y vuelve a intentarlo.
+Replyzen erstellt den Terminvorschlag|ReplyZen is preparing the event suggestion|ReplyZen está preparando la propuesta de evento
+Im Mailverlauf wurde kein eindeutiger Terminzeitpunkt erkannt. Bitte Datum und Uhrzeit prüfen.|No unambiguous event time was found in the thread. Please check the date and time.|No se ha encontrado una fecha y hora inequívocas en el hilo. Comprueba la fecha y la hora.
+Keine lesbare Outlook-Mail erkannt. Für eine Überweisung bitte die Rechnungsmail öffnen und erneut versuchen.|No readable Outlook email detected. To extract transfer details, open the invoice email and try again.|No se ha detectado ningún correo legible. Para extraer los datos de transferencia, abre el correo de la factura y vuelve a intentarlo.
+Replyzen sucht den PDF-Anhang …|ReplyZen is looking for the PDF attachment…|ReplyZen está buscando el PDF adjunto…
+PDF wird aus Outlook geladen …|Loading the PDF from Outlook…|Cargando el PDF desde Outlook…
+PDF wird automatisch aus Outlook gespeichert …|Saving the PDF from Outlook automatically…|Guardando el PDF de Outlook automáticamente…
+Outlook blockiert den PDF-Zugriff – bitte Rechnung auswählen …|Outlook is blocking PDF access. Please choose the invoice…|Outlook está bloqueando el acceso al PDF. Selecciona la factura…
+PDF nicht verfügbar|PDF unavailable|PDF no disponible
+Outlook gibt den PDF-Anhang nicht frei. Bitte Payment erneut klicken und im Dateidialog die Rechnung auswählen.|Outlook is not providing the PDF attachment. Click Payment again and choose the invoice in the file dialog.|Outlook no está proporcionando el PDF adjunto. Pulsa Pago de nuevo y selecciona la factura en el diálogo de archivos.|Outlook gibt den PDF-Anhang nicht frei. Bitte Überweisung erneut klicken und im Dateidialog die Rechnung auswählen.
+PDF automatisch aus Outlook gespeichert und direkt mit OpenAI gelesen: {0}|PDF saved from Outlook and read directly by OpenAI: {0}|PDF guardado desde Outlook y leído directamente por OpenAI: {0}
+PDF direkt mit OpenAI gelesen: {0}|PDF read directly by OpenAI: {0}|PDF leído directamente por OpenAI: {0}
+PDF wird direkt an OpenAI übergeben und gelesen …|Sending the PDF directly to OpenAI for reading…|Enviando el PDF directamente a OpenAI para su lectura…
+Kein direkt zugängliches PDF; lokal gelesen: {0}|No directly accessible PDF; read locally: {0}|No hay un PDF accesible directamente; leído localmente: {0}
+PDF-Anhang erkannt, aber Outlook konnte ihn weder lokal bereitstellen noch automatisch speichern.|PDF attachment detected, but Outlook could not provide a local file or save it automatically.|Se ha detectado un PDF adjunto, pero Outlook no ha podido proporcionar un archivo local ni guardarlo automáticamente.
+Kein PDF-Anhang erkannt. Extraktion aus dem Mailtext.|No PDF attachment detected. Extracting from the email text.|No se ha detectado ningún PDF adjunto. Extrayendo los datos del texto del correo.
+Kein PDF wurde direkt von OpenAI gelesen. Bitte Empfänger, IBAN und Betrag besonders sorgfältig prüfen.|No PDF was read directly by OpenAI. Please check the recipient, IBAN, and amount especially carefully.|OpenAI no ha leído ningún PDF directamente. Comprueba con especial cuidado el destinatario, el IBAN y el importe.
+Die Extraktion ist nicht eindeutig. Bitte die PDF-Rechnung mit den Feldern unten vergleichen.|The extraction is ambiguous. Please compare the fields below with the PDF invoice.|La extracción no es inequívoca. Compara los campos de abajo con la factura en PDF.
+Bitte IBAN, Betrag und Verwendungszweck vor einer Überweisung immer mit der PDF-Rechnung vergleichen.|Always compare the IBAN, amount, and payment reference with the PDF invoice before making a transfer.|Compara siempre el IBAN, el importe y el concepto con la factura en PDF antes de realizar una transferencia.
+Rechnung auswählen|Choose invoice|Seleccionar factura
+Outlook stellt den erkannten PDF-Anhang nicht als Datei bereit. Wähle die Rechnung einmal aus; Replyzen liest sie danach direkt mit OpenAI.|Outlook is not providing the PDF attachment as a file. Select the invoice; ReplyZen will then read it directly with OpenAI.|Outlook no está proporcionando el PDF adjunto como archivo. Selecciona la factura; ReplyZen la leerá directamente con OpenAI.
+PDF verwenden|Use PDF|Usar PDF
+Empfänger: {0}|Recipient: {0}|Destinatario: {0}
+Betrag: {0} {1}|Amount: {0} {1}|Importe: {0} {1}
+Verwendungszweck: {0}|Payment reference: {0}|Concepto: {0}
+Überweisungsdaten wurden in die Zwischenablage kopiert. Bitte vor der Zahlung im Banking prüfen.|Transfer details were copied to the clipboard. Check them in your banking app before paying.|Los datos de transferencia se han copiado al portapapeles. Compruébalos en tu aplicación bancaria antes de pagar.
+Die Endzeit muss nach der Startzeit liegen.|The end time must be after the start time.|La hora de finalización debe ser posterior a la de inicio.
+Bitte zuerst einen Kalender auswählen.|Please select a calendar first.|Selecciona primero un calendario.
+Termin wird direkt in Google Calendar angelegt|Creating the event in Google Calendar|Creando el evento en Google Calendar
+„{0}“ wurde am {1} direkt in Google Calendar · „{2}“ angelegt.|“{0}” was added for {1} to Google Calendar · “{2}”.|Se ha añadido «{0}» para el {1} a Google Calendar · «{2}».
+Einmalig Google OAuth einrichten.|Set up Google OAuth once.|Configura Google OAuth una vez.
+Google Calendar ist noch nicht verbunden.|Google Calendar is not connected yet.|Google Calendar aún no está conectado.
+Noch nicht mit Google verbunden.|Not connected to Google yet.|Aún sin conexión con Google.
+Bitte mit lennard@minubo.com verbinden.|Please connect with lennard@minubo.com.|Conecta con lennard@minubo.com.
+Falsches Google-Konto.|Wrong Google account.|Cuenta de Google incorrecta.
+Verbunden mit {0}|Connected as {0}|Conectado como {0}
+Google-Kalender werden geladen …|Loading Google calendars…|Cargando calendarios de Google…
+Keine beschreibbaren Google-Kalender gefunden.|No writable Google calendars found.|No se han encontrado calendarios de Google con permiso de escritura.
+Bitte Client-ID und Client Secret eintragen.|Enter the client ID and client secret.|Introduce el ID y el secreto del cliente.
+Google-Anmeldung wird im Browser geöffnet …|Opening Google sign-in in your browser…|Abriendo el inicio de sesión de Google en el navegador…
+Google Calendar wurde getrennt.|Google Calendar was disconnected.|Google Calendar se ha desconectado.
+Bitte erneut mit lennard@minubo.com verbinden.|Please reconnect with lennard@minubo.com.|Vuelve a conectar con lennard@minubo.com.
+Die ursprüngliche Outlook-Mail ist nicht mehr verfügbar. Bitte erneut laden.|The original Outlook email is no longer available. Please load it again.|El correo original de Outlook ya no está disponible. Vuelve a cargarlo.
+Replyzen braucht Bedienungshilfen, um den Text automatisch in Outlook einzusetzen. Der Text wurde in die Zwischenablage kopiert.|ReplyZen needs Accessibility access to insert text into Outlook automatically. The text was copied to the clipboard.|ReplyZen necesita acceso a Accesibilidad para insertar texto en Outlook automáticamente. El texto se ha copiado al portapapeles.
+Outlook wird aktiviert|Activating Outlook|Activando Outlook
+Replyzen braucht Bedienungshilfen, um den Forward automatisch in Outlook vorzubereiten. Dein Text wurde in die Zwischenablage kopiert.|ReplyZen needs Accessibility access to prepare the forward in Outlook. Your text was copied to the clipboard.|ReplyZen necesita acceso a Accesibilidad para preparar el reenvío en Outlook. El texto se ha copiado al portapapeles.|ReplyZen braucht Bedienungshilfen, um die Weiterleitung in Outlook vorzubereiten. Dein Text wurde in die Zwischenablage kopiert.
+Outlook Forward wird geöffnet; Thread und Anhänge bleiben erhalten|Opening the Outlook forward; the thread and attachments are preserved|Abriendo el reenvío en Outlook; se conservan el hilo y los adjuntos|Outlook-Weiterleitung wird geöffnet; Verlauf und Anhänge bleiben erhalten
+Der Forward wurde in Outlook geöffnet, aber Replyzen konnte den Text nicht automatisch über dem Thread einsetzen. Der Text liegt in der Zwischenablage.|The forward opened in Outlook, but ReplyZen could not insert the text above the thread. The text is on the clipboard.|Se ha abierto el reenvío en Outlook, pero ReplyZen no ha podido insertar el texto encima del hilo. El texto está en el portapapeles.|Die Weiterleitung wurde in Outlook geöffnet, aber ReplyZen konnte den Text nicht über dem Verlauf einsetzen. Der Text liegt in der Zwischenablage.
+Microsoft Outlook läuft nicht. Der Mailtext wurde in die Zwischenablage kopiert.|Microsoft Outlook is not running. The email text was copied to the clipboard.|Microsoft Outlook no está abierto. El texto del correo se ha copiado al portapapeles.
+Replyzen braucht Bedienungshilfen, um automatisch eine neue Outlook-Mail zu befüllen. Der Mailtext wurde in die Zwischenablage kopiert.|ReplyZen needs Accessibility access to fill a new Outlook email automatically. The text was copied to the clipboard.|ReplyZen necesita acceso a Accesibilidad para rellenar un nuevo correo en Outlook automáticamente. El texto se ha copiado al portapapeles.
+Neue Outlook-Mail wird geöffnet und befüllt|Opening and filling a new Outlook email|Abriendo y rellenando un nuevo correo en Outlook
+Der Mailtext konnte nicht automatisch eingesetzt werden. Er liegt in der Zwischenablage.|The email text could not be inserted automatically. It is on the clipboard.|No se ha podido insertar el texto automáticamente. Está en el portapapeles.
+Der API-Key konnte nicht im macOS-Schlüsselbund gespeichert werden.|The API key could not be saved to the macOS Keychain.|No se ha podido guardar la clave de API en el llavero de macOS.
+Microsoft Outlook läuft nicht.|Microsoft Outlook is not running.|Microsoft Outlook no está abierto.
+Ich finde kein Outlook-Fenster. Öffne die Mail bitte sichtbar in Outlook.|No Outlook window found. Please open the email visibly in Outlook.|No se ha encontrado ninguna ventana de Outlook. Abre el correo de forma visible en Outlook.
+Ich konnte in der geöffneten Outlook-Mail keinen lesbaren Mailtext finden.|No readable email text was found in the open Outlook email.|No se ha encontrado texto legible en el correo abierto en Outlook.

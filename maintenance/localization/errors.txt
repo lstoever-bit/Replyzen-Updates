@@ -1,0 +1,66 @@
+# Source | en-US | es | de override (optional)
+Google OAuth ist noch nicht eingerichtet. Bitte einmalig Client-ID und Client Secret eines Google-OAuth-Clients vom Typ Desktop-App hinterlegen.|Google OAuth is not set up yet. Enter the client ID and client secret for a Desktop app OAuth client.|Google OAuth aún no está configurado. Introduce el ID y el secreto de un cliente OAuth de tipo Aplicación de escritorio.
+Replyzen ist noch nicht mit Google Calendar verbunden. Bitte zuerst mit lennard@minubo.com anmelden.|ReplyZen is not connected to Google Calendar yet. First sign in with lennard@minubo.com.|ReplyZen aún no está conectado con Google Calendar. Inicia sesión primero con lennard@minubo.com.
+Die Google-Anmeldung wurde abgebrochen.|Google sign-in was canceled.|Se ha cancelado el inicio de sesión de Google.
+Google-Anmeldung fehlgeschlagen: {0}|Google sign-in failed: {0}|Ha fallado el inicio de sesión de Google: {0}
+Bitte mit lennard@minubo.com anmelden. Angemeldet wurde {0}.|Please sign in with lennard@minubo.com. You signed in as {0}.|Inicia sesión con lennard@minubo.com. Has iniciado sesión como {0}.
+Google hat eine unerwartete Antwort geliefert.|Google returned an unexpected response.|Google ha devuelto una respuesta inesperada.
+Der ausgewählte Google-Kalender ist nicht mehr verfügbar. Bitte einen anderen Kalender wählen.|The selected Google calendar is no longer available. Please choose another calendar.|El calendario de Google seleccionado ya no está disponible. Elige otro calendario.
+Start- und Endzeit des Termins sind ungültig.|The event's start and end times are invalid.|Las horas de inicio y fin del evento no son válidas.
+Google Calendar: {0}|Google Calendar: {0}|Google Calendar: {0}
+Google-Zugangsdaten konnten nicht im Schlüsselbund gespeichert werden ({0}).|Google credentials could not be saved to the Keychain ({0}).|No se han podido guardar las credenciales de Google en el llavero ({0}).
+Lokaler Callback-Port konnte nicht geöffnet werden.|The local callback port could not be opened.|No se ha podido abrir el puerto de respuesta local.
+OAuth-URL konnte nicht erstellt werden.|The OAuth URL could not be created.|No se ha podido crear la URL de OAuth.
+Ungültige OAuth-Antwort.|Invalid OAuth response.|Respuesta de OAuth no válida.
+Replyzen wartet auf die Google-Anmeldung.|ReplyZen is waiting for Google sign-in.|ReplyZen está esperando el inicio de sesión de Google.
+Google-Anmeldung wurde abgebrochen.|Google sign-in was canceled.|Se ha cancelado el inicio de sesión de Google.
+OAuth-Prüfung fehlgeschlagen.|OAuth verification failed.|Ha fallado la verificación de OAuth.
+State oder Autorisierungscode fehlt.|The state or authorization code is missing.|Falta el estado o el código de autorización.
+Replyzen ist mit Google Calendar verbunden. Dieses Fenster kann geschlossen werden.|ReplyZen is connected to Google Calendar. You can close this window.|ReplyZen está conectado con Google Calendar. Puedes cerrar esta ventana.
+Token-URL fehlt.|The token URL is missing.|Falta la URL del token.
+Token konnte nicht abgerufen werden.|The token could not be retrieved.|No se ha podido obtener el token.
+Token-Antwort konnte nicht gelesen werden.|The token response could not be read.|No se ha podido leer la respuesta del token.
+Google-Zugriff muss erneut autorisiert werden.|Google access must be authorized again.|Es necesario autorizar de nuevo el acceso a Google.
+Kalender konnten nicht geladen werden.|Calendars could not be loaded.|No se han podido cargar los calendarios.
+Es ist noch keine Update-Quelle eingerichtet.|No update source has been configured.|No se ha configurado ningún origen de actualizaciones.
+Die Update-URL ist ungültig. Bitte eine HTTPS-Adresse verwenden.|The update URL is invalid. Please use an HTTPS address.|La URL de actualización no es válida. Utiliza una dirección HTTPS.
+Die Update-Quelle hat keine gültige Antwort geliefert.|The update source did not return a valid response.|El origen de actualizaciones no ha devuelto una respuesta válida.
+Die Update-Datei update.json ist ungültig.|The update.json manifest is invalid.|El archivo update.json no es válido.
+Die Download-Adresse des Updates ist ungültig.|The update download address is invalid.|La dirección de descarga de la actualización no es válida.
+Die Prüfsumme des Updates stimmt nicht. Das Update wurde aus Sicherheitsgründen abgebrochen.|The update checksum does not match. The update was canceled for security reasons.|La suma de comprobación no coincide. Se ha cancelado la actualización por seguridad.
+Das heruntergeladene Update enthält keine gültige Replyzen.app.|The downloaded update does not contain a valid Replyzen.app.|La actualización descargada no contiene una Replyzen.app válida.
+Das Update gehört nicht zu Replyzen.|This update is not for ReplyZen.|Esta actualización no corresponde a ReplyZen.|Das Update gehört nicht zu ReplyZen.
+Die installierte App kann nicht ersetzt werden. Bitte Replyzen in den Programme-Ordner verschieben und erneut versuchen.|The installed app cannot be replaced. Move ReplyZen to the Applications folder and try again.|No se puede sustituir la aplicación instalada. Mueve ReplyZen a la carpeta Aplicaciones y vuelve a intentarlo.
+Das Update konnte nicht vorbereitet werden: {0}|The update could not be prepared: {0}|No se ha podido preparar la actualización: {0}
+SHA-256 konnte nicht berechnet werden.|SHA-256 could not be calculated.|No se ha podido calcular la suma SHA-256.
+OpenAI hat keinen gültigen Antwortentwurf geliefert.|OpenAI did not return a valid reply draft.|OpenAI no ha devuelto un borrador de respuesta válido.
+OpenAI hat keinen Antworttext geliefert.|OpenAI did not return any reply text.|OpenAI no ha devuelto texto de respuesta.
+OpenAI hat den Antwortentwurf nicht im erwarteten Format geliefert.|OpenAI returned the reply draft in an unexpected format.|OpenAI ha devuelto el borrador de respuesta en un formato inesperado.
+OpenAI hat keinen gültigen Mailentwurf geliefert.|OpenAI did not return a valid email draft.|OpenAI no ha devuelto un borrador de correo válido.
+OpenAI hat keinen Mailtext geliefert.|OpenAI did not return any email text.|OpenAI no ha devuelto texto de correo.
+OpenAI hat den Mailentwurf nicht im erwarteten Format geliefert.|OpenAI returned the email draft in an unexpected format.|OpenAI ha devuelto el borrador de correo en un formato inesperado.
+OpenAI hat keinen gültigen Terminvorschlag geliefert.|OpenAI did not return a valid event suggestion.|OpenAI no ha devuelto una propuesta de evento válida.
+OpenAI hat den Terminvorschlag nicht im erwarteten Format geliefert.|OpenAI returned the event suggestion in an unexpected format.|OpenAI ha devuelto la propuesta de evento en un formato inesperado.
+Ungültige OpenAI-Datei-URL.|Invalid OpenAI file URL.|URL de archivo de OpenAI no válida.
+Der PDF-Anhang konnte nicht gelesen werden: {0}|The PDF attachment could not be read: {0}|No se ha podido leer el PDF adjunto: {0}
+Keine Antwort beim PDF-Upload von OpenAI erhalten.|No response received from OpenAI while uploading the PDF.|No se ha recibido respuesta de OpenAI al subir el PDF.
+OpenAI-PDF-Upload fehlgeschlagen (HTTP {0}).|OpenAI PDF upload failed (HTTP {0}).|Ha fallado la subida del PDF a OpenAI (HTTP {0}).
+OpenAI hat keine Datei-ID für den PDF-Anhang geliefert.|OpenAI did not return a file ID for the PDF attachment.|OpenAI no ha devuelto un ID de archivo para el PDF adjunto.
+Die OpenAI-Antwort auf den PDF-Upload war ungültig.|The OpenAI response to the PDF upload was invalid.|La respuesta de OpenAI a la subida del PDF no era válida.
+OpenAI hat keine gültigen Überweisungsdaten geliefert.|OpenAI did not return valid transfer details.|OpenAI no ha devuelto datos de transferencia válidos.
+OpenAI hat die Überweisungsdaten nicht im erwarteten Format geliefert.|OpenAI returned transfer details in an unexpected format.|OpenAI ha devuelto los datos de transferencia en un formato inesperado.
+Ungültige OpenAI-URL.|Invalid OpenAI URL.|URL de OpenAI no válida.
+Keine Antwort von OpenAI erhalten.|No response received from OpenAI.|No se ha recibido respuesta de OpenAI.
+OpenAI-Fehler HTTP {0}.|OpenAI error, HTTP {0}.|Error de OpenAI, HTTP {0}.
+OpenAI hat ein unerwartetes Antwortformat geliefert.|OpenAI returned an unexpected response format.|OpenAI ha devuelto un formato de respuesta inesperado.
+Warum sind E-Mails schlechte Geheimnisträger? Weil am Ende doch jemand auf ‚Allen antworten‘ klickt.|Why are emails bad at keeping secrets? Someone always clicks Reply all.|¿Por qué los correos no guardan secretos? Porque alguien siempre pulsa Responder a todos.
+Mein Kalender wollte spontan sein. Ich habe ihm dafür einen Termin eingetragen.|My calendar wanted to be spontaneous. I scheduled a time for it.|Mi calendario quería ser espontáneo. Le reservé una cita para ello.
+CC ist die höfliche Art zu sagen: Jetzt weißt du es auch.|CC is the polite way of saying: now you know, too.|CC es la forma educada de decir: ahora tú también lo sabes.
+Warum war die Mail so entspannt? Sie hatte keinen Anhang zu tragen.|Why was the email so relaxed? It had no attachments to carry.|¿Por qué estaba tan tranquilo el correo? No tenía adjuntos que cargar.
+Der kürzeste Büro-Witz? ‚Kurze Abstimmung‘.|The shortest office joke? A quick meeting.|¿El chiste de oficina más corto? Una reunión rápida.
+Ich wollte meinem Posteingang Urlaub geben. Er hat die Abwesenheitsnotiz abgelehnt.|I tried giving my inbox a vacation. It rejected the out-of-office reply.|Quise darle vacaciones a mi bandeja de entrada. Rechazó la respuesta de ausencia.
+Warum mag Replyzen Montagmorgen? Weil selbst eine kurze Antwort schon wie Fortschritt aussieht.|Why does ReplyZen like Monday mornings? Even a short reply feels like progress.|¿Por qué le gustan los lunes a ReplyZen? Hasta una respuesta breve parece un avance.
+Mein Kalender und ich haben eine gute Beziehung: Er sagt mir ständig, wo ich sein soll.|My calendar and I have a great relationship: it always tells me where to be.|Mi calendario y yo nos llevamos bien: siempre me dice dónde tengo que estar.
+Eine E-Mail ohne Betreff ist wie ein Termin ohne Uhrzeit: spannend, aber unnötig.|An email without a subject is like an event without a time: exciting, but not helpful.|Un correo sin asunto es como una cita sin hora: emocionante, pero poco útil.
+Warum hat der Termin nicht zurückgerufen? Er war schon vergeben.|Why didn't the appointment call back? It was already taken.|¿Por qué no devolvió la llamada la cita? Porque ya estaba ocupada.
+Replyzen läuft. Das ist heute schon die halbe Miete.|ReplyZen is running. That's half the battle today.|ReplyZen está funcionando. Eso ya es medio camino recorrido.

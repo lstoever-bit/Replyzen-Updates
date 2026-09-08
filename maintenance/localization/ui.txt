@@ -1,0 +1,171 @@
+# Source key | US English | Spanish | German override (optional)
+Einstellungen|Settings|Configuración
+App-Sprache|App language|Idioma de la aplicación
+Gilt für die gesamte Oberfläche. Die Sprache deiner E-Mails bleibt unabhängig davon.|Applies to the entire interface. Your email language is a separate setting.|Se aplica a toda la interfaz. El idioma de tus correos se configura por separado.
+Die Auswahl wird automatisch gespeichert.|Your choice is saved automatically.|Tu elección se guarda automáticamente.
+Einstellungen…|Settings…|Configuración…
+Einstellungen und Hinweise|Settings and help|Configuración y ayuda
+Öffnen in Outlook: ⌃⌥R|Open in Outlook: ⌃⌥R|Abrir en Outlook: ⌃⌥R
+Der Editor-Zoom verändert nur die Anzeige. Mailtext wird weiterhin in Calibri Light, 10,5 pt eingesetzt.|Editor zoom only changes the display. Email text is still inserted in Calibri Light, 10.5 pt.|El zoom solo cambia la visualización. El texto del correo se sigue insertando en Calibri Light de 10,5 pt.
+API-Key ändern …|Change API key…|Cambiar clave de API…
+Bedienungshilfen öffnen …|Open Accessibility settings…|Abrir ajustes de accesibilidad…
+Updates und weitere Optionen findest du im ReplyZen-Menü in der macOS-Menüleiste.|Find updates and more options in the ReplyZen menu in the macOS menu bar.|Encontrarás las actualizaciones y otras opciones en el menú de ReplyZen de la barra de menús de macOS.
+Entwurf prüfen|Review draft|Revisar borrador
+Termin prüfen|Review event|Revisar evento
+Daten prüfen|Review details|Revisar datos
+Bereit|Ready|Listo
+Mail AI|AI email assistant|Asistente de correo con IA|KI-Mailassistent
+Schließen|Close|Cerrar
+Zurück|Back|Volver
+Abbrechen|Cancel|Cancelar
+Speichern|Save|Guardar
+Fertig|Done|Listo
+OK|OK|Aceptar
+Name|Name|Nombre
+Titel|Title|Título
+Start|Start|Inicio
+Ende|End|Fin
+Kalender|Calendar|Calendario
+Empfänger|Recipient|Destinatario
+Betrag|Amount|Importe
+Währung|Currency|Moneda
+Verwendungszweck|Payment reference|Concepto de pago
+BIC (optional)|BIC (optional)|BIC (opcional)
+0,00|0.00|0,00
+Antwortvorschlag|Suggested reply|Respuesta sugerida
+Neue Mail|New email|Nuevo correo
+Weiterleitung|Forward|Reenvío
+Termin|Event|Evento
+Überweisung|Bank transfer|Transferencia
+Antwort erstellen|Create reply|Crear respuesta
+Mail erstellen|Create email|Crear correo
+Forward erstellen|Create forward|Preparar reenvío|Weiterleitung erstellen
+Termin erstellen|Create event|Crear evento
+Überweisung extrahieren|Extract transfer details|Extraer datos de transferencia
+Neue Mail in Outlook|New email in Outlook|Nuevo correo en Outlook
+In Outlook einsetzen|Insert into Outlook|Insertar en Outlook
+Überweisungsdaten kopieren|Copy transfer details|Copiar datos de transferencia
+Im Kalender anlegen|Add to calendar|Añadir al calendario
+Deine Anweisung|Your instructions|Tus instrucciones
+Anweisung für den Mailentwurf|Instructions for the email draft|Instrucciones para el borrador del correo
+Bearbeitbarer Mailentwurf|Editable email draft|Borrador de correo editable
+Versendet wird erst in Outlook.|You send the email in Outlook.|El correo se envía desde Outlook.
+Vor dem Übernehmen prüfen.|Review before applying.|Revisa los datos antes de continuar.
+Prüfen, einsetzen, selbst senden.|Review, insert, then send yourself.|Revisa, inserta y envía tú mismo.
+Lädt …|Loading…|Cargando…
+Mail erkannt|Email detected|Correo detectado
+Ohne Mail-Kontext|No email context|Sin contexto de correo
+Outlook-Mail erneut lesen|Read Outlook email again|Volver a leer el correo de Outlook
+Die geöffnete Outlook-Mail dient als Kontext.|The open Outlook email provides context.|El correo abierto en Outlook aporta el contexto.
+Neue Mail ohne Kontext möglich. Für Reply oder Forward zuerst eine Outlook-Mail öffnen.|You can create a new email without context. To reply or forward, open an Outlook email first.|Puedes crear un correo sin contexto. Para responder o reenviar, abre primero un correo en Outlook.|Neue Mail ohne Kontext möglich. Zum Antworten oder Weiterleiten zuerst eine Outlook-Mail öffnen.
+Ton|Tone|Tono
+Ton des Mailentwurfs|Email draft tone|Tono del borrador
+Compact|Compact|Breve|Kompakt
+So kurz wie möglich formulieren|Keep it as short as possible|Redactar lo más breve posible
+Ausgabesprache|Output language|Idioma del texto generado
+Deutsch|German|Alemán
+US English|US English|Inglés de EE. UU.|US-Englisch
+Reminder|Reminder|Recordatorio|Erinnerung
+Reminder-Tag und Uhrzeit ändern|Change reminder day and time|Cambiar día y hora del recordatorio|Tag und Uhrzeit der Erinnerung ändern
+Reminder-Tag|Reminder day|Día del recordatorio|Erinnerungstag
+Tag|Day|Día
+Uhrzeit|Time|Hora
+Mo|Mon|Lun
+Di|Tue|Mar
+Mi|Wed|Mié
+Do|Thu|Jue
+Fr|Fri|Vie
+Sa|Sat|Sáb
+So|Sun|Dom
+BCC: {0}|BCC: {0}|CCO: {0}
+Termin aus Mail|Event from email|Evento a partir del correo
+Überweisung aus Mail + PDF|Transfer from email + PDF|Transferencia a partir del correo y PDF
+Titel, Kurzbeschreibung und erkennbaren Zeitpunkt aus der Mail übernehmen. Den Zielkalender wählst du anschließend aus.|Extract a title, short description, and clear date and time from the email. Choose the destination calendar afterward.|Extrae el título, una breve descripción y la fecha y hora indicadas en el correo. Después podrás elegir el calendario de destino.
+Empfänger, IBAN, Betrag und Verwendungszweck aus dem PDF-Anhang auslesen. Alle Angaben bleiben vor dem Kopieren bearbeitbar. Es wird keine Überweisung ausgelöst.|Extract the recipient, IBAN, amount, and payment reference from the PDF attachment. You can edit all details before copying. No transfer is initiated.|Extrae el destinatario, IBAN, importe y concepto del PDF adjunto. Puedes editar todos los datos antes de copiarlos. No se realiza ninguna transferencia.
+Betreff|Subject|Asunto
+Reply|Reply|Responder|Antworten
+New Mail|New email|Nuevo correo|Neue Mail
+Forward|Forward|Reenviar|Weiterleiten
+New|New email|Nuevo correo|Neue Mail
+Reply All|Reply all|Responder a todos|Allen antworten
+Cancel|Decline|Rechazar|Absagen
+Calendar|Calendar|Calendario|Kalender
+Payment|Payment|Pago|Überweisung
+Friendly|Friendly|Amable|Freundlich
+Direct|Direct|Directo|Direkt
+Professional|Professional|Profesional|Professionell
+Formal|Formal|Formal|Förmlich
+Casual|Casual|Informal|Locker
+Neutral|Neutral|Neutro|Neutral
+Fett|Bold|Negrita
+Kursiv|Italic|Cursiva
+Aufzählung|Bulleted list|Lista con viñetas
+Nummerierte Liste|Numbered list|Lista numerada
+Formatierung entfernen|Clear formatting|Quitar formato
+Nur Anzeige, kein Einfluss auf Outlook|Display only; does not affect Outlook|Solo visualización; no afecta a Outlook
+Editor-Zoom. Outlook erhält unverändert Calibri Light 10,5 pt.|Editor zoom. Outlook still receives Calibri Light, 10.5 pt.|Zoom del editor. Outlook sigue recibiendo Calibri Light de 10,5 pt.
+Editor-Zoom|Editor zoom|Zoom del editor
+{0} Prozent|{0} percent|{0} por ciento
+Einen Moment|One moment|Un momento
+Update wird installiert|Installing update|Instalando actualización
+Neue Version wird geladen und eingerichtet …|Downloading and setting up the new version…|Descargando y configurando la nueva versión…
+Fast fertig|Almost done|Casi listo
+ReplyZen läuft|ReplyZen is running|ReplyZen está funcionando
+Bereit in Outlook · ⌃⌥R oder ✨ AI|Ready in Outlook · ⌃⌥R or ✨ AI|Listo en Outlook · ⌃⌥R o ✨ AI
+Witz zum Start|A little humor to start|Un poco de humor para empezar
+ReplyZen öffnen|Open ReplyZen|Abrir ReplyZen
+Mail, Termin oder Überweisung, direkt aus Outlook.|Email, events, and transfer details, directly from Outlook.|Correos, eventos y datos de transferencia, directamente desde Outlook.
+Ich erstelle deine Antwort …|Creating your reply…|Creando tu respuesta…
+Ich formuliere deine neue Mail …|Drafting your new email…|Redactando tu nuevo correo…
+Ich bereite die Weiterleitung vor …|Preparing your forward…|Preparando el reenvío…
+Ich erstelle einen kurzen Termintitel und erkenne den Zeitpunkt …|Creating a short event title and identifying the date and time…|Creando un título breve para el evento e identificando la fecha y hora…
+Ich lese den PDF-Anhang und extrahiere die Überweisungsdaten …|Reading the PDF attachment and extracting transfer details…|Leyendo el PDF adjunto y extrayendo los datos de transferencia…
+Ich öffne eine neue Outlook-Mail und setze den Text ein …|Opening a new Outlook email and inserting your text…|Abriendo un nuevo correo en Outlook e insertando tu texto…
+Ich öffne die Outlook-Weiterleitung und setze deinen Text über den Thread …|Opening the Outlook forward and inserting your text above the thread…|Abriendo el reenvío en Outlook e insertando tu texto encima del hilo…
+Ich setze die Antwort in Outlook ein …|Inserting your reply into Outlook…|Insertando tu respuesta en Outlook…
+Fast fertig …|Almost done…|Casi listo…
+Überweisung prüfen|Review transfer details|Revisar datos de transferencia
+Kurzer Termintitel|Short event title|Título breve del evento
+Worum geht es?|What is it about?|¿De qué se trata?
+Zeitzone: CET / Europe-Berlin|Time zone: Europe/Berlin (CET/CEST)|Zona horaria: Europe/Berlin (CET/CEST)|Zeitzone: Europe/Berlin (MEZ/MESZ)
+Einmalig Google OAuth einrichten: Google Calendar API aktivieren und einen OAuth-Client vom Typ „Desktop-App“ erstellen. Client-ID und Client Secret hier einfügen.|Set up Google OAuth once: enable the Google Calendar API and create an OAuth client of type Desktop app. Enter the client ID and client secret here.|Configura Google OAuth una vez: activa la API de Google Calendar y crea un cliente OAuth de tipo Aplicación de escritorio. Introduce aquí el ID y el secreto del cliente.
+Google OAuth Client-ID|Google OAuth client ID|ID de cliente de Google OAuth
+Google OAuth Client Secret|Google OAuth client secret|Secreto de cliente de Google OAuth
+Google Cloud öffnen|Open Google Cloud|Abrir Google Cloud
+Verbinde …|Connecting…|Conectando…
+Speichern & Google verbinden|Save and connect Google|Guardar y conectar Google
+Noch nicht verbunden.|Not connected yet.|Aún sin conexión.
+OAuth-Zugang ändern|Change OAuth credentials|Cambiar credenciales de OAuth
+Mit Google verbinden|Connect to Google|Conectar con Google
+Verbunden: {0}|Connected: {0}|Conectado: {0}
+Trennen|Disconnect|Desconectar
+Es wird keine Zahlung ausgelöst.|No payment is initiated.|No se realiza ningún pago.
+Zeit und Zielkalender prüfen.|Check the time and destination calendar.|Comprueba la hora y el calendario de destino.
+Der Text wurde in eine neue Outlook-Mail eingesetzt. Bitte Empfänger und Betreff ergänzen, prüfen und selbst senden.|Your text was inserted into a new Outlook email. Add the recipient and subject, review it, and send it yourself.|El texto se ha insertado en un nuevo correo de Outlook. Añade el destinatario y el asunto, revísalo y envíalo tú mismo.
+Die Antwort ist in Outlook eingesetzt. Bitte noch kurz prüfen und selbst senden.|Your reply is in Outlook. Please review it and send it yourself.|La respuesta está en Outlook. Revísala y envíala tú mismo.
+Einmalige Berechtigung|One-time permission|Permiso inicial
+Für das Lesen aus Outlook und das automatische Einsetzen braucht Replyzen Zugriff auf Bedienungshilfen. New Mail erstellen kannst du auch ohne Mail-Kontext.|ReplyZen needs Accessibility access to read from Outlook and insert text automatically. You can create a new email without email context.|ReplyZen necesita acceso a Accesibilidad para leer Outlook e insertar texto automáticamente. Puedes crear un correo nuevo sin contexto de correo.|Zum Lesen aus Outlook und automatischen Einsetzen braucht ReplyZen Zugriff auf Bedienungshilfen. Neue Mails kannst du auch ohne Mail-Kontext erstellen.
+Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen → Replyzen einschalten.|System Settings → Privacy & Security → Accessibility → enable ReplyZen.|Ajustes del Sistema → Privacidad y seguridad → Accesibilidad → activa ReplyZen.|Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen → ReplyZen einschalten.
+Systemeinstellungen öffnen|Open System Settings|Abrir Ajustes del Sistema
+Zurück zu Replyzen|Back to ReplyZen|Volver a ReplyZen|Zurück zu ReplyZen
+OpenAI API-Key|OpenAI API key|Clave de API de OpenAI
+Der Key wird einmalig im macOS-Schlüsselbund gespeichert.|The key is stored in your macOS Keychain.|La clave se guarda en el llavero de macOS.
+Das hat nicht geklappt|Something went wrong|Algo salió mal
+Commands|Commands|Comandos|Befehle
+Name, Prompt und Tone festlegen. Die Sprache steuerst du weiterhin über 🇩🇪 / 🇺🇸.|Set the name, instructions, and tone. Choose the email language separately.|Define el nombre, las instrucciones y el tono. El idioma del correo se selecciona por separado.|Name, Anweisung und Ton festlegen. Die E-Mail-Sprache wählst du separat.
++ Add Command|+ Add command|+ Añadir comando|+ Befehl hinzufügen
+Command name|Command name|Nombre del comando|Befehlsname
+Prompt|Instructions|Instrucciones|Anweisung
+Tone|Tone|Tono|Ton
+Delete|Delete|Eliminar|Löschen
+Save|Save|Guardar|Speichern
+Reset Defaults|Reset defaults|Restablecer valores predeterminados|Standardeinstellungen wiederherstellen
+Done|Done|Listo|Fertig
+Anfrage fehlgeschlagen. Technische Details: {0}|The request failed. Technical details: {0}|La solicitud ha fallado. Detalles técnicos: {0}
+Weitere technische Details|More technical details|Más detalles técnicos|Weitere technische Details
+Kopieren|Copy|Copiar
+Ausschneiden|Cut|Cortar
+Einsetzen|Paste|Pegar
+Alles auswählen|Select all|Seleccionar todo
+Widerrufen|Undo|Deshacer
+Wiederholen|Redo|Rehacer
