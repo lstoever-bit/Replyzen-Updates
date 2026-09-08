@@ -19,8 +19,8 @@ class SourceContracts(unittest.TestCase):
         self.assertEqual(info['CFBundleExecutable'], 'Replyzen')
         self.assertEqual(info['CFBundleName'], 'Replyzen')
         self.assertEqual(info['CFBundleDisplayName'], 'ReplyZen')
-        self.assertEqual(info['CFBundleShortVersionString'], '1.50.0')
-        self.assertEqual(info['CFBundleVersion'], '51')
+        self.assertEqual(info['CFBundleShortVersionString'], '1.51.0')
+        self.assertEqual(info['CFBundleVersion'], '52')
 
     def test_visible_header_and_cached_logo(self):
         view = self.read('OverlayView.swift')
@@ -57,6 +57,9 @@ class SourceContracts(unittest.TestCase):
 
     def test_overlay_is_movable_and_persistent(self):
         panel = self.read('FloatingPanelController.swift')
+        drag_view = self.read('ReplyZenWindowDragView.swift')
+        drag_installer = self.read('ReplyZenDragInstaller.swift')
+        app_main = self.read('ReplyzenApp.swift')
         self.assertIn('panel.isMovable = true', panel)
         self.assertIn('panel.isMovableByWindowBackground = true', panel)
         self.assertIn('func windowDidMove(', panel)
@@ -64,6 +67,12 @@ class SourceContracts(unittest.TestCase):
         self.assertIn('NSRectFromString(raw)', panel)
         self.assertIn('referenceFrame.maxY - targetFrame.height', panel)
         self.assertIn('guard let targetScreen =', panel)
+        self.assertIn('override var mouseDownCanMoveWindow: Bool { true }', drag_view)
+        self.assertIn('override func acceptsFirstMouse', drag_view)
+        self.assertIn('replyzen.windowDragZone', drag_installer)
+        self.assertIn('constant: 74', drag_installer)
+        self.assertIn('equalToConstant: 26', drag_installer)
+        self.assertIn('ReplyZenDragInstaller.install()', app_main)
 
     def test_wysiwyg_editor_is_pinned_and_simple(self):
         package = (ROOT / 'Package.swift').read_text(encoding='utf-8')
