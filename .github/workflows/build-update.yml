@@ -6,6 +6,7 @@ on:
       - 'source-current/**'
       - 'maintenance/remove_payment_window_1_55.py'
       - 'maintenance/pre_1_55_overlay.py'
+      - 'maintenance/post_1_55_tests.py'
       - 'tests/**'
       - '.github/workflows/build-update.yml'
   workflow_dispatch:
@@ -24,6 +25,8 @@ jobs:
         run: python3 maintenance/pre_1_55_overlay.py source-current
       - name: Apply checked 1.55 migration
         run: python3 maintenance/remove_payment_window_1_55.py source-current
+      - name: Fix post-migration regression fixture
+        run: python3 maintenance/post_1_55_tests.py source-current
       - name: Existing regression and typography tests
         run: bash tests/run-tests.sh source-current
       - name: Localization and mail language tests
