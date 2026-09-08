@@ -26,6 +26,7 @@ jobs:
           from pathlib import Path
           p=Path('maintenance/localize_1_47.py')
           s=p.read_text().replace('                        + selectedPDFs', '                    + selectedPDFs')
+          s=s.replace('Text("ReplyZen").font(.headline)', 'Text(ReplyZenBrand.displayName).font(.headline)')
           p.write_text(s)
           PY
           python3 maintenance/localize_1_47.py source-current
