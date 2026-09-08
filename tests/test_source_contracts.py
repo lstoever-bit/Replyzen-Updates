@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Regression guards for app identity, feature paths, mail typography and editor integration."""
+"""Regression guards complement the executable AppKit window behavior tests."""
 from pathlib import Path
 import plistlib
 import sys
 import unittest
-
 ROOT = Path(sys.argv[1])
 sys.argv = [sys.argv[0]]
 APP = ROOT / 'app'
@@ -19,8 +18,8 @@ class SourceContracts(unittest.TestCase):
         self.assertEqual(info['CFBundleExecutable'], 'Replyzen')
         self.assertEqual(info['CFBundleName'], 'Replyzen')
         self.assertEqual(info['CFBundleDisplayName'], 'ReplyZen')
-        self.assertEqual(info['CFBundleShortVersionString'], '1.52.0')
-        self.assertEqual(info['CFBundleVersion'], '53')
+        self.assertEqual(info['CFBundleShortVersionString'], '1.53.0')
+        self.assertEqual(info['CFBundleVersion'], '54')
 
     def test_visible_header_and_cached_logo(self):
         view = self.read('OverlayView.swift')
@@ -54,39 +53,33 @@ class SourceContracts(unittest.TestCase):
         self.assertIn('replyScope', self.read('AppState.swift'))
         self.assertIn('case spanish', self.read('AppState.swift'))
 
-    def test_workspace_recenters_but_remains_movable_while_open(self):
+    def test_workspace_has_no_position_memory(self):
         panel = self.read('FloatingPanelController.swift')
-        drag_view = self.read('ReplyZenWindowDragView.swift')
-        drag_installer = self.read('ReplyZenDragInstaller.swift')
-        app_main = self.read('ReplyzenApp.swift')
         self.assertIn('panel.isMovable = true', panel)
-        self.assertIn('panel.isMovableByWindowBackground = true', panel)
-        self.assertIn('hasPositionedPanel = false', panel)
-        self.assertIn('let referenceFrame: NSRect? = hasPositionedPanel ? panel.frame : nil', panel)
-        self.assertNotIn('savedFrameKey', panel)
-        self.assertNotIn('savedPanelFrame', panel)
-        self.assertNotIn('NSStringFromRect', panel)
-        self.assertNotIn('NSRectFromString', panel)
-        self.assertIn('override var mouseDownCanMoveWindow: Bool { true }', drag_view)
-        self.assertIn('replyzen.windowDragZone', drag_installer)
-        self.assertIn('ReplyZenDragInstaller.install()', app_main)
+        self.assertIn('panel.isRestorable = false', panel)
+        self.assertIn('panel.setFrameAutosaveName("")', panel)
+        self.assertIn('defaults.removeObject(forKey: "Replyzen.FloatingPanel.Frame.v1")', panel)
+        self.assertIn('resizeForCurrentState(animated: false, centered: true)', panel)
+        self.assertIn('self.layoutRevision == revision, self.panel.isVisible', panel)
+        for obsolete in ['hasPositionedPanel', 'savedPanelFrame', 'NSStringFromRect', 'NSRectFromString', 'defaults.set(']:
+            self.assertNotIn(obsolete, panel)
+        self.assertIn('override var mouseDownCanMoveWindow: Bool { true }', self.read('ReplyZenWindowDragView.swift'))
+        self.assertIn('replyzen.windowDragZone', self.read('ReplyZenDragInstaller.swift'))
+        self.assertIn('ReplyZenDragInstaller.install()', self.read('ReplyzenApp.swift'))
 
-    def test_outlook_action_overlay_is_draggable_and_tracks_outlook(self):
+    def test_toolbar_saves_actual_drop_not_drag_start(self):
         toolbar = self.read('OutlookToolbarButtonController.swift')
-        self.assertIn('private final class OutlookToolbarDragHandle', toolbar)
-        self.assertIn('window.performDrag(with: event)', toolbar)
-        self.assertIn('panel.isMovable = true', toolbar)
-        self.assertIn('panel.isMovableByWindowBackground = false', toolbar)
-        self.assertIn('Replyzen.OutlookToolbar.OffsetX.v1', toolbar)
-        self.assertIn('Replyzen.OutlookToolbar.OffsetY.v1', toolbar)
-        self.assertIn('toolbarOffset = NSPoint', toolbar)
-        self.assertIn('private func defaultOrigin(for outlookFrame: NSRect)', toolbar)
-        self.assertIn('private func clampedOrigin(', toolbar)
-        self.assertIn('if isDragging {', toolbar)
+        self.assertIn('override func mouseDragged(', toolbar)
+        self.assertIn('override func mouseUp(', toolbar)
+        self.assertIn('override func hitTest(', toolbar)
+        self.assertNotIn('performDrag(with:', toolbar)
+        self.assertIn('if isDragging { return }', toolbar)
+        self.assertIn('defaults.set(Double(toolbarOffset.x)', toolbar)
+        self.assertIn('defaults.set(Double(toolbarOffset.y)', toolbar)
+        self.assertIn('dragHandle.cancelDrag()', toolbar)
         self.assertIn('let desired = NSPoint(x: anchor.x + toolbarOffset.x', toolbar)
         self.assertIn('NSSize(width: 322, height: 34)', toolbar)
         self.assertIn('circle.grid.2x3.fill', toolbar)
-        self.assertNotIn('panel.isMovable = false', toolbar)
 
     def test_wysiwyg_editor_is_pinned_and_simple(self):
         package = (ROOT / 'Package.swift').read_text(encoding='utf-8')
