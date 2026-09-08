@@ -20,7 +20,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Apply checked ReplyZen 1.48 migration if needed
-        run: python3 maintenance/fix_reply_language_1_48.py source-current
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('maintenance/fix_reply_language_1_48.py')
+          s=p.read_text()
+          s=s.replace("marker = '\"$TMP/localization-tests\"\\n'", "marker = '-o \\\"$TMP/localization-tests\\\"\\n\\\"$TMP/localization-tests\\\"\\n'")
+          s=s.replace("behavior = '''\"$TMP/localization-tests\"\n", "behavior = '''-o \"$TMP/localization-tests\"\n\"$TMP/localization-tests\"\n")
+          p.write_text(s)
+          PY
+          python3 maintenance/fix_reply_language_1_48.py source-current
       - name: Existing regression and typography tests
         run: bash tests/run-tests.sh source-current
       - name: Localization, language detection and native workspace tests
