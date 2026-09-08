@@ -1,0 +1,33 @@
+name: Audit ReplyZen localization
+on:
+  push:
+    branches: [codex/replyzen-localization-1.47]
+    paths: ['.github/workflows/localization-audit.yml']
+permissions:
+  contents: write
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inventory strings in existing Swift sources
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          root = Path('source-current/app')
+          dest = Path('maintenance/i18n-inventory')
+          dest.mkdir(parents=True, exist_ok=True)
+          ui = {'OverlayView.swift','MailWorkspaceView.swift','WorkspaceComponents.swift','EditorToolbar.swift','AppState.swift','ReplyCommand.swift','CommandStore.swift'}
+          for path in sorted(root.glob('*.swift')):
+              rows=[]
+              for number,line in enumerate(path.read_text().splitlines(),1):
+                  if '"' not in line or line.lstrip().startswith('//'): continue
+                  if path.name in ui or any(ord(c)>127 and c.isalpha() for c in line) or any(x in line for x in ['APIError(message:', 'return "', 'title:', 'toolTip', 'accessibilityDescription:', 'messageText', 'informativeText', 'labelWithString:', 'tooltip:']):
+                      rows.append(f'{number}: {line.strip()}')
+              if rows: (dest / (path.stem+'.txt')).write_text('\n'.join(rows)+'\n')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add maintenance/i18n-inventory
+          git commit -m "Record ReplyZen localization inventory"
+          git push
