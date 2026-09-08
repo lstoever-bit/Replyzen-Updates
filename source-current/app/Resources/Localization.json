@@ -1633,5 +1633,10 @@
     "en-US": "Outlook did not open the reply editor. The text was copied to the clipboard.",
     "de": "Outlook hat den Antworteditor nicht geöffnet. Der Text wurde in die Zwischenablage kopiert.",
     "es": "Outlook no ha abierto el editor de respuesta. El texto se ha copiado al portapapeles."
+  },
+  "Mail und Termin, direkt aus Outlook.": {
+    "de": "Mail und Termin, direkt aus Outlook.",
+    "en-US": "Mail and calendar, directly from Outlook.",
+    "es": "Correo y calendario, directamente desde Outlook."
   }
 }

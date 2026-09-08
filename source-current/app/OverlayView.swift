@@ -23,7 +23,7 @@ struct OverlayView: View {
 
     private var isWorkspace: Bool {
         state.stage == .instruction || state.stage == .preview ||
-        state.stage == .calendarPreview || state.stage == .paymentPreview
+        state.stage == .calendarPreview
     }
 
     @ViewBuilder
@@ -48,13 +48,6 @@ struct OverlayView: View {
                     .padding(24)
             }
             .safeAreaInset(edge: .bottom, spacing: 0) { calendarFooter }
-        case .paymentPreview:
-            ScrollView {
-                paymentPreviewView
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(24)
-            }
-            .safeAreaInset(edge: .bottom, spacing: 0) { paymentFooter }
         case .inserting:
             loadingView(title: L10n.tr("Fast fertig"), subtitle: insertingSubtitle)
         case .success:
@@ -111,7 +104,7 @@ struct OverlayView: View {
             replyzenLogo(size: 72)
             Text(ReplyZenBrand.displayName)
                 .font(.title2.bold())
-            Text(L10n.tr("Mail, Termin oder Überweisung, direkt aus Outlook."))
+            Text(L10n.tr("Mail und Termin, direkt aus Outlook."))
                 .foregroundStyle(.secondary)
             Button(L10n.tr("ReplyZen öffnen")) {
                 state.retryAction?()
@@ -143,7 +136,6 @@ struct OverlayView: View {
         case .newMail: return L10n.tr("Ich formuliere deine neue Mail …")
         case .forward: return L10n.tr("Ich bereite die Weiterleitung vor …")
         case .calendar: return L10n.tr("Ich erstelle einen kurzen Termintitel und erkenne den Zeitpunkt …")
-        case .payment: return L10n.tr("Ich lese den PDF-Anhang und extrahiere die Überweisungsdaten …")
         }
     }
 
@@ -155,7 +147,7 @@ struct OverlayView: View {
             return L10n.tr("Ich öffne die Outlook-Weiterleitung und setze deinen Text über den Thread …")
         case .reply:
             return L10n.tr("Ich setze die Antwort in Outlook ein …")
-        case .calendar, .payment:
+        case .calendar:
             return L10n.tr("Fast fertig …")
         }
     }
@@ -182,75 +174,6 @@ struct OverlayView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private var paymentPreviewView: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 10) {
-                Image(systemName: "banknote")
-                    .font(.title2)
-                Text(L10n.tr("Überweisung prüfen"))
-                    .font(.title2.bold())
-            }
-
-            if !state.paymentWarning.isEmpty {
-                HStack(alignment: .top, spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                    Text(L10n.render(state.paymentWarning))
-                        .font(.callout)
-                }
-                .foregroundStyle(.secondary)
-                .padding(10)
-                .background(.background.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
-            }
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text(L10n.tr("Empfänger")).font(.caption).foregroundStyle(.secondary)
-                TextField(L10n.tr("Empfänger"), text: $state.paymentRecipient)
-                    .textFieldStyle(.roundedBorder)
-            }
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text("IBAN").font(.caption).foregroundStyle(.secondary)
-                TextField("IBAN", text: $state.paymentIBAN)
-                    .textFieldStyle(.roundedBorder)
-            }
-
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(L10n.tr("Betrag")).font(.caption).foregroundStyle(.secondary)
-                    TextField(L10n.tr("0,00"), text: $state.paymentAmount)
-                        .textFieldStyle(.roundedBorder)
-                }
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(L10n.tr("Währung")).font(.caption).foregroundStyle(.secondary)
-                    TextField("EUR", text: $state.paymentCurrency)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 90)
-                }
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(L10n.tr("BIC (optional)")).font(.caption).foregroundStyle(.secondary)
-                    TextField("BIC", text: $state.paymentBIC)
-                        .textFieldStyle(.roundedBorder)
-                }
-            }
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text(L10n.tr("Verwendungszweck")).font(.caption).foregroundStyle(.secondary)
-                TextEditor(text: $state.paymentPurpose)
-                    .font(.body)
-                    .frame(height: 70)
-                    .padding(6)
-                    .background(.background.opacity(0.7), in: RoundedRectangle(cornerRadius: 8))
-            }
-
-            if !state.paymentSourceStatus.isEmpty {
-                Text(L10n.render(state.paymentSourceStatus))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-        }
     }
 
     private var calendarPreviewView: some View {
@@ -387,16 +310,6 @@ struct OverlayView: View {
         }
     }
 
-    private var paymentFooter: some View {
-        WorkspaceActionBar(
-            secondaryTitle: L10n.tr("Zurück"), primaryTitle: L10n.tr("Überweisungsdaten kopieren"),
-            hint: L10n.tr("Es wird keine Zahlung ausgelöst."),
-            disabled: state.paymentRecipient.isEmpty && state.paymentIBAN.isEmpty && state.paymentAmount.isEmpty,
-            secondaryAction: { state.stage = .instruction },
-            primaryAction: { state.copyPaymentAction?() }
-        )
-    }
-
     private var calendarFooter: some View {
         WorkspaceActionBar(
             secondaryTitle: L10n.tr("Zurück"), primaryTitle: L10n.tr("Im Kalender anlegen"),
@@ -413,7 +326,6 @@ struct OverlayView: View {
         case .newMail: return L10n.tr("Neue Mail")
         case .forward: return L10n.tr("Weiterleitung")
         case .calendar: return L10n.tr("Termin")
-        case .payment: return L10n.tr("Überweisung")
         }
     }
 

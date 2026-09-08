@@ -6,8 +6,8 @@ import Combine
 // exact production FloatingPanelController and OutlookToolbarButtonController.
 // No Outlook automation, credentials, mail content or network calls are used.
 final class AppState: ObservableObject {
-    enum Stage { case startup, instruction, calendarPreview, paymentPreview, preview, apiKey, needsAccessibility, error, generating, updating, inserting, success, idle }
-    enum OutputMode { case reply, newMail, forward, calendar, payment }
+    enum Stage { case startup, instruction, calendarPreview, preview, apiKey, needsAccessibility, error, generating, updating, inserting, success, idle }
+    enum OutputMode { case reply, newMail, forward, calendar }
     @Published var stage: Stage = .error
     @Published var outputMode: OutputMode = .reply
     @Published var googleNeedsOAuthCredentials = false

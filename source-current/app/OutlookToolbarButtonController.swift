@@ -145,7 +145,6 @@ final class OutlookToolbarButtonController: NSObject {
     private let forwardButton: DelayedTooltipButton
     private let cancelButton: DelayedTooltipButton
     private let calendarButton: DelayedTooltipButton
-    private let paymentButton: DelayedTooltipButton
     private let dragHandle: OutlookToolbarDragHandle
     private var timer: Timer?
     private var isSuppressed = false
@@ -162,7 +161,6 @@ final class OutlookToolbarButtonController: NSObject {
     var forwardAction: (() -> Void)?
     var cancelAction: (() -> Void)?
     var calendarAction: (() -> Void)?
-    var paymentAction: (() -> Void)?
 
     init(outlook: OutlookAccessibility, defaults: UserDefaults = .standard,
          outlookIsFrontmost: @escaping () -> Bool = {
@@ -173,7 +171,7 @@ final class OutlookToolbarButtonController: NSObject {
         self.outlookIsFrontmost = outlookIsFrontmost
         dragHandle = OutlookToolbarDragHandle(frame: NSRect(x: 0, y: 0, width: 20, height: 34))
         dragHandle.identifier = NSUserInterfaceItemIdentifier("replyzen.outlookActions.dragHandle")
-        let size = NSSize(width: 322, height: 34)
+        let size = NSSize(width: 282, height: 34)
         panel = NSPanel(contentRect: NSRect(origin: .zero, size: size),
                         styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         panel.identifier = NSUserInterfaceItemIdentifier("replyzen.outlookActions")
@@ -222,8 +220,7 @@ final class OutlookToolbarButtonController: NSObject {
         forwardButton = makeButton(symbol: "arrowshape.turn.up.right", x: 146, tooltip: L10n.source("Forward"))
         cancelButton = makeButton(symbol: "xmark.circle", x: 198, tooltip: L10n.source("Cancel"))
         calendarButton = makeButton(symbol: "calendar.badge.plus", x: 238, tooltip: L10n.source("Calendar"))
-        paymentButton = makeButton(symbol: "banknote", x: 278, tooltip: L10n.source("Payment"))
-        [newButton, replyButton, replyAllButton, forwardButton, cancelButton, calendarButton, paymentButton].forEach { effect.addSubview($0) }
+        [newButton, replyButton, replyAllButton, forwardButton, cancelButton, calendarButton].forEach { effect.addSubview($0) }
         effect.addSubview(makePipe(x: 186))
         panel.contentView = effect
         panel.isOpaque = false
@@ -254,8 +251,6 @@ final class OutlookToolbarButtonController: NSObject {
         cancelButton.action = #selector(cancelClicked)
         calendarButton.target = self
         calendarButton.action = #selector(calendarClicked)
-        paymentButton.target = self
-        paymentButton.action = #selector(paymentClicked)
     }
 
     func start() {
@@ -326,7 +321,6 @@ final class OutlookToolbarButtonController: NSObject {
     @objc private func forwardClicked() { forwardAction?() }
     @objc private func cancelClicked() { cancelAction?() }
     @objc private func calendarClicked() { calendarAction?() }
-    @objc private func paymentClicked() { paymentAction?() }
 
     private func beginToolbarDrag() {
         hideAllTooltips()
@@ -365,11 +359,11 @@ final class OutlookToolbarButtonController: NSObject {
     }
 
     func refreshLocalization() {
-        [newButton, replyButton, replyAllButton, forwardButton, cancelButton, calendarButton, paymentButton].forEach { $0.refreshLocalization() }
+        [newButton, replyButton, replyAllButton, forwardButton, cancelButton, calendarButton].forEach { $0.refreshLocalization() }
     }
 
     private func hideAllTooltips() {
-        [newButton, replyButton, replyAllButton, forwardButton, cancelButton, calendarButton, paymentButton].forEach { $0.hideDelayedTooltip() }
+        [newButton, replyButton, replyAllButton, forwardButton, cancelButton, calendarButton].forEach { $0.hideDelayedTooltip() }
     }
 
     private func update() {

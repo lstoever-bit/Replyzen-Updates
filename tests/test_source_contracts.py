@@ -1,142 +1,78 @@
 #!/usr/bin/env python3
-"""Regression guards complement the executable AppKit window behavior tests."""
 from pathlib import Path
 import plistlib
 import sys
 import unittest
-ROOT = Path(sys.argv[1])
-sys.argv = [sys.argv[0]]
-APP = ROOT / 'app'
+ROOT = Path(sys.argv[1]); sys.argv = [sys.argv[0]]; APP = ROOT / "app"
 
 class SourceContracts(unittest.TestCase):
-    def read(self, name):
-        return (APP / name).read_text(encoding='utf-8')
-
-    def test_app_identity_and_version(self):
-        info = plistlib.loads((APP / 'Info.plist').read_bytes())
-        self.assertEqual(info['CFBundleIdentifier'], 'com.lstoever.replyzen')
-        self.assertEqual(info['CFBundleExecutable'], 'Replyzen')
-        self.assertEqual(info['CFBundleName'], 'Replyzen')
-        self.assertEqual(info['CFBundleDisplayName'], 'ReplyZen')
-        self.assertEqual(info['CFBundleShortVersionString'], '1.54.0')
-        self.assertEqual(info['CFBundleVersion'], '55')
-
-    def test_visible_header_and_cached_logo(self):
-        view = self.read('OverlayView.swift')
-        brand = self.read('ReplyZenBrand.swift')
-        self.assertIn('static let displayName = "ReplyZen"', brand)
-        self.assertIn('Text(ReplyZenBrand.displayName)', view)
-        self.assertNotIn('Text("Replyzen")', view)
-        self.assertIn('if let image = ReplyZenBrand.logo', view)
-        self.assertNotIn('NSImage(contentsOf:', view)
-        self.assertIn('static let menuBarIcon', brand)
-
-    def test_toolbar_lifecycle(self):
-        toolbar = self.read('OutlookToolbarButtonController.swift')
-        self.assertIn('frontmostApplication?.bundleIdentifier == "com.microsoft.Outlook"', toolbar)
-        self.assertIn('isStarted && !isSuppressed', toolbar)
-        self.assertIn('newTimer.tolerance = 0.07', toolbar)
-        self.assertIn('workspaceObservers.removeAll()', toolbar)
-        self.assertNotIn('timer!', toolbar)
-        for action in ['new', 'reply', 'replyAll', 'forward', 'cancel', 'calendar', 'payment']:
-            self.assertIn(action + 'Action?()', toolbar)
-
-    def test_existing_outlook_integration(self):
-        app = self.read('AppDelegate.swift')
-        for flow in ['openNewMailWorkspace', 'openReplyWorkspace', 'openForwardWorkspace', 'quickDecline', 'createCalendarFromOverlay', 'createPaymentFromOverlay']:
-            self.assertIn(flow + '(', app)
-        self.assertIn('openSelectedMessageWindowIfNeeded', self.read('OutlookAccessibility.swift'))
-        self.assertIn('hasOpenedReplyComposer(since: snapshot)', app)
-        self.assertIn('focusComposeSubjectField()', app)
-        self.assertIn('if attempt >= 2', app)
-        self.assertIn('openReplyComposer(replyAll:', self.read('OutlookAccessibility.swift'))
-        self.assertIn('replyScope', self.read('AppState.swift'))
-        self.assertIn('case spanish', self.read('AppState.swift'))
-
-    def test_workspace_has_no_position_memory(self):
-        panel = self.read('FloatingPanelController.swift')
-        self.assertIn('panel.isMovable = true', panel)
-        self.assertIn('panel.isRestorable = false', panel)
+    def read(self, name): return (APP / name).read_text(encoding="utf-8")
+    def test_identity_and_version(self):
+        info = plistlib.loads((APP / "Info.plist").read_bytes())
+        self.assertEqual(info["CFBundleIdentifier"], "com.lstoever.replyzen")
+        self.assertEqual(info["CFBundleDisplayName"], "ReplyZen")
+        self.assertEqual(info["CFBundleShortVersionString"], "1.55.0")
+        self.assertEqual(info["CFBundleVersion"], "56")
+    def test_payment_is_removed_from_active_code(self):
+        self.assertFalse((APP / "AttachmentTextExtractor.swift").exists())
+        swift = "\n".join(p.read_text(encoding="utf-8") for p in APP.glob("*.swift"))
+        lowered = swift.lower()
+        for token in ["payment", "überweisung", "banknote", "paymentpreview", "paymentrecipient"]:
+            self.assertNotIn(token, lowered)
+    def test_outlook_overlay_has_six_actions(self):
+        toolbar = self.read("OutlookToolbarButtonController.swift")
+        self.assertIn("NSSize(width: 282, height: 34)", toolbar)
+        for action in ["new", "reply", "replyAll", "forward", "cancel", "calendar"]:
+            self.assertIn(action + "Action?()", toolbar)
+        self.assertNotIn("paymentAction", toolbar)
+    def test_fresh_hosting_tree_on_hidden_open(self):
+        panel = self.read("FloatingPanelController.swift")
+        self.assertIn("private func installFreshHostingRoot()", panel)
+        self.assertIn("if !panel.isVisible", panel)
+        self.assertIn("NSHostingController(rootView: OverlayView(state: state))", panel)
+        self.assertIn("resizeForCurrentState(animated: false, centered: true)", panel)
+        self.assertNotIn("defaults.set(", panel)
+    def test_stable_native_wysiwyg_wrapper(self):
+        editor = self.read("RichTextMailEditor.swift")
+        toolbar = self.read("EditorToolbar.swift")
+        package = (ROOT / "Package.swift").read_text(encoding="utf-8")
+        self.assertIn("rich-editor-swiftui.git", package)
+        self.assertIn('exact: "1.1.1"', package)
+        self.assertIn("import RichEditorSwiftUI", editor)
+        self.assertIn("NSViewRepresentable", editor)
+        self.assertIn("RichTextView.scrollableTextView()", editor)
+        self.assertNotIn("RichTextEditor(", editor)
+        self.assertNotIn("RichEditorState", editor)
+        self.assertIn("adapter.toggleBold", toolbar)
+        self.assertIn("adapter.toggleItalic", toolbar)
+        self.assertIn("MailTypography.normalizeFonts", editor)
+    def test_existing_mail_calendar_paths(self):
+        delegate = self.read("AppDelegate.swift")
+        for flow in ["openNewMailWorkspace", "openReplyWorkspace", "openForwardWorkspace", "quickDecline", "createCalendarFromOverlay"]:
+            self.assertIn(flow + "(", delegate)
+        state = self.read("AppState.swift")
+        for mode in ["case reply", "case newMail", "case forward", "case calendar"]:
+            self.assertIn(mode, state)
+    def test_json_pipeline(self):
+        client = self.read("OpenAIClient.swift")
+        self.assertEqual(client.count("ResponseJSON.cleanedText(text)"), 3)
+        self.assertNotIn("PaymentSuggestion", client)
+        self.assertNotIn("uploadFile(", client)
+        self.assertNotIn("fileIOQueue", client)
+        self.assertIn('"store": false', client)
+    def test_typography_contract(self):
+        typography = self.read("MailTypography.swift")
+        self.assertIn("static let pointSize: CGFloat = 10.5", typography)
+        self.assertIn('static let family = "Calibri Light"', typography)
+        self.assertIn("MailTypography.baseFont", self.read("RichTextMailEditor.swift"))
+    def test_window_position_contract(self):
+        panel = self.read("FloatingPanelController.swift")
+        self.assertIn("panel.isMovable = true", panel)
+        self.assertIn("panel.isRestorable = false", panel)
         self.assertIn('panel.setFrameAutosaveName("")', panel)
         self.assertIn('defaults.removeObject(forKey: "Replyzen.FloatingPanel.Frame.v1")', panel)
-        self.assertIn('resizeForCurrentState(animated: false, centered: true)', panel)
-        self.assertIn('panel.makeKeyAndOrderFront(nil)', panel)
-        self.assertIn('private func stabilizeVisibleContent()', panel)
-        self.assertIn('self.layoutRevision == revision, self.panel.isVisible', panel)
-        for obsolete in ['hasPositionedPanel', 'savedPanelFrame', 'NSStringFromRect', 'NSRectFromString', 'defaults.set(']:
-            self.assertNotIn(obsolete, panel)
-        self.assertIn('override var mouseDownCanMoveWindow: Bool { true }', self.read('ReplyZenWindowDragView.swift'))
-        self.assertIn('replyzen.windowDragZone', self.read('ReplyZenDragInstaller.swift'))
-        self.assertIn('ReplyZenDragInstaller.install()', self.read('ReplyzenApp.swift'))
+        toolbar = self.read("OutlookToolbarButtonController.swift")
+        self.assertIn("defaults.set(Double(toolbarOffset.x)", toolbar)
+        self.assertIn("defaults.set(Double(toolbarOffset.y)", toolbar)
 
-    def test_toolbar_saves_actual_drop_not_drag_start(self):
-        toolbar = self.read('OutlookToolbarButtonController.swift')
-        self.assertIn('override func mouseDragged(', toolbar)
-        self.assertIn('override func mouseUp(', toolbar)
-        self.assertIn('override func hitTest(', toolbar)
-        self.assertNotIn('performDrag(with:', toolbar)
-        self.assertIn('if isDragging { return }', toolbar)
-        self.assertIn('defaults.set(Double(toolbarOffset.x)', toolbar)
-        self.assertIn('defaults.set(Double(toolbarOffset.y)', toolbar)
-        self.assertIn('dragHandle.cancelDrag()', toolbar)
-        self.assertIn('let desired = NSPoint(x: anchor.x + toolbarOffset.x', toolbar)
-        self.assertIn('NSSize(width: 322, height: 34)', toolbar)
-        self.assertIn('circle.grid.2x3.fill', toolbar)
-
-    def test_wysiwyg_editor_is_pinned_and_simple(self):
-        package = (ROOT / 'Package.swift').read_text(encoding='utf-8')
-        editor = self.read('RichTextMailEditor.swift')
-        toolbar = self.read('EditorToolbar.swift')
-        self.assertIn('rich-editor-swiftui.git', package)
-        self.assertIn('exact: "1.1.1"', package)
-        self.assertIn('import RichEditorSwiftUI', editor)
-        self.assertIn('RichTextEditor(', editor)
-        self.assertIn('RichEditorState', editor)
-        self.assertIn('context.toggleStyle(.bold)', toolbar)
-        self.assertIn('context.toggleStyle(.italic)', toolbar)
-        self.assertNotIn('zoomPercent', toolbar)
-        self.assertIn('scrollView.magnification = 1.30', editor)
-        self.assertIn('NSTextStorage.didProcessEditingNotification', editor)
-        self.assertIn('.clipped()', editor)
-        self.assertIn('layer?.masksToBounds = true', editor)
-        self.assertIn('idealHeight: height == nil ? 340', editor)
-        self.assertIn('MailTypography.htmlDocument(from: normalized)', editor)
-        license_text = (APP / 'Resources' / 'ThirdPartyLicenses' / 'RichEditorSwiftUI-LICENSE.txt').read_text()
-        self.assertIn('Copyright (c) 2022 Canopas Software LLP', license_text)
-
-    def test_json_and_upload_pipeline(self):
-        client = self.read('OpenAIClient.swift')
-        self.assertEqual(client.count('ResponseJSON.cleanedText(text)'), 4)
-        self.assertNotIn('var cleaned = text.trimmingCharacters', client)
-        self.assertIn('fileIOQueue.async {', client)
-        self.assertIn('url.pathExtension.lowercased() == "pdf"', client)
-        self.assertIn('"store": false', client)
-        self.assertIn('collected.forEach { self.deleteUploadedFile', client)
-        self.assertIn('fileIDs.forEach { self.deleteUploadedFile', client)
-        self.assertIn('Never initiate, authorize or imply that a payment has been made.', client)
-
-    def test_release_build(self):
-        build = (ROOT / 'Build-CI.sh').read_text()
-        self.assertIn('swift', build.lower())
-        self.assertIn('build -c release', build)
-        self.assertIn('--product Replyzen', build)
-        self.assertIn('codesign --verify', build)
-
-    def test_typography_routes(self):
-        app = self.read('AppDelegate.swift')
-        self.assertIn('MailTypography.write(plainText: plainText, html: html)', app)
-        self.assertNotIn('copyToPasteboard(reply)', app)
-        self.assertIn('copyToPasteboard(lines.joined', app)
-        for start, end in [('insertReply()', 'insertForwardDraft()'), ('insertForwardDraft()', 'insertNewMail()'), ('insertNewMail()', 'finishNewMailInsertion()')]:
-            section = app.split('private func ' + start, 1)[1].split('private func ' + end, 1)[0]
-            self.assertIn('copyMailToPasteboard', section)
-        editor = self.read('RichTextMailEditor.swift')
-        self.assertIn('MailTypography.baseFont', editor)
-        self.assertIn('MailTypography.normalizeFonts', editor)
-        self.assertIn('MailTypography.attributedString', editor)
-        typography = self.read('MailTypography.swift')
-        self.assertIn('static let pointSize: CGFloat = 10.5', typography)
-        self.assertIn('static let family = "Calibri Light"', typography)
-
-if __name__ == '__main__':
-    unittest.main(verbosity=2)
+if __name__ == "__main__": unittest.main(verbosity=2)

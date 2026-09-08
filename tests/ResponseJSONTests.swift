@@ -22,11 +22,10 @@ struct ResponseJSONChecks {
             "{\"body\":\"Hello\",\"html\":null}",
             "{\"subject\":\"Test\",\"body\":\"Hello\",\"html\":null}",
             "{\"title\":\"Test\",\"description\":\"Test\",\"start\":null,\"end\":null}",
-            "{\"iban\":null,\"amount\":\"123.45\",\"currency\":\"EUR\"}"
         ] {
             let value = ResponseJSON.cleanedText("```json\n" + payload + "\n```")
             _ = try JSONSerialization.jsonObject(with: Data(value.utf8))
         }
-        print("PASS: 10 JSON normalization cases and 4 output schemas")
+        print("PASS: 10 JSON normalization cases and 3 output schemas")
     }
 }

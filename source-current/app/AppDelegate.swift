@@ -14,7 +14,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let loginItem = LoginItemManager()
     private let updateManager = UpdateManager()
     private let calendarManager = CalendarManager()
-    private let attachmentExtractor = AttachmentTextExtractor()
     private lazy var toolbarButton = OutlookToolbarButtonController(outlook: outlook)
 
     private var languageObserver: NSObjectProtocol?
@@ -108,8 +107,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         state.generateAction = { [weak self] in self?.generateCurrentOutput() }
         state.insertAction = { [weak self] in self?.insertGeneratedText() }
         state.createCalendarAction = { [weak self] in self?.createCalendarEvent() }
-        state.extractPaymentAction = { [weak self] in self?.generatePaymentSuggestion() }
-        state.copyPaymentAction = { [weak self] in self?.copyPaymentDetails() }
         state.connectGoogleCalendarAction = { [weak self] in self?.connectGoogleCalendar() }
         state.disconnectGoogleCalendarAction = { [weak self] in self?.disconnectGoogleCalendar() }
         state.openGoogleCloudAction = { [weak self] in self?.openGoogleCloudCredentials() }
@@ -187,7 +184,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         toolbarButton.forwardAction = { [weak self] in self?.openForwardWorkspace() }
         toolbarButton.cancelAction = { [weak self] in self?.quickDecline() }
         toolbarButton.calendarAction = { [weak self] in self?.createCalendarFromOverlay() }
-        toolbarButton.paymentAction = { [weak self] in self?.createPaymentFromOverlay() }
     }
 
     private var isOutlookRunning: Bool {
@@ -321,73 +317,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self.toolbarButton.setSuppressed(false)
                     self.showSimpleAlert(
                         title: L10n.source("Termin nicht erstellt"),
-                        message: L10n.source("Die geöffnete Outlook-Mail konnte nicht gelesen werden.")
-                    )
-                }
-            }
-        }
-    }
-
-    private func createPaymentFromOverlay() {
-        guard !isRunningFlow else { return }
-        // Warm/load the API key before starting the hidden flow. KeychainStore caches
-        // it for the rest of the app session, so the extractor can reuse it.
-        guard keychain.loadAPIKey() != nil else {
-            toolbarButton.setSuppressed(true)
-            state.apiKeyDraft = ""
-            state.stage = .apiKey
-            panel.show()
-            return
-        }
-        guard outlook.isTrusted() else {
-            outlook.requestTrustPrompt()
-            return
-        }
-
-        isRunningFlow = true
-        toolbarButton.setSuppressed(true)
-
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self else { return }
-
-            do {
-                var snapshot = try self.outlook.captureSnapshot(includeAllWindows: false)
-                var mail: String
-                do {
-                    mail = try self.outlook.readMail(from: snapshot)
-                } catch OutlookAccessibility.OutlookError.noMailText {
-                    snapshot = try self.outlook.captureSnapshot(includeAllWindows: true)
-                    mail = try self.outlook.readMail(from: snapshot)
-                }
-
-                var paymentSnapshot = snapshot
-                var paymentMail = mail
-
-                // Legacy Outlook exposes attachment files more reliably once the
-                // selected mail is opened in its own message window.
-                DispatchQueue.main.sync {
-                    paymentSnapshot = self.outlook.openSelectedMessageWindowIfNeeded(from: snapshot)
-                }
-                if let refreshedMail = try? self.outlook.readMail(from: paymentSnapshot),
-                   !refreshedMail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    paymentMail = refreshedMail
-                }
-
-                DispatchQueue.main.async {
-                    self.activeSnapshot = paymentSnapshot
-                    self.state.mailText = paymentMail
-                    self.state.mailStatus = .available
-                    self.state.outputMode = .payment
-                    // Do not show the normal Replyzen form. The existing extractor
-                    // opens only the editable payment result window when finished.
-                    self.generatePaymentSuggestion()
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    self.isRunningFlow = false
-                    self.toolbarButton.setSuppressed(false)
-                    self.showSimpleAlert(
-                        title: L10n.source("Überweisung nicht erkannt"),
                         message: L10n.source("Die geöffnete Outlook-Mail konnte nicht gelesen werden.")
                     )
                 }
@@ -825,8 +754,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             forwardWithNote()
         case .calendar:
             generateCalendarSuggestion()
-        case .payment:
-            generatePaymentSuggestion()
         }
     }
 
@@ -1016,211 +943,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-
-    private func generatePaymentSuggestion() {
-        guard let apiKey = keychain.loadAPIKey() else {
-            state.stage = .apiKey
-            return
-        }
-        guard !state.mailText.isEmpty, let snapshot = activeSnapshot else {
-            state.mailStatus = .unavailable(L10n.source("Keine lesbare Outlook-Mail erkannt. Für eine Überweisung bitte die Rechnungsmail öffnen und erneut versuchen."))
-            return
-        }
-
-        isRunningFlow = true
-        toolbarButton.setSuppressed(true)
-        state.stage = .generating
-        state.statusText = L10n.source("Replyzen sucht den PDF-Anhang …")
-
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self else { return }
-
-            let filenames = self.outlook.attachmentFilenames(from: snapshot)
-            let mentionedPDF = filenames.first { $0.lowercased().hasSuffix(".pdf") }
-
-            var directFiles = self.outlook.attachmentFileURLs(from: snapshot)
-            var resolvedFiles = directFiles + self.attachmentExtractor.resolveFiles(filenames: filenames)
-            var selectedPDFs = Array(resolvedFiles.filter { $0.pathExtension.lowercased() == "pdf" }.prefix(3))
-
-            if selectedPDFs.isEmpty, let pdfName = mentionedPDF {
-                DispatchQueue.main.sync {
-                    self.state.statusText = L10n.source("PDF wird aus Outlook geladen …")
-                    self.outlook.activateOutlook(pid: snapshot.pid)
-                    _ = self.outlook.activateAttachment(named: pdfName, from: snapshot)
-                }
-
-                Thread.sleep(forTimeInterval: 1.6)
-                let retrySnapshot = (try? self.outlook.captureSnapshot(includeAllWindows: true)) ?? snapshot
-                directFiles = self.outlook.attachmentFileURLs(from: retrySnapshot)
-                resolvedFiles = directFiles + self.attachmentExtractor.resolveFiles(filenames: filenames)
-                selectedPDFs = Array(resolvedFiles.filter { $0.pathExtension.lowercased() == "pdf" }.prefix(3))
-
-                // If Outlook still has not materialized the attachment, use its own
-                // attachment context menu and Save As sheet automatically. This is
-                // intentionally a last resort because direct AX file URLs are faster.
-                if selectedPDFs.isEmpty {
-                    var savedURL: URL?
-                    DispatchQueue.main.sync {
-                        self.state.statusText = L10n.source("PDF wird automatisch aus Outlook gespeichert …")
-                        self.outlook.activateOutlook(pid: snapshot.pid)
-                        savedURL = self.outlook.materializeAttachmentToTemporaryFile(named: pdfName, from: retrySnapshot)
-                    }
-
-                    if let savedURL {
-                        selectedPDFs = [savedURL]
-                    } else {
-                        // Save/Download can complete without exposing a Save As sheet.
-                        // Give Outlook a final moment, then search its caches/Downloads.
-                        Thread.sleep(forTimeInterval: 1.0)
-                        let finalSnapshot = (try? self.outlook.captureSnapshot(includeAllWindows: true)) ?? retrySnapshot
-                        directFiles = self.outlook.attachmentFileURLs(from: finalSnapshot)
-                        resolvedFiles = directFiles + self.attachmentExtractor.resolveFiles(filenames: filenames)
-                        selectedPDFs = Array(resolvedFiles.filter { $0.pathExtension.lowercased() == "pdf" }.prefix(3))
-                    }
-                }
-            }
-
-            if selectedPDFs.isEmpty, let pdfName = mentionedPDF {
-                var manuallySelectedPDF: URL?
-                DispatchQueue.main.sync {
-                    self.state.statusText = L10n.source("Outlook blockiert den PDF-Zugriff – bitte Rechnung auswählen …")
-                    manuallySelectedPDF = self.choosePaymentPDFFallback(suggestedName: pdfName)
-                }
-                if let manuallySelectedPDF {
-                    selectedPDFs = [manuallySelectedPDF]
-                }
-            }
-
-            // A detected invoice PDF must be read as a real file. Never continue to
-            // the blank payment form based only on mail text when Outlook blocks it.
-            if selectedPDFs.isEmpty, mentionedPDF != nil {
-                DispatchQueue.main.async {
-                    self.isRunningFlow = false
-                    self.toolbarButton.setSuppressed(false)
-                    self.showSimpleAlert(
-                        title: L10n.source("PDF nicht verfügbar"),
-                        message: L10n.source("Outlook gibt den PDF-Anhang nicht frei. Bitte Payment erneut klicken und im Dateidialog die Rechnung auswählen.")
-                    )
-                }
-                return
-            }
-
-            let replyzenTempDirectories = Set(selectedPDFs.compactMap { url -> URL? in
-                guard url.path.contains("/Replyzen-Attachments/") else { return nil }
-                return url.deletingLastPathComponent()
-            })
-
-            var fallbackText = ""
-            var sourceStatus: String
-
-            if !selectedPDFs.isEmpty {
-                let wasAutoSaved = !replyzenTempDirectories.isEmpty
-                sourceStatus = L10n.source(wasAutoSaved ? "PDF automatisch aus Outlook gespeichert und direkt mit OpenAI gelesen: {0}" : "PDF direkt mit OpenAI gelesen: {0}", selectedPDFs.map(\.lastPathComponent).joined(separator: ", "))
-                DispatchQueue.main.async {
-                    self.state.statusText = L10n.source("PDF wird direkt an OpenAI übergeben und gelesen …")
-                }
-            } else {
-                let fallback = self.attachmentExtractor.extract(filenames: filenames)
-                fallbackText = fallback.text
-
-                let pdfMentioned = filenames.contains { $0.lowercased().hasSuffix(".pdf") }
-                if !fallback.usedFiles.isEmpty {
-                    sourceStatus = L10n.source("Kein direkt zugängliches PDF; lokal gelesen: {0}", fallback.usedFiles.joined(separator: ", "))
-                } else if pdfMentioned {
-                    sourceStatus = L10n.source("PDF-Anhang erkannt, aber Outlook konnte ihn weder lokal bereitstellen noch automatisch speichern.")
-                } else {
-                    sourceStatus = L10n.source("Kein PDF-Anhang erkannt. Extraktion aus dem Mailtext.")
-                }
-                DispatchQueue.main.async {
-                    self.state.statusText = sourceStatus
-                }
-            }
-
-            self.openAI.createPaymentSuggestion(
-                apiKey: apiKey,
-                mailText: self.state.mailText,
-                fileURLs: selectedPDFs,
-                fallbackAttachmentText: fallbackText
-            ) { [weak self] result in
-                // OpenAI has completed reading/uploading at this point, so any
-                // temporary Outlook Save As copies can be removed immediately.
-                for directory in replyzenTempDirectories {
-                    try? FileManager.default.removeItem(at: directory)
-                }
-
-                DispatchQueue.main.async {
-                    guard let self else { return }
-                    self.isRunningFlow = false
-
-                    switch result {
-                    case .success(let suggestion):
-                        self.state.paymentRecipient = suggestion.recipient?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                        self.state.paymentIBAN = suggestion.iban?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                        self.state.paymentBIC = suggestion.bic?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                        self.state.paymentAmount = suggestion.amount?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                        self.state.paymentCurrency = suggestion.currency?.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() ?? "EUR"
-                        self.state.paymentPurpose = suggestion.purpose?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                        self.state.paymentSourceStatus = sourceStatus
-
-                        let confidence = suggestion.confidence?.lowercased() ?? "low"
-                        let missingCore = self.state.paymentRecipient.isEmpty || self.state.paymentIBAN.isEmpty || self.state.paymentAmount.isEmpty
-                        if selectedPDFs.isEmpty {
-                            self.state.paymentWarning = L10n.source("Kein PDF wurde direkt von OpenAI gelesen. Bitte Empfänger, IBAN und Betrag besonders sorgfältig prüfen.")
-                        } else if confidence == "low" || missingCore {
-                            self.state.paymentWarning = L10n.source("Die Extraktion ist nicht eindeutig. Bitte die PDF-Rechnung mit den Feldern unten vergleichen.")
-                        } else {
-                            self.state.paymentWarning = L10n.source("Bitte IBAN, Betrag und Verwendungszweck vor einer Überweisung immer mit der PDF-Rechnung vergleichen.")
-                        }
-
-                        self.state.stage = .paymentPreview
-                        self.panel.show()
-                    case .failure(let error):
-                        self.showError(error.localizedDescription)
-                    }
-                }
-            }
-        }
-    }
-
-    private func choosePaymentPDFFallback(suggestedName: String?) -> URL? {
-        let picker = NSOpenPanel()
-        picker.title = L10n.tr("Rechnung auswählen")
-        picker.message = L10n.source("Outlook stellt den erkannten PDF-Anhang nicht als Datei bereit. Wähle die Rechnung einmal aus; Replyzen liest sie danach direkt mit OpenAI.")
-        picker.prompt = L10n.tr("PDF verwenden")
-        picker.canChooseFiles = true
-        picker.canChooseDirectories = false
-        picker.allowsMultipleSelection = false
-        picker.allowedFileTypes = ["pdf"]
-
-        let downloads = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Downloads", isDirectory: true)
-        if FileManager.default.fileExists(atPath: downloads.path) {
-            picker.directoryURL = downloads
-        }
-        if let suggestedName, !suggestedName.isEmpty {
-            picker.nameFieldStringValue = URL(fileURLWithPath: suggestedName).lastPathComponent
-        }
-
-        NSApp.activate(ignoringOtherApps: true)
-        guard picker.runModal() == .OK,
-              let url = picker.url,
-              url.pathExtension.lowercased() == "pdf" else { return nil }
-        return url.standardizedFileURL
-    }
-
-    private func copyPaymentDetails() {
-        let lines = [
-            state.paymentRecipient.isEmpty ? nil : L10n.tr("Empfänger: {0}", state.paymentRecipient),
-            state.paymentIBAN.isEmpty ? nil : "IBAN: \(state.paymentIBAN)",
-            state.paymentBIC.isEmpty ? nil : "BIC: \(state.paymentBIC)",
-            state.paymentAmount.isEmpty ? nil : L10n.tr("Betrag: {0} {1}", state.paymentAmount, state.paymentCurrency),
-            state.paymentPurpose.isEmpty ? nil : L10n.tr("Verwendungszweck: {0}", state.paymentPurpose)
-        ].compactMap { $0 }
-        guard !lines.isEmpty else { return }
-        copyToPasteboard(lines.joined(separator: "\n"))
-        state.successMessage = L10n.tr("Überweisungsdaten wurden in die Zwischenablage kopiert. Bitte vor der Zahlung im Banking prüfen.")
-        state.stage = .success
-        panel.show()
-    }
 
     private func createCalendarEvent() {
         let title = state.calendarTitle.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1418,7 +1140,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             insertNewMail()
         case .forward:
             insertForwardDraft()
-        case .calendar, .payment:
+        case .calendar:
             break
         }
     }

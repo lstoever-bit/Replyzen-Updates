@@ -1,6 +1,6 @@
 import Foundation
 
-/// Shared normalization for reply, new-mail, calendar and payment JSON.
+/// Shared normalization for reply, new-mail and calendar JSON.
 /// Keeps the existing decoder behavior and error messages unchanged.
 enum ResponseJSON {
     static func cleanedText(_ text: String) -> String {

@@ -8,8 +8,8 @@ import sys
 import zipfile
 root = Path(sys.argv[1])
 manifest = json.loads((root / 'update.json').read_text())
-assert manifest['version'] == '1.54.0' and manifest['build'] == 55
-assert manifest['download_url'] == 'Replyzen-update-1.54.zip'
+assert manifest['version'] == '1.55.0' and manifest['build'] == 56
+assert manifest['download_url'] == 'Replyzen-update-1.55.zip'
 archive = root / manifest['download_url']
 assert hashlib.sha256(archive.read_bytes()).hexdigest() == manifest['sha256']
 with zipfile.ZipFile(archive) as package:
@@ -27,4 +27,4 @@ with zipfile.ZipFile(archive) as package:
     assert binary[:4] == b'\xcf\xfa\xed\xfe'
     assert package.read('Replyzen.app/Contents/Resources/ReplyzenLogo.png')[:8] == b'\x89PNG\r\n\x1a\n'
     assert package.read('Replyzen.app/Contents/Resources/Replyzen.icns')[:4] == b'icns'
-print('PASS: 1.54 version/build, bundle identity, archive, SHA-256, binary and icons')
+print('PASS: 1.55 version/build, bundle identity, archive, SHA-256, binary and icons')

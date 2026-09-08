@@ -7,7 +7,6 @@ final class AppState: ObservableObject {
         case newMail
         case forward
         case calendar
-        case payment
 
         var id: String { rawValue }
 
@@ -17,7 +16,6 @@ final class AppState: ObservableObject {
             case .newMail: return L10n.tr("New Mail")
             case .forward: return L10n.tr("Forward")
             case .calendar: return L10n.tr("Termin")
-            case .payment: return L10n.tr("Überweisung")
             }
         }
     }
@@ -64,7 +62,6 @@ final class AppState: ObservableObject {
         case updating
         case preview
         case calendarPreview
-        case paymentPreview
         case inserting
         case success
         case needsAccessibility
@@ -107,22 +104,12 @@ final class AppState: ObservableObject {
     @Published var googleOAuthStatus: String = ""
     @Published var googleIsConnecting: Bool = false
     @Published var successMessage: String = ""
-    @Published var paymentRecipient: String = ""
-    @Published var paymentIBAN: String = ""
-    @Published var paymentBIC: String = ""
-    @Published var paymentAmount: String = ""
-    @Published var paymentCurrency: String = "EUR"
-    @Published var paymentPurpose: String = ""
-    @Published var paymentSourceStatus: String = ""
-    @Published var paymentWarning: String = ""
 
     var mailText: String = ""
 
     var generateAction: (() -> Void)?
     var insertAction: (() -> Void)?
     var createCalendarAction: (() -> Void)?
-    var extractPaymentAction: (() -> Void)?
-    var copyPaymentAction: (() -> Void)?
     var connectGoogleCalendarAction: (() -> Void)?
     var disconnectGoogleCalendarAction: (() -> Void)?
     var openGoogleCloudAction: (() -> Void)?

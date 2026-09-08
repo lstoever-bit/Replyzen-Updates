@@ -20,7 +20,7 @@ enum InterfaceLanguage: String, CaseIterable, Identifiable {
 }
 
 /// All app-owned copy is in Resources/Localization.json. Technical identifiers,
-/// API prompts, outgoing mail, user-entered names and payment values are not keys.
+/// API prompts, outgoing mail and user-entered values are not keys.
 enum L10n {
     static let preferenceKey = "ReplyZen.InterfaceLanguage"
     private static let lock = NSLock()

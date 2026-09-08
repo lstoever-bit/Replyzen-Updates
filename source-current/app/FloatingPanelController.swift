@@ -23,8 +23,7 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
             defer: false
         )
 
-        let host = NSHostingController(rootView: OverlayView(state: state))
-        panel.contentViewController = host
+        panel.contentViewController = NSHostingController(rootView: OverlayView(state: state))
         panel.title = ReplyZenBrand.displayName
         panel.titleVisibility = .hidden
         panel.titlebarAppearsTransparent = true
@@ -54,9 +53,20 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
         fatalError("init(coder:) has not been implemented")
     }
 
+    private func installFreshHostingRoot() {
+        // A fresh hosting tree avoids stale AppKit representable geometry from a
+        // previously hidden editor. AppState keeps the user's draft/content intact.
+        panel.contentViewController = NSHostingController(rootView: OverlayView(state: state))
+        panel.contentViewController?.view.needsLayout = true
+        panel.contentViewController?.view.layoutSubtreeIfNeeded()
+    }
+
     func show(activate: Bool = true) {
         cancelScheduledResize()
         wantsVisibleInOutlookContext = true
+        if !panel.isVisible {
+            installFreshHostingRoot()
+        }
         // Every explicit opening starts centered, independent of any old frame.
         resizeForCurrentState(animated: false, centered: true)
         if activate {
@@ -239,13 +249,12 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
         case .instruction:
             switch state.outputMode {
             case .reply, .newMail, .forward: return NSSize(width: 900, height: 740)
-            case .calendar, .payment: return NSSize(width: 840, height: 640)
+            case .calendar: return NSSize(width: 840, height: 640)
             }
         case .calendarPreview:
             let extraOAuthHeight = state.googleNeedsOAuthCredentials ? 130.0 : 0.0
             let warningHeight = state.calendarWarning.isEmpty ? 0.0 : 50.0
             return NSSize(width: 880, height: 760 + extraOAuthHeight + warningHeight)
-        case .paymentPreview: return NSSize(width: 840, height: 690)
         case .preview: return NSSize(width: 900, height: 740)
         case .apiKey, .needsAccessibility, .error: return NSSize(width: 720, height: 520)
         case .generating, .updating, .inserting: return NSSize(width: 680, height: 400)

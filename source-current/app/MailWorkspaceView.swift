@@ -8,7 +8,7 @@ enum MailWorkspaceLogic {
         switch state.outputMode {
         case .newMail: return hasInstruction
         case .reply, .forward: return state.mailStatus == .available && hasInstruction
-        case .calendar, .payment: return state.mailStatus == .available
+        case .calendar: return state.mailStatus == .available
         }
     }
 
@@ -29,7 +29,7 @@ enum MailWorkspaceLogic {
                 state.instruction = state.replyLanguage.defaultReplyInstruction
                 state.instructionHTML = ""
             }
-        case .calendar, .payment: break
+        case .calendar: break
         }
     }
 
@@ -248,23 +248,23 @@ struct MailWorkspaceView: View {
 
     private var extractionCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Label(state.outputMode == .calendar ? L10n.tr("Termin aus Mail") : L10n.tr("Überweisung aus Mail + PDF"),
-                  systemImage: state.outputMode == .calendar ? "calendar.badge.plus" : "banknote")
+            Label(L10n.tr("Termin aus Mail"), systemImage: "calendar.badge.plus")
                 .font(.title3.weight(.semibold))
-            Text(state.outputMode == .calendar
-                 ? L10n.tr("Titel, Kurzbeschreibung und erkennbaren Zeitpunkt aus der Mail übernehmen. Den Zielkalender wählst du anschließend aus.")
-                 : L10n.tr("Empfänger, IBAN, Betrag und Verwendungszweck aus dem PDF-Anhang auslesen. Alle Angaben bleiben vor dem Kopieren bearbeitbar. Es wird keine Überweisung ausgelöst."))
-                .foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            Text(L10n.tr("Titel, Kurzbeschreibung und erkennbaren Zeitpunkt aus der Mail übernehmen. Den Zielkalender wählst du anschließend aus."))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(24).frame(maxWidth: .infinity, alignment: .leading).modifier(WorkspaceCard())
+        .padding(24)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .modifier(WorkspaceCard())
     }
+
     private var primaryTitle: String {
         switch state.outputMode {
         case .reply: return L10n.tr("Antwort erstellen")
         case .newMail: return L10n.tr("Mail erstellen")
         case .forward: return L10n.tr("Forward erstellen")
         case .calendar: return L10n.tr("Termin erstellen")
-        case .payment: return L10n.tr("Überweisung extrahieren")
         }
     }
 }

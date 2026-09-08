@@ -99,7 +99,6 @@ struct WorkspaceHeader: View {
         switch state.stage {
         case .preview: return L10n.tr("Entwurf prüfen")
         case .calendarPreview: return L10n.tr("Termin prüfen")
-        case .paymentPreview: return L10n.tr("Daten prüfen")
         default: return L10n.tr("Bereit")
         }
     }

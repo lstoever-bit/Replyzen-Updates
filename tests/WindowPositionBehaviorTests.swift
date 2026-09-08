@@ -151,21 +151,20 @@ struct WindowPositionBehaviorTests {
         equal(visibleToolbar().frame.origin, dropped, "restore after app switch")
 
         // Exercise every real action target; the drag area must not cover buttons.
-        var clicks = Array(repeating: 0, count: 7)
+        var clicks = Array(repeating: 0, count: 6)
         toolbar.newAction = { clicks[0] += 1 }
         toolbar.replyAction = { clicks[1] += 1 }
         toolbar.replyAllAction = { clicks[2] += 1 }
         toolbar.forwardAction = { clicks[3] += 1 }
         toolbar.cancelAction = { clicks[4] += 1 }
         toolbar.calendarAction = { clicks[5] += 1 }
-        toolbar.paymentAction = { clicks[6] += 1 }
         let buttons = root.subviews.compactMap { $0 as? NSButton }.sorted { $0.frame.minX < $1.frame.minX }
-        expect(buttons.count == 7, "lost an action button")
+        expect(buttons.count == 6, "lost an action button")
         for button in buttons {
             expect(root.hitTest(NSPoint(x: button.frame.midX, y: button.frame.midY)) === button, "drag handle covers a button")
             button.performClick(nil)
         }
-        expect(clicks == Array(repeating: 1, count: 7), "action routing changed")
+        expect(clicks == Array(repeating: 1, count: 6), "action routing changed")
         equal(offset(defaults), NSPoint(x: -73, y: -105), "buttons changed saved position")
         toolbar.stop()
 
@@ -195,6 +194,6 @@ struct WindowPositionBehaviorTests {
         recreated.setSuppressed(false)
         equal(newPanel.frame.origin, shifted(dropped, -12, -14), "restore after interrupted gesture")
         recreated.stop()
-        print("PASS: toolbar hit testing, mouse down/drag/up, polling, suppression, app switch, persisted reload, following/clamping and all seven actions")
+        print("PASS: toolbar hit testing, mouse down/drag/up, polling, suppression, app switch, persisted reload, following/clamping and all six actions")
     }
 }
