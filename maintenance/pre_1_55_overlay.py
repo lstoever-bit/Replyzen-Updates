@@ -18,3 +18,9 @@ text = path.read_text(encoding="utf-8")
 text = text.replace("API prompts, outgoing mail, user-entered names and payment values are not keys.",
                     "API prompts, outgoing mail and user-entered values are not keys.")
 path.write_text(text, encoding="utf-8")
+
+path = root / "ResponseJSON.swift"
+text = path.read_text(encoding="utf-8")
+text = text.replace("Shared normalization for reply, new-mail, calendar and payment JSON.",
+                    "Shared normalization for reply, new-mail and calendar JSON.")
+path.write_text(text, encoding="utf-8")
