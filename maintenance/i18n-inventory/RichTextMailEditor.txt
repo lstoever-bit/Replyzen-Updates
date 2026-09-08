@@ -1,0 +1,2 @@
+296: guard attributed.length > 0 else { return "" }
+307: return ""

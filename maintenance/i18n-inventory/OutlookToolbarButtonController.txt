@@ -1,0 +1,8 @@
+173: let pipe = NSTextField(labelWithString: "|")
+181: newButton = makeButton(symbol: "square.and.pencil", x: 6, tooltip: "New")
+182: replyButton = makeButton(symbol: "arrowshape.turn.up.left", x: 46, tooltip: "Reply")
+183: replyAllButton = makeButton(symbol: "arrowshape.turn.up.left.2", x: 86, tooltip: "Reply All")
+184: forwardButton = makeButton(symbol: "arrowshape.turn.up.right", x: 126, tooltip: "Forward")
+185: cancelButton = makeButton(symbol: "xmark.circle", x: 178, tooltip: "Cancel")
+186: calendarButton = makeButton(symbol: "calendar.badge.plus", x: 218, tooltip: "Calendar")
+187: paymentButton = makeButton(symbol: "banknote", x: 258, tooltip: "Payment")

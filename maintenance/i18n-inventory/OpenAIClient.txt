@@ -1,0 +1,22 @@
+209: throw APIError(message: "OpenAI hat keinen gültigen Antwortentwurf geliefert.")
+214: throw APIError(message: "OpenAI hat keinen Antworttext geliefert.")
+220: throw APIError(message: "OpenAI hat den Antwortentwurf nicht im erwarteten Format geliefert.")
+227: throw APIError(message: "OpenAI hat keinen gültigen Mailentwurf geliefert.")
+232: throw APIError(message: "OpenAI hat keinen Mailtext geliefert.")
+238: throw APIError(message: "OpenAI hat den Mailentwurf nicht im erwarteten Format geliefert.")
+294: "title: the shortest useful calendar title possible, ideally 1-4 words, maximum 6 words. No filler such as Meeting, Call, Appointment, Termin unless it is necessary to understand the event.",
+333: throw APIError(message: "OpenAI hat keinen gültigen Terminvorschlag geliefert.")
+338: throw APIError(message: "OpenAI hat den Terminvorschlag nicht im erwarteten Format geliefert.")
+481: completion(.failure(APIError(message: "Ungültige OpenAI-Datei-URL.")))
+489: completion(.failure(APIError(message: "Der PDF-Anhang konnte nicht gelesen werden: \(url.lastPathComponent)")))
+533: completion(.failure(APIError(message: "Keine Antwort beim PDF-Upload von OpenAI erhalten.")))
+545: throw APIError(message: "OpenAI hat keine Datei-ID für den PDF-Anhang geliefert.")
+551: completion(.failure(APIError(message: "Die OpenAI-Antwort auf den PDF-Upload war ungültig.")))
+568: throw APIError(message: "OpenAI hat keine gültigen Überweisungsdaten geliefert.")
+573: throw APIError(message: "OpenAI hat die Überweisungsdaten nicht im erwarteten Format geliefert.")
+580: return "FINAL OUTPUT LANGUAGE IS GERMAN. Write the entire \(purpose) in natural German. The USER INSTRUCTION may be written in any language; treat its language only as input and translate its requested meaning into German. Never switch the final email to another language because the instruction itself is written in that language. Preserve exact names, brands, URLs, email addresses and explicitly requested verbatim quotations."
+582: return "FINAL OUTPUT LANGUAGE IS US ENGLISH. Write the entire \(purpose) in natural US English using American spelling and phrasing. The USER INSTRUCTION may be written in any language; treat its language only as input and translate its requested meaning into US English. Never switch the final email to German or another language because the instruction itself is written in that language. Preserve exact names, brands, URLs, email addresses and explicitly requested verbatim quotations."
+597: completion(.failure(APIError(message: "Ungültige OpenAI-URL.")))
+637: completion(.failure(APIError(message: "Keine Antwort von OpenAI erhalten.")))
+668: throw APIError(message: "OpenAI hat ein unerwartetes Antwortformat geliefert.")
+684: throw APIError(message: "OpenAI hat keinen Antworttext geliefert.")

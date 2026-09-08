@@ -1,0 +1,3 @@
+18: return "Microsoft Outlook läuft nicht."
+20: return "Ich finde kein Outlook-Fenster. Öffne die Mail bitte sichtbar in Outlook."
+22: return "Ich konnte in der geöffneten Outlook-Mail keinen lesbaren Mailtext finden."

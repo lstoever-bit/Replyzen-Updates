@@ -1,0 +1,63 @@
+85: "Warum sind E-Mails schlechte Geheimnisträger? Weil am Ende doch jemand auf ‚Allen antworten‘ klickt.",
+86: "Mein Kalender wollte spontan sein. Ich habe ihm dafür einen Termin eingetragen.",
+87: "CC ist die höfliche Art zu sagen: Jetzt weißt du es auch.",
+89: "Der kürzeste Büro-Witz? ‚Kurze Abstimmung‘.",
+92: "Mein Kalender und ich haben eine gute Beziehung: Er sagt mir ständig, wo ich sein soll.",
+93: "Eine E-Mail ohne Betreff ist wie ein Termin ohne Uhrzeit: spannend, aber unnötig.",
+94: "Warum hat der Termin nicht zurückgerufen? Er war schon vergeben."
+96: return jokes.randomElement() ?? "Replyzen läuft. Das ist heute schon die halbe Miete."
+120: } else if let fallback = NSImage(systemSymbolName: "envelope.badge", accessibilityDescription: ReplyZenBrand.displayName) {
+130: let reply = NSMenuItem(title: "ReplyZen öffnen   ⌃⌥R", action: #selector(menuReply), keyEquivalent: "")
+134: let login = NSMenuItem(title: "Bei Anmeldung starten", action: #selector(menuEnableLogin), keyEquivalent: "")
+138: let key = NSMenuItem(title: "API-Key ändern…", action: #selector(menuAPIKey), keyEquivalent: "")
+144: let updates = NSMenuItem(title: "Nach Updates suchen…", action: #selector(menuCheckUpdates), keyEquivalent: "")
+149: let source = NSMenuItem(title: "Update-Quelle…", action: #selector(menuUpdateSource), keyEquivalent: "")
+155: let quit = NSMenuItem(title: "Beenden", action: #selector(menuQuit), keyEquivalent: "q")
+313: title: "Termin nicht erstellt",
+314: message: "Die geöffnete Outlook-Mail konnte nicht gelesen werden."
+380: title: "Überweisung nicht erkannt",
+381: message: "Die geöffnete Outlook-Mail konnte nicht gelesen werden."
+424: self.showSimpleAlert(title: "Absage fehlgeschlagen", message: "OpenAI hat keinen Antworttext geliefert.")
+432: self.showSimpleAlert(title: "Absage fehlgeschlagen", message: error.localizedDescription)
+440: self.showSimpleAlert(title: "Absage fehlgeschlagen", message: "Die geöffnete Outlook-Mail konnte nicht gelesen werden.")
+508: alert.messageText = "Replyzen · Update-Quelle"
+509: alert.informativeText = "Replyzen nutzt standardmäßig den offiziellen Update-Kanal. Hier kannst du die HTTPS-Adresse zu update.json bei Bedarf ändern."
+529: showSimpleAlert(title: "Ungültige Update-URL", message: "Bitte eine vollständige HTTPS-Adresse zu update.json eintragen.")
+535: showSimpleAlert(title: "Update-Quelle gespeichert", message: "Künftig prüft die App beim Start automatisch auf neue Versionen. Installiert wird erst nach deinem Klick auf „Installieren“. ")
+549: self.updateMenuItem?.title = "Update verfügbar: \(update.manifest.version)…"
+556: self.showSimpleAlert(title: "Replyzen", message: "Du verwendest bereits die aktuelle Version \(self.updateManager.currentVersion).")
+561: self.showSimpleAlert(title: "Update-Prüfung fehlgeschlagen", message: error.localizedDescription)
+571: alert.messageText = "Replyzen \(update.manifest.version) ist verfügbar"
+576: alert.addButton(withTitle: "Später")
+608: alert.messageText = title == "Replyzen" ? "Replyzen" : "Replyzen · \(title)"
+695: return "Kurz, freundlich und direkt antworten."
+697: return "Reply briefly, friendly and directly."
+715: state.mailStatus = .unavailable("Keine Outlook-Mail verfügbar. Reply ist ausgeblendet.")
+784: message = "Outlook läuft gerade nicht. New Mail funktioniert trotzdem."
+912: state.mailStatus = .unavailable("Keine lesbare Outlook-Mail erkannt. Für Forward bitte eine Mail öffnen und erneut versuchen.")
+957: state.mailStatus = .unavailable("Keine lesbare Outlook-Mail erkannt. Für einen Termin bitte eine Mail öffnen und erneut versuchen.")
+994: self.state.calendarWarning = "Im Mailverlauf wurde kein eindeutiger Terminzeitpunkt erkannt. Bitte Datum und Uhrzeit prüfen."
+1014: state.mailStatus = .unavailable("Keine lesbare Outlook-Mail erkannt. Für eine Überweisung bitte die Rechnungsmail öffnen und erneut versuchen.")
+1074: self.state.statusText = "Outlook blockiert den PDF-Zugriff – bitte Rechnung auswählen …"
+1089: title: "PDF nicht verfügbar",
+1090: message: "Outlook gibt den PDF-Anhang nicht frei. Bitte Payment erneut klicken und im Dateidialog die Rechnung auswählen."
+1109: self.state.statusText = "PDF wird direkt an OpenAI übergeben und gelesen …"
+1117: sourceStatus = "Kein direkt zugängliches PDF; lokal gelesen: " + fallback.usedFiles.joined(separator: ", ")
+1157: self.state.paymentWarning = "Kein PDF wurde direkt von OpenAI gelesen. Bitte Empfänger, IBAN und Betrag besonders sorgfältig prüfen."
+1161: self.state.paymentWarning = "Bitte IBAN, Betrag und Verwendungszweck vor einer Überweisung immer mit der PDF-Rechnung vergleichen."
+1176: picker.title = "Rechnung auswählen"
+1177: picker.message = "Outlook stellt den erkannten PDF-Anhang nicht als Datei bereit. Wähle die Rechnung einmal aus; Replyzen liest sie danach direkt mit OpenAI."
+1201: state.paymentRecipient.isEmpty ? nil : "Empfänger: \(state.paymentRecipient)",
+1209: state.successMessage = "Überweisungsdaten wurden in die Zwischenablage kopiert. Bitte vor der Zahlung im Banking prüfen."
+1223: showError("Bitte zuerst einen Kalender auswählen.")
+1333: state.googleOAuthStatus = "Google-Anmeldung wird im Browser geöffnet …"
+1397: return "\(day)@fut.io"
+1399: return "\(day)\(compactTime)@fut.io"
+1418: state.mailStatus = .unavailable("Die ursprüngliche Outlook-Mail ist nicht mehr verfügbar. Bitte erneut laden.")
+1468: state.mailStatus = .unavailable("Die ursprüngliche Outlook-Mail ist nicht mehr verfügbar. Bitte erneut laden.")
+1483: state.statusText = "Outlook Forward wird geöffnet; Thread und Anhänge bleiben erhalten"
+1547: self.showError("Der Forward wurde in Outlook geöffnet, aber Replyzen konnte den Text nicht automatisch über dem Thread einsetzen. Der Text liegt in der Zwischenablage.")
+1559: showError("Microsoft Outlook läuft nicht. Der Mailtext wurde in die Zwischenablage kopiert.")
+1566: showError("Replyzen braucht Bedienungshilfen, um automatisch eine neue Outlook-Mail zu befüllen. Der Mailtext wurde in die Zwischenablage kopiert.")
+1571: state.statusText = "Neue Outlook-Mail wird geöffnet und befüllt"
+1672: showError("Der API-Key konnte nicht im macOS-Schlüsselbund gespeichert werden.")

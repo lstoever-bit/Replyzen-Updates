@@ -1,0 +1,105 @@
+37: loadingView(title: "Einen Moment", subtitle: generatingSubtitle)
+39: loadingView(title: "Update wird installiert", subtitle: "Neue Version wird geladen und eingerichtet …")
+57: loadingView(title: "Fast fertig", subtitle: insertingSubtitle)
+74: Text("ReplyZen läuft")
+76: Text("Bereit in Outlook · ⌃⌥R oder ✨ AI")
+81: Image(systemName: "checkmark.circle.fill")
+87: Text("Witz zum Start")
+99: Button("Schließen") { state.closeAction?() }
+101: Button("ReplyZen öffnen") { state.retryAction?() }
+112: Text("Mail, Termin oder Überweisung, direkt aus Outlook.")
+114: Button("ReplyZen öffnen") {
+128: Image(systemName: "envelope.badge")
+140: case .reply: return "Ich erstelle deine Antwort …"
+141: case .newMail: return "Ich formuliere deine neue Mail …"
+142: case .forward: return "Ich bereite die Weiterleitung vor …"
+143: case .calendar: return "Ich erstelle einen kurzen Termintitel und erkenne den Zeitpunkt …"
+144: case .payment: return "Ich lese den PDF-Anhang und extrahiere die Überweisungsdaten …"
+151: return "Ich öffne eine neue Outlook-Mail und setze den Text ein …"
+153: return "Ich öffne die Outlook-Weiterleitung und setze deinen Text über den Thread …"
+155: return "Ich setze die Antwort in Outlook ein …"
+157: return "Fast fertig …"
+188: Image(systemName: "banknote")
+190: Text("Überweisung prüfen")
+196: Image(systemName: "exclamationmark.triangle.fill")
+206: Text("Empfänger").font(.caption).foregroundStyle(.secondary)
+207: TextField("Empfänger", text: $state.paymentRecipient)
+212: Text("IBAN").font(.caption).foregroundStyle(.secondary)
+213: TextField("IBAN", text: $state.paymentIBAN)
+219: Text("Betrag").font(.caption).foregroundStyle(.secondary)
+220: TextField("0,00", text: $state.paymentAmount)
+224: Text("Währung").font(.caption).foregroundStyle(.secondary)
+225: TextField("EUR", text: $state.paymentCurrency)
+230: Text("BIC (optional)").font(.caption).foregroundStyle(.secondary)
+231: TextField("BIC", text: $state.paymentBIC)
+237: Text("Verwendungszweck").font(.caption).foregroundStyle(.secondary)
+257: Image(systemName: "calendar.badge.plus")
+259: Text("Termin prüfen")
+265: Image(systemName: "exclamationmark.triangle.fill")
+275: Text("Titel").font(.caption).foregroundStyle(.secondary)
+276: TextField("Kurzer Termintitel", text: $state.calendarTitle)
+281: Text("Worum geht es?").font(.caption).foregroundStyle(.secondary)
+291: Text("Start").font(.caption).foregroundStyle(.secondary)
+292: DatePicker("", selection: $state.calendarStart, displayedComponents: [.date, .hourAndMinute])
+297: Text("Ende").font(.caption).foregroundStyle(.secondary)
+298: DatePicker("", selection: $state.calendarEnd, displayedComponents: [.date, .hourAndMinute])
+305: Text("Zeitzone: CET / Europe-Berlin")
+311: Image(systemName: "g.circle.fill")
+312: Text("Google Calendar · lennard@minubo.com")
+316: Image(systemName: "checkmark.circle.fill")
+322: Text("Einmalig Google OAuth einrichten: Google Calendar API aktivieren und einen OAuth-Client vom Typ „Desktop-App“ erstellen. Client-ID und Client Secret hier einfügen.")
+326: TextField("Google OAuth Client-ID", text: $state.googleClientIDDraft)
+328: SecureField("Google OAuth Client Secret", text: $state.googleClientSecretDraft)
+332: Button("Google Cloud öffnen") { state.openGoogleCloudAction?() }
+334: Button(state.googleIsConnecting ? "Verbinde …" : "Speichern & Google verbinden") {
+342: Text(state.googleOAuthStatus.isEmpty ? "Noch nicht verbunden." : state.googleOAuthStatus)
+347: Button("OAuth-Zugang ändern") { state.googleNeedsOAuthCredentials = true }
+349: Button("Mit Google verbinden") { state.connectGoogleCalendarAction?() }
+354: Text("Verbunden: \(state.googleConnectedEmail)")
+358: Button("Trennen") { state.disconnectGoogleCalendarAction?() }
+364: if state.calendarListStatus.contains("geladen") {
+372: Picker("Kalender", selection: $state.selectedCalendarID) {
+390: secondaryTitle: "Zurück", primaryTitle: "Überweisungsdaten kopieren",
+391: hint: "Es wird keine Zahlung ausgelöst.",
+400: secondaryTitle: "Zurück", primaryTitle: "Im Kalender anlegen",
+401: hint: "Zeit und Zielkalender prüfen.",
+410: case .reply: return "Antwortvorschlag"
+411: case .newMail: return "Neue Mail"
+412: case .forward: return "Weiterleitung"
+413: case .calendar: return "Termin"
+414: case .payment: return "Überweisung"
+420: Image(systemName: "checkmark.circle.fill")
+422: Text("Fertig")
+427: ? "Der Text wurde in eine neue Outlook-Mail eingesetzt. Bitte Empfänger und Betreff ergänzen, prüfen und selbst senden."
+428: : "Die Antwort ist in Outlook eingesetzt. Bitte noch kurz prüfen und selbst senden."))
+431: Button("Schließen") { state.closeAction?() }
+438: Text("Einmalige Berechtigung")
+440: Text("Für das Lesen aus Outlook und das automatische Einsetzen braucht Replyzen Zugriff auf Bedienungshilfen. New Mail erstellen kannst du auch ohne Mail-Kontext.")
+442: Text("Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen → Replyzen einschalten.")
+445: Button("Systemeinstellungen öffnen") { state.openAccessibilityAction?() }
+447: Button("Zurück zu Replyzen") { state.retryAction?() }
+455: Text("OpenAI API-Key")
+457: Text("Der Key wird einmalig im macOS-Schlüsselbund gespeichert.")
+460: SecureField("sk-…", text: $state.apiKeyDraft)
+464: Button("Abbrechen") { state.closeAction?() }
+466: Button("Speichern") { state.saveAPIKeyAction?() }
+475: Image(systemName: "exclamationmark.triangle.fill")
+477: Text("Das hat nicht geklappt")
+486: Button("Schließen") { state.closeAction?() }
+488: Button("Zurück") {
+502: @State private var draftName = ""
+503: @State private var draftPrompt = ""
+510: Text("Commands")
+512: Text("Name, Prompt und Tone festlegen. Die Sprache steuerst du weiterhin über 🇩🇪 / 🇺🇸.")
+517: Button("+ Add Command") {
+555: Text("Name")
+558: TextField("Command name", text: $draftName)
+561: Text("Prompt")
+570: Text("Tone")
+574: Picker("Tone", selection: $draftTone) {
+586: Button("Delete", role: .destructive) {
+593: Button("Save") {
+606: Button("Reset Defaults") {
+611: Button("Done") { dismiss() }
+652: draftName = ""
+653: draftPrompt = ""

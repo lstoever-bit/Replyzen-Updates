@@ -1,0 +1,16 @@
+32: return "Google OAuth ist noch nicht eingerichtet. Bitte einmalig Client-ID und Client Secret eines Google-OAuth-Clients vom Typ Desktop-App hinterlegen."
+34: return "Replyzen ist noch nicht mit Google Calendar verbunden. Bitte zuerst mit lennard@minubo.com anmelden."
+36: return "Die Google-Anmeldung wurde abgebrochen."
+38: return "Google-Anmeldung fehlgeschlagen: \(message)"
+40: return "Bitte mit lennard@minubo.com anmelden. Angemeldet wurde \(email)."
+42: return "Google hat eine unerwartete Antwort geliefert."
+44: return "Der ausgewählte Google-Kalender ist nicht mehr verfügbar. Bitte einen anderen Kalender wählen."
+46: return "Start- und Endzeit des Termins sind ungültig."
+48: return "Google Calendar: \(message)"
+50: return "Google-Zugangsdaten konnten nicht im Schlüsselbund gespeichert werden (\(status))."
+164: self.finishOAuth(.failure(CalendarError.authorizationFailed("Lokaler Callback-Port konnte nicht geöffnet werden.")))
+295: self.sendBrowserResponse(connection, success: false, message: "Ungültige OAuth-Antwort.")
+301: self.sendBrowserResponse(connection, success: false, message: "Ungültige OAuth-Antwort.")
+312: self.sendBrowserResponse(connection, success: false, message: "Ungültige OAuth-Antwort.")
+326: self.sendBrowserResponse(connection, success: false, message: "OAuth-Prüfung fehlgeschlagen.")
+576: return "\(k)=\(v)"

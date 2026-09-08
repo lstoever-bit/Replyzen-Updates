@@ -1,0 +1,9 @@
+8: private let storageKey = "Replyzen.CustomCommands.v1"
+22: name: "New Command",
+23: prompt: "Write a short, clear reply based on the email thread.",
+68: name: "Reminder",
+69: prompt: "Write a short follow-up that politely reminds the recipient about the open topic.",
+73: name: "Danke",
+74: prompt: "Thank the recipient briefly and confirm the message. Keep it concise.",
+78: name: "Kurz & direkt",
+79: prompt: "Reply very briefly and directly. Include only what is necessary.",

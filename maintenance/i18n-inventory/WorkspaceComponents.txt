@@ -1,0 +1,16 @@
+40: Image(systemName: "envelope.badge").resizable().scaledToFit().padding(8)
+50: Text("Mail AI")
+61: Image(systemName: "gearshape").frame(width: 28, height: 28)
+64: .help("Einstellungen und Hinweise")
+65: .accessibilityLabel("Einstellungen und Hinweise")
+69: Text("Öffnen in Outlook: ⌃⌥R")
+70: Text("Der Editor-Zoom verändert nur die Anzeige. Mailtext wird weiterhin in Calibri Light, 10,5 pt eingesetzt.")
+74: Button("API-Key ändern …") {
+78: Button("Bedienungshilfen öffnen …") {
+82: Text("Updates und weitere Optionen findest du im ReplyZen-Menü in der macOS-Menüleiste.")
+96: case .preview: return "Entwurf prüfen"
+97: case .calendarPreview: return "Termin prüfen"
+98: case .paymentPreview: return "Daten prüfen"
+99: default: return "Bereit"
+108: var hint: String = ""
+130: .accessibilityIdentifier("replyzen.actionBar")

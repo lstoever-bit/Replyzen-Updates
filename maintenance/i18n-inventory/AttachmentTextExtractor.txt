@@ -1,0 +1,3 @@
+131: guard let document = PDFDocument(url: url) else { return "" }
+143: let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return "" }
+153: return ""

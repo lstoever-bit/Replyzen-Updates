@@ -1,0 +1,65 @@
+19: let isDefault = trimmed == "Kurz, freundlich und direkt antworten." ||
+20: trimmed == "Reply briefly, friendly and directly."
+24: state.instruction = ""
+25: state.instructionHTML = ""
+27: if mode == .newMail { state.newMailSubject = "" }
+31: ? "Kurz, freundlich und direkt antworten."
+32: : "Reply briefly, friendly and directly."
+33: state.instructionHTML = ""
+44: ("Mo", "mon"), ("Di", "tues"), ("Mi", "wed"), ("Do", "thurs"),
+45: ("Fr", "fri"), ("Sa", "sat"), ("So", "sun")
+48: String(format: "%02d:%02d", slot / 2, slot % 2 == 0 ? 0 : 30)
+61: Text("Deine Anweisung").font(.system(size: 12, weight: .medium))
+65: .accessibilityLabel("Anweisung für den Mailentwurf")
+80: secondaryTitle: "Schließen", primaryTitle: primaryTitle,
+81: hint: isMail ? "Versendet wird erst in Outlook." : "Vor dem Übernehmen prüfen.",
+92: if hasMail { modeButton(.reply, symbol: "arrowshape.turn.up.left") }
+93: modeButton(.newMail, symbol: "square.and.pencil")
+94: if hasMail { modeButton(.forward, symbol: "arrowshape.turn.up.right") }
+115: Text("Lädt …")
+117: Image(systemName: hasMail ? "checkmark.circle" : "info.circle")
+118: Text(hasMail ? "Mail erkannt" : "Ohne Mail-Kontext")
+121: Button { state.refreshMailAction?() } label: { Image(systemName: "arrow.clockwise") }
+122: .buttonStyle(.borderless).help("Outlook-Mail erneut lesen")
+123: .accessibilityLabel("Outlook-Mail erneut lesen")
+131: return hasMail ? "Die geöffnete Outlook-Mail dient als Kontext."
+132: : "Neue Mail ohne Kontext möglich. Für Reply oder Forward zuerst eine Outlook-Mail öffnen."
+138: Text("Ton").font(.caption).foregroundStyle(.secondary)
+139: Picker("Ton", selection: $state.replyTone) {
+143: .accessibilityLabel("Ton des Mailentwurfs")
+145: Toggle("Compact", isOn: $state.newMailCompact)
+146: .toggleStyle(.checkbox).help("So kurz wie möglich formulieren")
+155: languageButton("DE", language: .german, title: "Deutsch")
+156: languageButton("EN", language: .usEnglish, title: "US English")
+160: .accessibilityElement(children: .contain).accessibilityLabel("Ausgabesprache")
+172: Toggle(isOn: $state.reminderEnabled) { Label("Reminder", systemImage: "bell") }
+178: Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold))
+181: .buttonStyle(.borderless).help("Reminder-Tag und Uhrzeit ändern")
+183: Text("BCC: \(reminderAddress)").font(.caption).foregroundStyle(.secondary).lineLimit(1)
+193: Label("Reminder", systemImage: "bell").font(.headline)
+194: Picker("Tag", selection: $state.reminderDay) {
+197: .pickerStyle(.segmented).labelsHidden().accessibilityLabel("Reminder-Tag")
+199: Text("Uhrzeit")
+201: Picker("Uhrzeit", selection: $state.reminderTime) {
+206: Text("BCC: \(reminderAddress)").font(.caption.monospaced())
+208: HStack { Spacer(); Button("Fertig") { showsReminder = false } }
+215: return "\(day) · \(state.reminderTime)"
+218: let time = state.reminderTime.replacingOccurrences(of: ":", with: "")
+219: return time == "0600" ? "\(state.reminderDay)@fut.io" : "\(state.reminderDay)\(time)@fut.io"
+224: Label(state.outputMode == .calendar ? "Termin aus Mail" : "Überweisung aus Mail + PDF",
+225: systemImage: state.outputMode == .calendar ? "calendar.badge.plus" : "banknote")
+228: ? "Titel, Kurzbeschreibung und erkennbaren Zeitpunkt aus der Mail übernehmen. Den Zielkalender wählst du anschließend aus."
+229: : "Empfänger, IBAN, Betrag und Verwendungszweck aus dem PDF-Anhang auslesen. Alle Angaben bleiben vor dem Kopieren bearbeitbar. Es wird keine Überweisung ausgelöst.")
+236: case .reply: return "Antwort erstellen"
+237: case .newMail: return "Mail erstellen"
+238: case .forward: return "Forward erstellen"
+239: case .calendar: return "Termin erstellen"
+240: case .payment: return "Überweisung extrahieren"
+250: Text(state.outputMode == .newMail ? "Neue Mail" :
+251: (state.outputMode == .forward ? "Weiterleitung" : "Antwortvorschlag"))
+255: Text("Betreff").font(.caption).foregroundStyle(.secondary)
+256: TextField("Betreff", text: $state.newMailSubject).textFieldStyle(.plain)
+262: .accessibilityLabel("Bearbeitbarer Mailentwurf")
+266: secondaryTitle: "Zurück",
+267: primaryTitle: state.outputMode == .newMail ? "Neue Mail in Outlook" : "In Outlook einsetzen",
+268: hint: "Prüfen, einsetzen, selbst senden.",
