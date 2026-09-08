@@ -23,7 +23,7 @@ enum ReplyZenDragInstaller {
     private static func attachIfNeeded(to window: NSWindow) {
         guard window.title == ReplyZenBrand.displayName,
               let content = window.contentView,
-              content.viewWithIdentifier(identifier) == nil else { return }
+              !content.subviews.contains(where: { $0.identifier == identifier }) else { return }
 
         let dragZone = ReplyZenWindowDragView(frame: .zero)
         dragZone.identifier = identifier
