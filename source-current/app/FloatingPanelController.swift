@@ -3,12 +3,16 @@ import SwiftUI
 import Combine
 
 final class FloatingPanelController: NSWindowController, NSWindowDelegate {
+    private static let savedFrameKey = "Replyzen.FloatingPanel.Frame.v1"
+
     private let panel: NSPanel
     private let state: AppState
     private var cancellables = Set<AnyCancellable>()
     private var resizeWorkItem: DispatchWorkItem?
     private var workspaceActivationObserver: NSObjectProtocol?
     private var wantsVisibleInOutlookContext = false
+    private var hasPositionedPanel = false
+    private var isApplyingProgrammaticFrame = false
     var onClose: (() -> Void)?
 
     init(state: AppState) {
@@ -33,6 +37,7 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
         panel.backgroundColor = .clear
         panel.isOpaque = false
         panel.hasShadow = true
+        panel.isMovable = true
         panel.isMovableByWindowBackground = true
         panel.minSize = NSSize(width: 680, height: 560)
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient, .ignoresCycle]
@@ -116,6 +121,31 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
         return false
     }
 
+    func windowDidMove(_ notification: Notification) {
+        guard !isApplyingProgrammaticFrame else { return }
+        hasPositionedPanel = true
+        persistPanelFrame()
+    }
+
+    func windowDidEndLiveResize(_ notification: Notification) {
+        guard !isApplyingProgrammaticFrame else { return }
+        hasPositionedPanel = true
+        persistPanelFrame()
+    }
+
+    private func persistPanelFrame() {
+        let frame = panel.frame
+        guard frame.width > 0, frame.height > 0 else { return }
+        UserDefaults.standard.set(NSStringFromRect(frame), forKey: Self.savedFrameKey)
+    }
+
+    private func savedPanelFrame() -> NSRect? {
+        guard let raw = UserDefaults.standard.string(forKey: Self.savedFrameKey) else { return nil }
+        let frame = NSRectFromString(raw)
+        guard frame.width > 0, frame.height > 0 else { return nil }
+        return frame
+    }
+
     private func observeWorkspaceContext() {
         workspaceActivationObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification,
@@ -194,7 +224,10 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
     }
 
     private func resizeForCurrentState(animated: Bool) {
-        guard let screen = screenUnderMouse() ?? panel.screen ?? NSScreen.main else { return }
+        let saved = hasPositionedPanel ? nil : savedPanelFrame()
+        let referenceFrame: NSRect? = saved ?? (hasPositionedPanel ? panel.frame : nil)
+        let preferredScreen = referenceFrame.flatMap { screen(containing: $0) }
+        guard let screen = preferredScreen ?? screenUnderMouse() ?? panel.screen ?? NSScreen.main else { return }
         let visible = screen.visibleFrame.insetBy(dx: 10, dy: 10)
         let preferred = preferredContentSize()
 
@@ -210,18 +243,40 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
         )
 
         var targetFrame = panel.frameRect(forContentRect: NSRect(origin: .zero, size: contentSize))
-        targetFrame.origin = NSPoint(
-            x: visible.midX - targetFrame.width / 2,
-            y: visible.midY - targetFrame.height / 2
-        )
 
-        // Final safety clamp for unusual menu-bar/dock layouts.
+        if let referenceFrame, screen(containing: referenceFrame) != nil {
+            // Keep the user's top-left anchor when ReplyZen changes size between
+            // instruction, preview, calendar and error states.
+            targetFrame.origin = NSPoint(
+                x: referenceFrame.minX,
+                y: referenceFrame.maxY - targetFrame.height
+            )
+        } else {
+            targetFrame.origin = NSPoint(
+                x: visible.midX - targetFrame.width / 2,
+                y: visible.midY - targetFrame.height / 2
+            )
+        }
+
+        // Final safety clamp for unusual menu-bar/dock layouts and disconnected screens.
         if targetFrame.minX < visible.minX { targetFrame.origin.x = visible.minX }
         if targetFrame.maxX > visible.maxX { targetFrame.origin.x = visible.maxX - targetFrame.width }
         if targetFrame.minY < visible.minY { targetFrame.origin.y = visible.minY }
         if targetFrame.maxY > visible.maxY { targetFrame.origin.y = visible.maxY - targetFrame.height }
 
+        hasPositionedPanel = true
+        isApplyingProgrammaticFrame = true
         panel.setFrame(targetFrame, display: true, animate: animated && panel.isVisible)
+        let releaseDelay: TimeInterval = animated && panel.isVisible ? 0.30 : 0.0
+        DispatchQueue.main.asyncAfter(deadline: .now() + releaseDelay) { [weak self] in
+            self?.isApplyingProgrammaticFrame = false
+        }
+    }
+
+    private func screen(containing frame: NSRect) -> NSScreen? {
+        let center = NSPoint(x: frame.midX, y: frame.midY)
+        return NSScreen.screens.first(where: { NSMouseInRect(center, $0.frame, false) })
+            ?? NSScreen.screens.first(where: { $0.frame.intersects(frame) })
     }
 
     private func preferredContentSize() -> NSSize {

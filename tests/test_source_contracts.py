@@ -19,8 +19,8 @@ class SourceContracts(unittest.TestCase):
         self.assertEqual(info['CFBundleExecutable'], 'Replyzen')
         self.assertEqual(info['CFBundleName'], 'Replyzen')
         self.assertEqual(info['CFBundleDisplayName'], 'ReplyZen')
-        self.assertEqual(info['CFBundleShortVersionString'], '1.49.0')
-        self.assertEqual(info['CFBundleVersion'], '50')
+        self.assertEqual(info['CFBundleShortVersionString'], '1.50.0')
+        self.assertEqual(info['CFBundleVersion'], '51')
 
     def test_visible_header_and_cached_logo(self):
         view = self.read('OverlayView.swift')
@@ -54,6 +54,16 @@ class SourceContracts(unittest.TestCase):
         self.assertIn('openReplyComposer(replyAll:', self.read('OutlookAccessibility.swift'))
         self.assertIn('replyScope', self.read('AppState.swift'))
         self.assertIn('case spanish', self.read('AppState.swift'))
+
+    def test_overlay_is_movable_and_persistent(self):
+        panel = self.read('FloatingPanelController.swift')
+        self.assertIn('panel.isMovable = true', panel)
+        self.assertIn('panel.isMovableByWindowBackground = true', panel)
+        self.assertIn('func windowDidMove(', panel)
+        self.assertIn('NSStringFromRect(frame)', panel)
+        self.assertIn('NSRectFromString(raw)', panel)
+        self.assertIn('referenceFrame.maxY - targetFrame.height', panel)
+        self.assertNotIn('visible.midX - targetFrame.width / 2\n', panel.split('if let referenceFrame', 1)[0])
 
     def test_json_and_upload_pipeline(self):
         client = self.read('OpenAIClient.swift')
