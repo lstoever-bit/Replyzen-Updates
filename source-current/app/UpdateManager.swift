@@ -8,6 +8,13 @@ final class UpdateManager {
         let downloadURL: String
         let sha256: String?
         let notes: String?
+        let notesLocalized: [String: String]?
+
+        var localizedNotes: String {
+            if let localized = notesLocalized?[L10n.language.rawValue], !localized.isEmpty { return localized }
+            if let notes, !notes.isEmpty { return L10n.render(notes) }
+            return L10n.tr("Die neue Version kann jetzt automatisch geladen und installiert werden.")
+        }
 
         enum CodingKeys: String, CodingKey {
             case version
@@ -15,6 +22,7 @@ final class UpdateManager {
             case downloadURL = "download_url"
             case sha256
             case notes
+            case notesLocalized = "notes_localized"
         }
     }
 
@@ -38,25 +46,25 @@ final class UpdateManager {
         var errorDescription: String? {
             switch self {
             case .feedNotConfigured:
-                return "Es ist noch keine Update-Quelle eingerichtet."
+                return L10n.source("Es ist noch keine Update-Quelle eingerichtet.")
             case .invalidFeedURL:
-                return "Die Update-URL ist ungültig. Bitte eine HTTPS-Adresse verwenden."
+                return L10n.source("Die Update-URL ist ungültig. Bitte eine HTTPS-Adresse verwenden.")
             case .badResponse:
-                return "Die Update-Quelle hat keine gültige Antwort geliefert."
+                return L10n.source("Die Update-Quelle hat keine gültige Antwort geliefert.")
             case .invalidManifest:
-                return "Die Update-Datei update.json ist ungültig."
+                return L10n.source("Die Update-Datei update.json ist ungültig.")
             case .invalidDownloadURL:
-                return "Die Download-Adresse des Updates ist ungültig."
+                return L10n.source("Die Download-Adresse des Updates ist ungültig.")
             case .checksumMismatch:
-                return "Die Prüfsumme des Updates stimmt nicht. Das Update wurde aus Sicherheitsgründen abgebrochen."
+                return L10n.source("Die Prüfsumme des Updates stimmt nicht. Das Update wurde aus Sicherheitsgründen abgebrochen.")
             case .archiveInvalid:
-                return "Das heruntergeladene Update enthält keine gültige Replyzen.app."
+                return L10n.source("Das heruntergeladene Update enthält keine gültige Replyzen.app.")
             case .bundleMismatch:
-                return "Das Update gehört nicht zu Replyzen."
+                return L10n.source("Das Update gehört nicht zu Replyzen.")
             case .appNotWritable:
-                return "Die installierte App kann nicht ersetzt werden. Bitte Replyzen in den Programme-Ordner verschieben und erneut versuchen."
+                return L10n.source("Die installierte App kann nicht ersetzt werden. Bitte Replyzen in den Programme-Ordner verschieben und erneut versuchen.")
             case .installPreparationFailed(let message):
-                return "Das Update konnte nicht vorbereitet werden: \(message)"
+                return L10n.source("Das Update konnte nicht vorbereitet werden: {0}", L10n.diagnostic(message))
             }
         }
     }
@@ -368,7 +376,7 @@ final class UpdateManager {
     private func sha256(of url: URL) throws -> String {
         let output = try runWithOutput("/usr/bin/shasum", ["-a", "256", url.path])
         guard let first = output.split(whereSeparator: { $0.isWhitespace }).first else {
-            throw UpdateError.installPreparationFailed("SHA-256 konnte nicht berechnet werden.")
+            throw UpdateError.installPreparationFailed(L10n.source("SHA-256 konnte nicht berechnet werden."))
         }
         return String(first)
     }

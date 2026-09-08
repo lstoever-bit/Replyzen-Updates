@@ -5,7 +5,9 @@ final class OpenAIClient {
 
     struct APIError: LocalizedError {
         let message: String
-        var errorDescription: String? { message }
+        var errorDescription: String? {
+            L10n.isAppMessage(message) ? message : L10n.source("Anfrage fehlgeschlagen. Technische Details: {0}", message)
+        }
     }
 
     struct ReplyDraft: Decodable {
@@ -206,36 +208,36 @@ final class OpenAIClient {
     private static func decodeReplyDraft(_ text: String) throws -> ReplyDraft {
         let cleaned = ResponseJSON.cleanedText(text)
         guard let data = cleaned.data(using: .utf8) else {
-            throw APIError(message: "OpenAI hat keinen gültigen Antwortentwurf geliefert.")
+            throw APIError(message: L10n.source("OpenAI hat keinen gültigen Antwortentwurf geliefert."))
         }
         do {
             let draft = try JSONDecoder().decode(ReplyDraft.self, from: data)
             guard !draft.body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                throw APIError(message: "OpenAI hat keinen Antworttext geliefert.")
+                throw APIError(message: L10n.source("OpenAI hat keinen Antworttext geliefert."))
             }
             return draft
         } catch let error as APIError {
             throw error
         } catch {
-            throw APIError(message: "OpenAI hat den Antwortentwurf nicht im erwarteten Format geliefert.")
+            throw APIError(message: L10n.source("OpenAI hat den Antwortentwurf nicht im erwarteten Format geliefert."))
         }
     }
 
     private static func decodeNewMailDraft(_ text: String) throws -> NewMailDraft {
         let cleaned = ResponseJSON.cleanedText(text)
         guard let data = cleaned.data(using: .utf8) else {
-            throw APIError(message: "OpenAI hat keinen gültigen Mailentwurf geliefert.")
+            throw APIError(message: L10n.source("OpenAI hat keinen gültigen Mailentwurf geliefert."))
         }
         do {
             let draft = try JSONDecoder().decode(NewMailDraft.self, from: data)
             guard !draft.body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                throw APIError(message: "OpenAI hat keinen Mailtext geliefert.")
+                throw APIError(message: L10n.source("OpenAI hat keinen Mailtext geliefert."))
             }
             return draft
         } catch let error as APIError {
             throw error
         } catch {
-            throw APIError(message: "OpenAI hat den Mailentwurf nicht im erwarteten Format geliefert.")
+            throw APIError(message: L10n.source("OpenAI hat den Mailentwurf nicht im erwarteten Format geliefert."))
         }
     }
 
@@ -283,7 +285,7 @@ final class OpenAIClient {
         nowFormatter.timeZone = CalendarManager.eventTimeZone
         let now = nowFormatter.string(from: Date())
         let timezone = CalendarManager.eventTimeZoneIdentifier
-        let titleLanguage = language == .german ? "German" : "US English"
+        let titleLanguage = language == .german ? "German" : L10n.source("US English")
         let strictLanguageInstruction = language == .german
             ? "OUTPUT LANGUAGE IS GERMAN. The title and description MUST be written in German, regardless of the language used in the email thread."
             : "OUTPUT LANGUAGE IS US ENGLISH. The title and description MUST be written in natural US English, regardless of the language used in the email thread. Translate ordinary descriptive words; preserve only true proper names such as people, companies, products, and projects."
@@ -330,12 +332,12 @@ final class OpenAIClient {
     private static func decodeCalendarSuggestion(_ text: String) throws -> CalendarSuggestion {
         let cleaned = ResponseJSON.cleanedText(text)
         guard let data = cleaned.data(using: .utf8) else {
-            throw APIError(message: "OpenAI hat keinen gültigen Terminvorschlag geliefert.")
+            throw APIError(message: L10n.source("OpenAI hat keinen gültigen Terminvorschlag geliefert."))
         }
         do {
             return try JSONDecoder().decode(CalendarSuggestion.self, from: data)
         } catch {
-            throw APIError(message: "OpenAI hat den Terminvorschlag nicht im erwarteten Format geliefert.")
+            throw APIError(message: L10n.source("OpenAI hat den Terminvorschlag nicht im erwarteten Format geliefert."))
         }
     }
 
@@ -478,7 +480,7 @@ final class OpenAIClient {
         completion: @escaping (Result<String, Error>) -> Void
     ) {
         guard let endpoint = URL(string: "https://api.openai.com/v1/files") else {
-            completion(.failure(APIError(message: "Ungültige OpenAI-Datei-URL.")))
+            completion(.failure(APIError(message: L10n.source("Ungültige OpenAI-Datei-URL."))))
             return
         }
 
@@ -486,7 +488,7 @@ final class OpenAIClient {
         do {
             fileData = try Data(contentsOf: url, options: .mappedIfSafe)
         } catch {
-            completion(.failure(APIError(message: "Der PDF-Anhang konnte nicht gelesen werden: \(url.lastPathComponent)")))
+            completion(.failure(APIError(message: L10n.source("Der PDF-Anhang konnte nicht gelesen werden: {0}", url.lastPathComponent))))
             return
         }
 
@@ -530,11 +532,11 @@ final class OpenAIClient {
                 return
             }
             guard let http = response as? HTTPURLResponse, let data else {
-                completion(.failure(APIError(message: "Keine Antwort beim PDF-Upload von OpenAI erhalten.")))
+                completion(.failure(APIError(message: L10n.source("Keine Antwort beim PDF-Upload von OpenAI erhalten."))))
                 return
             }
             guard (200..<300).contains(http.statusCode) else {
-                let message = Self.extractErrorMessage(from: data) ?? "OpenAI-PDF-Upload fehlgeschlagen (HTTP \(http.statusCode))."
+                let message = Self.extractErrorMessage(from: data) ?? L10n.source("OpenAI-PDF-Upload fehlgeschlagen (HTTP {0}).", http.statusCode)
                 completion(.failure(APIError(message: message)))
                 return
             }
@@ -542,13 +544,13 @@ final class OpenAIClient {
             do {
                 let object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
                 guard let fileID = object?["id"] as? String, !fileID.isEmpty else {
-                    throw APIError(message: "OpenAI hat keine Datei-ID für den PDF-Anhang geliefert.")
+                    throw APIError(message: L10n.source("OpenAI hat keine Datei-ID für den PDF-Anhang geliefert."))
                 }
                 completion(.success(fileID))
             } catch let error as APIError {
                 completion(.failure(error))
             } catch {
-                completion(.failure(APIError(message: "Die OpenAI-Antwort auf den PDF-Upload war ungültig.")))
+                completion(.failure(APIError(message: L10n.source("Die OpenAI-Antwort auf den PDF-Upload war ungültig."))))
             }
         }.resume()
     }
@@ -565,12 +567,12 @@ final class OpenAIClient {
     private static func decodePaymentSuggestion(_ text: String) throws -> PaymentSuggestion {
         let cleaned = ResponseJSON.cleanedText(text)
         guard let data = cleaned.data(using: .utf8) else {
-            throw APIError(message: "OpenAI hat keine gültigen Überweisungsdaten geliefert.")
+            throw APIError(message: L10n.source("OpenAI hat keine gültigen Überweisungsdaten geliefert."))
         }
         do {
             return try JSONDecoder().decode(PaymentSuggestion.self, from: data)
         } catch {
-            throw APIError(message: "OpenAI hat die Überweisungsdaten nicht im erwarteten Format geliefert.")
+            throw APIError(message: L10n.source("OpenAI hat die Überweisungsdaten nicht im erwarteten Format geliefert."))
         }
     }
 
@@ -594,7 +596,7 @@ final class OpenAIClient {
         completion: @escaping (Result<String, Error>) -> Void
     ) {
         guard let url = URL(string: "https://api.openai.com/v1/responses") else {
-            completion(.failure(APIError(message: "Ungültige OpenAI-URL.")))
+            completion(.failure(APIError(message: L10n.source("Ungültige OpenAI-URL."))))
             return
         }
 
@@ -634,12 +636,12 @@ final class OpenAIClient {
             }
 
             guard let http = response as? HTTPURLResponse, let data else {
-                completion(.failure(APIError(message: "Keine Antwort von OpenAI erhalten.")))
+                completion(.failure(APIError(message: L10n.source("Keine Antwort von OpenAI erhalten."))))
                 return
             }
 
             guard (200..<300).contains(http.statusCode) else {
-                let message = Self.extractErrorMessage(from: data) ?? "OpenAI-Fehler HTTP \(http.statusCode)."
+                let message = Self.extractErrorMessage(from: data) ?? L10n.source("OpenAI-Fehler HTTP {0}.", http.statusCode)
                 completion(.failure(APIError(message: message)))
                 return
             }
@@ -665,7 +667,7 @@ final class OpenAIClient {
     private static func extractOutputText(from data: Data) throws -> String {
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               let output = json["output"] as? [[String: Any]] else {
-            throw APIError(message: "OpenAI hat ein unerwartetes Antwortformat geliefert.")
+            throw APIError(message: L10n.source("OpenAI hat ein unerwartetes Antwortformat geliefert."))
         }
 
         var pieces: [String] = []
@@ -681,7 +683,7 @@ final class OpenAIClient {
 
         let result = pieces.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !result.isEmpty else {
-            throw APIError(message: "OpenAI hat keinen Antworttext geliefert.")
+            throw APIError(message: L10n.source("OpenAI hat keinen Antworttext geliefert."))
         }
         return result
     }

@@ -38,12 +38,13 @@ enum MailWorkspaceLogic {
 }
 
 struct MailWorkspaceView: View {
+    @ObservedObject private var appLocalization = AppLocalization.shared
     @ObservedObject var state: AppState
     @State private var showsReminder = false
-    private static let days: [(label: String, code: String)] = [
-        ("Mo", "mon"), ("Di", "tues"), ("Mi", "wed"), ("Do", "thurs"),
-        ("Fr", "fri"), ("Sa", "sat"), ("So", "sun")
-    ]
+    private static var days: [(label: String, code: String)] { [
+        (L10n.tr("Mo"), "mon"), (L10n.tr("Di"), "tues"), (L10n.tr("Mi"), "wed"), (L10n.tr("Do"), "thurs"),
+        (L10n.tr("Fr"), "fri"), (L10n.tr("Sa"), "sat"), (L10n.tr("So"), "sun")
+    ] }
     private static let times = (0...48).map { slot in
         String(format: "%02d:%02d", slot / 2, slot % 2 == 0 ? 0 : 30)
     }
@@ -58,11 +59,11 @@ struct MailWorkspaceView: View {
                 if isMail {
                     modeRow
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Deine Anweisung").font(.system(size: 12, weight: .medium))
+                        Text(L10n.tr("Deine Anweisung")).font(.system(size: 12, weight: .medium))
                             .foregroundStyle(.secondary)
                         RichTextMailEditor(plainText: $state.instruction, html: $state.instructionHTML,
                                            height: nil, showsHTMLBadge: false)
-                            .accessibilityLabel("Anweisung für den Mailentwurf")
+                            .accessibilityLabel(L10n.tr("Anweisung für den Mailentwurf"))
                     }
                     .frame(maxHeight: .infinity)
                     optionsRow
@@ -77,8 +78,8 @@ struct MailWorkspaceView: View {
             .padding(20)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             WorkspaceActionBar(
-                secondaryTitle: "Schließen", primaryTitle: primaryTitle,
-                hint: isMail ? "Versendet wird erst in Outlook." : "Vor dem Übernehmen prüfen.",
+                secondaryTitle: L10n.tr("Schließen"), primaryTitle: primaryTitle,
+                hint: isMail ? L10n.tr("Versendet wird erst in Outlook.") : L10n.tr("Vor dem Übernehmen prüfen."),
                 disabled: !MailWorkspaceLogic.canGenerate(state),
                 secondaryAction: { state.closeAction?() },
                 primaryAction: { state.generateAction?() }
@@ -112,38 +113,38 @@ struct MailWorkspaceView: View {
         HStack(spacing: 6) {
             if state.mailStatus == .loading {
                 ProgressView().controlSize(.mini)
-                Text("Lädt …")
+                Text(L10n.tr("Lädt …"))
             } else {
                 Image(systemName: hasMail ? "checkmark.circle" : "info.circle")
-                Text(hasMail ? "Mail erkannt" : "Ohne Mail-Kontext")
+                Text(hasMail ? L10n.tr("Mail erkannt") : L10n.tr("Ohne Mail-Kontext"))
             }
             if !hasMail && state.mailStatus != .loading {
                 Button { state.refreshMailAction?() } label: { Image(systemName: "arrow.clockwise") }
-                    .buttonStyle(.borderless).help("Outlook-Mail erneut lesen")
-                    .accessibilityLabel("Outlook-Mail erneut lesen")
+                    .buttonStyle(.borderless).help(L10n.tr("Outlook-Mail erneut lesen"))
+                    .accessibilityLabel(L10n.tr("Outlook-Mail erneut lesen"))
             }
         }
         .font(.system(size: 11)).foregroundStyle(.secondary).help(contextHelp)
     }
 
     private var contextHelp: String {
-        if case .unavailable(let message) = state.mailStatus { return message }
-        return hasMail ? "Die geöffnete Outlook-Mail dient als Kontext."
-            : "Neue Mail ohne Kontext möglich. Für Reply oder Forward zuerst eine Outlook-Mail öffnen."
+        if case .unavailable(let message) = state.mailStatus { return L10n.render(message) }
+        return hasMail ? L10n.tr("Die geöffnete Outlook-Mail dient als Kontext.")
+            : L10n.tr("Neue Mail ohne Kontext möglich. Für Reply oder Forward zuerst eine Outlook-Mail öffnen.")
     }
 
     private var optionsRow: some View {
         HStack(spacing: 14) {
             HStack(spacing: 6) {
-                Text("Ton").font(.caption).foregroundStyle(.secondary)
-                Picker("Ton", selection: $state.replyTone) {
+                Text(L10n.tr("Ton")).font(.caption).foregroundStyle(.secondary)
+                Picker(L10n.tr("Ton"), selection: $state.replyTone) {
                     ForEach(ReplyTone.allCases) { tone in Text(tone.displayName).tag(tone) }
                 }
                 .labelsHidden().pickerStyle(.menu).frame(width: 138)
-                .accessibilityLabel("Ton des Mailentwurfs")
+                .accessibilityLabel(L10n.tr("Ton des Mailentwurfs"))
             }
-            Toggle("Compact", isOn: $state.newMailCompact)
-                .toggleStyle(.checkbox).help("So kurz wie möglich formulieren")
+            Toggle(L10n.tr("Compact"), isOn: $state.newMailCompact)
+                .toggleStyle(.checkbox).help(L10n.tr("So kurz wie möglich formulieren"))
             Spacer(minLength: 6)
             languageSelector
         }
@@ -152,12 +153,12 @@ struct MailWorkspaceView: View {
 
     private var languageSelector: some View {
         HStack(spacing: 2) {
-            languageButton("DE", language: .german, title: "Deutsch")
-            languageButton("EN", language: .usEnglish, title: "US English")
+            languageButton("DE", language: .german, title: L10n.tr("Deutsch"))
+            languageButton("EN", language: .usEnglish, title: L10n.tr("US English"))
         }
         .padding(3)
         .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 9))
-        .accessibilityElement(children: .contain).accessibilityLabel("Ausgabesprache")
+        .accessibilityElement(children: .contain).accessibilityLabel(L10n.tr("Ausgabesprache"))
     }
 
     private func languageButton(_ label: String, language: AppState.ReplyLanguage, title: String) -> some View {
@@ -169,7 +170,7 @@ struct MailWorkspaceView: View {
 
     private var reminderControl: some View {
         HStack(spacing: 10) {
-            Toggle(isOn: $state.reminderEnabled) { Label("Reminder", systemImage: "bell") }
+            Toggle(isOn: $state.reminderEnabled) { Label(L10n.tr("Reminder"), systemImage: "bell") }
                 .toggleStyle(.checkbox).controlSize(.small)
             if state.reminderEnabled {
                 Button { showsReminder.toggle() } label: {
@@ -178,9 +179,9 @@ struct MailWorkspaceView: View {
                         Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold))
                     }
                 }
-                .buttonStyle(.borderless).help("Reminder-Tag und Uhrzeit ändern")
+                .buttonStyle(.borderless).help(L10n.tr("Reminder-Tag und Uhrzeit ändern"))
                 .popover(isPresented: $showsReminder, arrowEdge: .top) { reminderDetails }
-                Text("BCC: \(reminderAddress)").font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                Text(L10n.tr("BCC: {0}", reminderAddress)).font(.caption).foregroundStyle(.secondary).lineLimit(1)
             }
             Spacer(minLength: 0)
         }
@@ -190,22 +191,22 @@ struct MailWorkspaceView: View {
 
     private var reminderDetails: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Label("Reminder", systemImage: "bell").font(.headline)
-            Picker("Tag", selection: $state.reminderDay) {
+            Label(L10n.tr("Reminder"), systemImage: "bell").font(.headline)
+            Picker(L10n.tr("Tag"), selection: $state.reminderDay) {
                 ForEach(Self.days, id: \.code) { day in Text(day.label).tag(day.code) }
             }
-            .pickerStyle(.segmented).labelsHidden().accessibilityLabel("Reminder-Tag")
+            .pickerStyle(.segmented).labelsHidden().accessibilityLabel(L10n.tr("Reminder-Tag"))
             HStack {
-                Text("Uhrzeit")
+                Text(L10n.tr("Uhrzeit"))
                 Spacer()
-                Picker("Uhrzeit", selection: $state.reminderTime) {
+                Picker(L10n.tr("Uhrzeit"), selection: $state.reminderTime) {
                     ForEach(Self.times, id: \.self) { Text($0).tag($0) }
                 }
                 .labelsHidden().frame(width: 100)
             }
-            Text("BCC: \(reminderAddress)").font(.caption.monospaced())
+            Text(L10n.tr("BCC: {0}", reminderAddress)).font(.caption.monospaced())
                 .foregroundStyle(.secondary).textSelection(.enabled)
-            HStack { Spacer(); Button("Fertig") { showsReminder = false } }
+            HStack { Spacer(); Button(L10n.tr("Fertig")) { showsReminder = false } }
         }
         .padding(20).frame(width: 330)
     }
@@ -221,51 +222,52 @@ struct MailWorkspaceView: View {
 
     private var extractionCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Label(state.outputMode == .calendar ? "Termin aus Mail" : "Überweisung aus Mail + PDF",
+            Label(state.outputMode == .calendar ? L10n.tr("Termin aus Mail") : L10n.tr("Überweisung aus Mail + PDF"),
                   systemImage: state.outputMode == .calendar ? "calendar.badge.plus" : "banknote")
                 .font(.title3.weight(.semibold))
             Text(state.outputMode == .calendar
-                 ? "Titel, Kurzbeschreibung und erkennbaren Zeitpunkt aus der Mail übernehmen. Den Zielkalender wählst du anschließend aus."
-                 : "Empfänger, IBAN, Betrag und Verwendungszweck aus dem PDF-Anhang auslesen. Alle Angaben bleiben vor dem Kopieren bearbeitbar. Es wird keine Überweisung ausgelöst.")
+                 ? L10n.tr("Titel, Kurzbeschreibung und erkennbaren Zeitpunkt aus der Mail übernehmen. Den Zielkalender wählst du anschließend aus.")
+                 : L10n.tr("Empfänger, IBAN, Betrag und Verwendungszweck aus dem PDF-Anhang auslesen. Alle Angaben bleiben vor dem Kopieren bearbeitbar. Es wird keine Überweisung ausgelöst."))
                 .foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
         }
         .padding(24).frame(maxWidth: .infinity, alignment: .leading).modifier(WorkspaceCard())
     }
     private var primaryTitle: String {
         switch state.outputMode {
-        case .reply: return "Antwort erstellen"
-        case .newMail: return "Mail erstellen"
-        case .forward: return "Forward erstellen"
-        case .calendar: return "Termin erstellen"
-        case .payment: return "Überweisung extrahieren"
+        case .reply: return L10n.tr("Antwort erstellen")
+        case .newMail: return L10n.tr("Mail erstellen")
+        case .forward: return L10n.tr("Forward erstellen")
+        case .calendar: return L10n.tr("Termin erstellen")
+        case .payment: return L10n.tr("Überweisung extrahieren")
         }
     }
 }
 
 struct MailDraftPreviewView: View {
+    @ObservedObject private var appLocalization = AppLocalization.shared
     @ObservedObject var state: AppState
     var body: some View {
         VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 14) {
-                Text(state.outputMode == .newMail ? "Neue Mail" :
-                        (state.outputMode == .forward ? "Weiterleitung" : "Antwortvorschlag"))
+                Text(state.outputMode == .newMail ? L10n.tr("Neue Mail") :
+                        (state.outputMode == .forward ? L10n.tr("Weiterleitung") : L10n.tr("Antwortvorschlag")))
                     .font(.title3.weight(.semibold))
                 if state.outputMode == .newMail {
                     HStack(spacing: 12) {
-                        Text("Betreff").font(.caption).foregroundStyle(.secondary)
-                        TextField("Betreff", text: $state.newMailSubject).textFieldStyle(.plain)
+                        Text(L10n.tr("Betreff")).font(.caption).foregroundStyle(.secondary)
+                        TextField(L10n.tr("Betreff"), text: $state.newMailSubject).textFieldStyle(.plain)
                     }
                     .padding(12).modifier(WorkspaceCard())
                 }
                 RichTextMailEditor(plainText: $state.reply, html: $state.replyHTML,
                                    height: nil, showsHTMLBadge: false)
-                    .accessibilityLabel("Bearbeitbarer Mailentwurf")
+                    .accessibilityLabel(L10n.tr("Bearbeitbarer Mailentwurf"))
             }
             .padding(20).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             WorkspaceActionBar(
-                secondaryTitle: "Zurück",
-                primaryTitle: state.outputMode == .newMail ? "Neue Mail in Outlook" : "In Outlook einsetzen",
-                hint: "Prüfen, einsetzen, selbst senden.",
+                secondaryTitle: L10n.tr("Zurück"),
+                primaryTitle: state.outputMode == .newMail ? L10n.tr("Neue Mail in Outlook") : L10n.tr("In Outlook einsetzen"),
+                hint: L10n.tr("Prüfen, einsetzen, selbst senden."),
                 secondaryAction: { state.stage = .instruction },
                 primaryAction: { state.insertAction?() }
             )

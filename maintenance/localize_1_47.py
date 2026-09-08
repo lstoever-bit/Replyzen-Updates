@@ -112,7 +112,7 @@ changed = dict(sources)
 # Convert concatenated diagnostic prefixes to explicit value-preserving templates.
 s = changed['AppDelegate.swift']
 s = once(s, '''sourceStatus = (wasAutoSaved ? "PDF automatisch aus Outlook gespeichert und direkt mit OpenAI gelesen: " : "PDF direkt mit OpenAI gelesen: ")
-                        + selectedPDFs.map(\\.lastPathComponent).joined(separator: ", ")''', '''sourceStatus = L10n.source(wasAutoSaved ? "PDF automatisch aus Outlook gespeichert und direkt mit OpenAI gelesen: {0}" : "PDF direkt mit OpenAI gelesen: {0}", selectedPDFs.map(\\.lastPathComponent).joined(separator: ", "))''')
+                    + selectedPDFs.map(\\.lastPathComponent).joined(separator: ", ")''', '''sourceStatus = L10n.source(wasAutoSaved ? "PDF automatisch aus Outlook gespeichert und direkt mit OpenAI gelesen: {0}" : "PDF direkt mit OpenAI gelesen: {0}", selectedPDFs.map(\\.lastPathComponent).joined(separator: ", "))''')
 s = once(s, 'sourceStatus = "Kein direkt zugängliches PDF; lokal gelesen: " + fallback.usedFiles.joined(separator: ", ")', 'sourceStatus = L10n.source("Kein direkt zugängliches PDF; lokal gelesen: {0}", fallback.usedFiles.joined(separator: ", "))')
 changed['AppDelegate.swift'] = s
 
@@ -172,7 +172,7 @@ s=s.replace('private static let days: [(label: String, code: String)] = [','priv
 s=once(s, '    ]\n    private static let times', '    ] }\n    private static let times')
 changed['MailWorkspaceView.swift']=s
 s=changed['WorkspaceComponents.swift']
-s=once(s, '                    Text("ReplyZen").font(.headline)', '                    Text("ReplyZen").font(.headline)\n                    InterfaceLanguagePicker()\n                    Divider()')
+s=once(s, '                    Text(ReplyZenBrand.displayName).font(.headline)', '                    Text(ReplyZenBrand.displayName).font(.headline)\n                    InterfaceLanguagePicker()\n                    Divider()')
 s=s.replace('.padding(20).frame(width: 300)', '.padding(20).frame(width: 360)')
 changed['WorkspaceComponents.swift']=s
 

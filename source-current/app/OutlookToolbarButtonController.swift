@@ -50,6 +50,11 @@ private final class DelayedTooltipButton: NSButton {
         super.mouseDown(with: event)
     }
 
+    func refreshLocalization() {
+        hideDelayedTooltip()
+        setAccessibilityLabel(L10n.render(delayedTooltipText))
+    }
+
     func hideDelayedTooltip() {
         tooltipWorkItem?.cancel()
         tooltipWorkItem = nil
@@ -61,7 +66,7 @@ private final class DelayedTooltipButton: NSButton {
         guard let window else { return }
         hideDelayedTooltip()
 
-        let label = NSTextField(labelWithString: delayedTooltipText)
+        let label = NSTextField(labelWithString: L10n.render(delayedTooltipText))
         label.font = .systemFont(ofSize: 12, weight: .medium)
         label.textColor = .labelColor
         label.alignment = .center
@@ -162,10 +167,10 @@ final class OutlookToolbarButtonController: NSObject {
             button.bezelStyle = .rounded
             button.isBordered = false
             button.setButtonType(.momentaryPushIn)
-            button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: tooltip)
+            button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: L10n.render(tooltip))
             button.imagePosition = .imageOnly
             button.imageScaling = .scaleProportionallyDown
-            button.setAccessibilityLabel(tooltip)
+            button.setAccessibilityLabel(L10n.render(tooltip))
             return button
         }
 
@@ -178,13 +183,13 @@ final class OutlookToolbarButtonController: NSObject {
             return pipe
         }
 
-        newButton = makeButton(symbol: "square.and.pencil", x: 6, tooltip: "New")
-        replyButton = makeButton(symbol: "arrowshape.turn.up.left", x: 46, tooltip: "Reply")
-        replyAllButton = makeButton(symbol: "arrowshape.turn.up.left.2", x: 86, tooltip: "Reply All")
-        forwardButton = makeButton(symbol: "arrowshape.turn.up.right", x: 126, tooltip: "Forward")
-        cancelButton = makeButton(symbol: "xmark.circle", x: 178, tooltip: "Cancel")
-        calendarButton = makeButton(symbol: "calendar.badge.plus", x: 218, tooltip: "Calendar")
-        paymentButton = makeButton(symbol: "banknote", x: 258, tooltip: "Payment")
+        newButton = makeButton(symbol: "square.and.pencil", x: 6, tooltip: L10n.source("New"))
+        replyButton = makeButton(symbol: "arrowshape.turn.up.left", x: 46, tooltip: L10n.source("Reply"))
+        replyAllButton = makeButton(symbol: "arrowshape.turn.up.left.2", x: 86, tooltip: L10n.source("Reply All"))
+        forwardButton = makeButton(symbol: "arrowshape.turn.up.right", x: 126, tooltip: L10n.source("Forward"))
+        cancelButton = makeButton(symbol: "xmark.circle", x: 178, tooltip: L10n.source("Cancel"))
+        calendarButton = makeButton(symbol: "calendar.badge.plus", x: 218, tooltip: L10n.source("Calendar"))
+        paymentButton = makeButton(symbol: "banknote", x: 258, tooltip: L10n.source("Payment"))
 
         effect.addSubview(newButton)
         effect.addSubview(replyButton)
@@ -310,6 +315,11 @@ final class OutlookToolbarButtonController: NSObject {
     @objc private func cancelClicked() { cancelAction?() }
     @objc private func calendarClicked() { calendarAction?() }
     @objc private func paymentClicked() { paymentAction?() }
+
+    func refreshLocalization() {
+        [newButton, replyButton, replyAllButton, forwardButton, cancelButton, calendarButton, paymentButton]
+            .forEach { $0.refreshLocalization() }
+    }
 
     private func hideAllTooltips() {
         [newButton, replyButton, replyAllButton, forwardButton, cancelButton, calendarButton, paymentButton]

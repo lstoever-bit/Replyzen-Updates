@@ -2,6 +2,7 @@ import SwiftUI
 import AppKit
 
 struct OverlayView: View {
+    @ObservedObject private var appLocalization = AppLocalization.shared
     @ObservedObject var state: AppState
 
     var body: some View {
@@ -17,6 +18,7 @@ struct OverlayView: View {
         .frame(minWidth: 590, minHeight: 390)
         .background(Color(nsColor: .windowBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .environment(\.locale, appLocalization.locale)
     }
 
     private var isWorkspace: Bool {
@@ -34,9 +36,9 @@ struct OverlayView: View {
         case .instruction:
             MailWorkspaceView(state: state)
         case .generating:
-            loadingView(title: "Einen Moment", subtitle: generatingSubtitle)
+            loadingView(title: L10n.tr("Einen Moment"), subtitle: generatingSubtitle)
         case .updating:
-            loadingView(title: "Update wird installiert", subtitle: "Neue Version wird geladen und eingerichtet …")
+            loadingView(title: L10n.tr("Update wird installiert"), subtitle: L10n.tr("Neue Version wird geladen und eingerichtet …"))
         case .preview:
             MailDraftPreviewView(state: state)
         case .calendarPreview:
@@ -54,7 +56,7 @@ struct OverlayView: View {
             }
             .safeAreaInset(edge: .bottom, spacing: 0) { paymentFooter }
         case .inserting:
-            loadingView(title: "Fast fertig", subtitle: insertingSubtitle)
+            loadingView(title: L10n.tr("Fast fertig"), subtitle: insertingSubtitle)
         case .success:
             successView
         case .needsAccessibility:
@@ -71,9 +73,9 @@ struct OverlayView: View {
             HStack(spacing: 12) {
                 replyzenLogo(size: 46)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("ReplyZen läuft")
+                    Text(L10n.tr("ReplyZen läuft"))
                         .font(.title2.bold())
-                    Text("Bereit in Outlook · ⌃⌥R oder ✨ AI")
+                    Text(L10n.tr("Bereit in Outlook · ⌃⌥R oder ✨ AI"))
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
@@ -84,10 +86,10 @@ struct OverlayView: View {
             }
 
             VStack(alignment: .leading, spacing: 7) {
-                Text("Witz zum Start")
+                Text(L10n.tr("Witz zum Start"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Text(state.startupJoke)
+                Text(L10n.render(state.startupJoke))
                     .font(.title3)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -96,9 +98,9 @@ struct OverlayView: View {
             .background(.background.opacity(0.55), in: RoundedRectangle(cornerRadius: 12))
 
             HStack {
-                Button("Schließen") { state.closeAction?() }
+                Button(L10n.tr("Schließen")) { state.closeAction?() }
                 Spacer()
-                Button("ReplyZen öffnen") { state.retryAction?() }
+                Button(L10n.tr("ReplyZen öffnen")) { state.retryAction?() }
                     .keyboardShortcut(.defaultAction)
             }
         }
@@ -109,9 +111,9 @@ struct OverlayView: View {
             replyzenLogo(size: 72)
             Text(ReplyZenBrand.displayName)
                 .font(.title2.bold())
-            Text("Mail, Termin oder Überweisung, direkt aus Outlook.")
+            Text(L10n.tr("Mail, Termin oder Überweisung, direkt aus Outlook."))
                 .foregroundStyle(.secondary)
-            Button("ReplyZen öffnen") {
+            Button(L10n.tr("ReplyZen öffnen")) {
                 state.retryAction?()
             }
             .keyboardShortcut(.defaultAction)
@@ -137,24 +139,24 @@ struct OverlayView: View {
 
     private var generatingSubtitle: String {
         switch state.outputMode {
-        case .reply: return "Ich erstelle deine Antwort …"
-        case .newMail: return "Ich formuliere deine neue Mail …"
-        case .forward: return "Ich bereite die Weiterleitung vor …"
-        case .calendar: return "Ich erstelle einen kurzen Termintitel und erkenne den Zeitpunkt …"
-        case .payment: return "Ich lese den PDF-Anhang und extrahiere die Überweisungsdaten …"
+        case .reply: return L10n.tr("Ich erstelle deine Antwort …")
+        case .newMail: return L10n.tr("Ich formuliere deine neue Mail …")
+        case .forward: return L10n.tr("Ich bereite die Weiterleitung vor …")
+        case .calendar: return L10n.tr("Ich erstelle einen kurzen Termintitel und erkenne den Zeitpunkt …")
+        case .payment: return L10n.tr("Ich lese den PDF-Anhang und extrahiere die Überweisungsdaten …")
         }
     }
 
     private var insertingSubtitle: String {
         switch state.outputMode {
         case .newMail:
-            return "Ich öffne eine neue Outlook-Mail und setze den Text ein …"
+            return L10n.tr("Ich öffne eine neue Outlook-Mail und setze den Text ein …")
         case .forward:
-            return "Ich öffne die Outlook-Weiterleitung und setze deinen Text über den Thread …"
+            return L10n.tr("Ich öffne die Outlook-Weiterleitung und setze deinen Text über den Thread …")
         case .reply:
-            return "Ich setze die Antwort in Outlook ein …"
+            return L10n.tr("Ich setze die Antwort in Outlook ein …")
         case .calendar, .payment:
-            return "Fast fertig …"
+            return L10n.tr("Fast fertig …")
         }
     }
 
@@ -174,7 +176,7 @@ struct OverlayView: View {
                 .frame(height: 14)
 
             if !state.statusText.isEmpty {
-                Text(state.statusText)
+                Text(L10n.render(state.statusText))
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
@@ -187,14 +189,14 @@ struct OverlayView: View {
             HStack(spacing: 10) {
                 Image(systemName: "banknote")
                     .font(.title2)
-                Text("Überweisung prüfen")
+                Text(L10n.tr("Überweisung prüfen"))
                     .font(.title2.bold())
             }
 
             if !state.paymentWarning.isEmpty {
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
-                    Text(state.paymentWarning)
+                    Text(L10n.render(state.paymentWarning))
                         .font(.callout)
                 }
                 .foregroundStyle(.secondary)
@@ -203,8 +205,8 @@ struct OverlayView: View {
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Empfänger").font(.caption).foregroundStyle(.secondary)
-                TextField("Empfänger", text: $state.paymentRecipient)
+                Text(L10n.tr("Empfänger")).font(.caption).foregroundStyle(.secondary)
+                TextField(L10n.tr("Empfänger"), text: $state.paymentRecipient)
                     .textFieldStyle(.roundedBorder)
             }
 
@@ -216,25 +218,25 @@ struct OverlayView: View {
 
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Betrag").font(.caption).foregroundStyle(.secondary)
-                    TextField("0,00", text: $state.paymentAmount)
+                    Text(L10n.tr("Betrag")).font(.caption).foregroundStyle(.secondary)
+                    TextField(L10n.tr("0,00"), text: $state.paymentAmount)
                         .textFieldStyle(.roundedBorder)
                 }
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Währung").font(.caption).foregroundStyle(.secondary)
+                    Text(L10n.tr("Währung")).font(.caption).foregroundStyle(.secondary)
                     TextField("EUR", text: $state.paymentCurrency)
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 90)
                 }
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("BIC (optional)").font(.caption).foregroundStyle(.secondary)
+                    Text(L10n.tr("BIC (optional)")).font(.caption).foregroundStyle(.secondary)
                     TextField("BIC", text: $state.paymentBIC)
                         .textFieldStyle(.roundedBorder)
                 }
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Verwendungszweck").font(.caption).foregroundStyle(.secondary)
+                Text(L10n.tr("Verwendungszweck")).font(.caption).foregroundStyle(.secondary)
                 TextEditor(text: $state.paymentPurpose)
                     .font(.body)
                     .frame(height: 70)
@@ -243,7 +245,7 @@ struct OverlayView: View {
             }
 
             if !state.paymentSourceStatus.isEmpty {
-                Text(state.paymentSourceStatus)
+                Text(L10n.render(state.paymentSourceStatus))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -256,14 +258,14 @@ struct OverlayView: View {
             HStack(spacing: 10) {
                 Image(systemName: "calendar.badge.plus")
                     .font(.title2)
-                Text("Termin prüfen")
+                Text(L10n.tr("Termin prüfen"))
                     .font(.title2.bold())
             }
 
             if !state.calendarWarning.isEmpty {
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
-                    Text(state.calendarWarning)
+                    Text(L10n.render(state.calendarWarning))
                         .font(.callout)
                 }
                 .foregroundStyle(.secondary)
@@ -272,13 +274,13 @@ struct OverlayView: View {
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Titel").font(.caption).foregroundStyle(.secondary)
-                TextField("Kurzer Termintitel", text: $state.calendarTitle)
+                Text(L10n.tr("Titel")).font(.caption).foregroundStyle(.secondary)
+                TextField(L10n.tr("Kurzer Termintitel"), text: $state.calendarTitle)
                     .textFieldStyle(.roundedBorder)
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Worum geht es?").font(.caption).foregroundStyle(.secondary)
+                Text(L10n.tr("Worum geht es?")).font(.caption).foregroundStyle(.secondary)
                 TextEditor(text: $state.calendarNotes)
                     .font(.body)
                     .frame(height: 58)
@@ -288,13 +290,13 @@ struct OverlayView: View {
 
             HStack(spacing: 14) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Start").font(.caption).foregroundStyle(.secondary)
+                    Text(L10n.tr("Start")).font(.caption).foregroundStyle(.secondary)
                     DatePicker("", selection: $state.calendarStart, displayedComponents: [.date, .hourAndMinute])
                         .labelsHidden()
                         .environment(\.timeZone, CalendarManager.eventTimeZone)
                 }
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Ende").font(.caption).foregroundStyle(.secondary)
+                    Text(L10n.tr("Ende")).font(.caption).foregroundStyle(.secondary)
                     DatePicker("", selection: $state.calendarEnd, displayedComponents: [.date, .hourAndMinute])
                         .labelsHidden()
                         .environment(\.timeZone, CalendarManager.eventTimeZone)
@@ -302,7 +304,7 @@ struct OverlayView: View {
                 Spacer()
             }
 
-            Text("Zeitzone: CET / Europe-Berlin")
+            Text(L10n.tr("Zeitzone: CET / Europe-Berlin"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
@@ -319,19 +321,19 @@ struct OverlayView: View {
                 }
 
                 if state.googleNeedsOAuthCredentials {
-                    Text("Einmalig Google OAuth einrichten: Google Calendar API aktivieren und einen OAuth-Client vom Typ „Desktop-App“ erstellen. Client-ID und Client Secret hier einfügen.")
+                    Text(L10n.tr("Einmalig Google OAuth einrichten: Google Calendar API aktivieren und einen OAuth-Client vom Typ „Desktop-App“ erstellen. Client-ID und Client Secret hier einfügen."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
-                    TextField("Google OAuth Client-ID", text: $state.googleClientIDDraft)
+                    TextField(L10n.tr("Google OAuth Client-ID"), text: $state.googleClientIDDraft)
                         .textFieldStyle(.roundedBorder)
-                    SecureField("Google OAuth Client Secret", text: $state.googleClientSecretDraft)
+                    SecureField(L10n.tr("Google OAuth Client Secret"), text: $state.googleClientSecretDraft)
                         .textFieldStyle(.roundedBorder)
 
                     HStack {
-                        Button("Google Cloud öffnen") { state.openGoogleCloudAction?() }
+                        Button(L10n.tr("Google Cloud öffnen")) { state.openGoogleCloudAction?() }
                         Spacer()
-                        Button(state.googleIsConnecting ? "Verbinde …" : "Speichern & Google verbinden") {
+                        Button(state.googleIsConnecting ? L10n.tr("Verbinde …") : L10n.tr("Speichern & Google verbinden")) {
                             state.connectGoogleCalendarAction?()
                         }
                         .disabled(state.googleIsConnecting)
@@ -339,23 +341,23 @@ struct OverlayView: View {
                 } else if state.googleConnectedEmail.isEmpty {
                     HStack(spacing: 8) {
                         if state.googleIsConnecting { ProgressView().controlSize(.small) }
-                        Text(state.googleOAuthStatus.isEmpty ? "Noch nicht verbunden." : state.googleOAuthStatus)
+                        Text(state.googleOAuthStatus.isEmpty ? L10n.tr("Noch nicht verbunden.") : L10n.render(state.googleOAuthStatus))
                             .font(.callout)
                             .foregroundStyle(.secondary)
                     }
                     HStack {
-                        Button("OAuth-Zugang ändern") { state.googleNeedsOAuthCredentials = true }
+                        Button(L10n.tr("OAuth-Zugang ändern")) { state.googleNeedsOAuthCredentials = true }
                         Spacer()
-                        Button("Mit Google verbinden") { state.connectGoogleCalendarAction?() }
+                        Button(L10n.tr("Mit Google verbinden")) { state.connectGoogleCalendarAction?() }
                             .disabled(state.googleIsConnecting)
                     }
                 } else {
                     HStack {
-                        Text("Verbunden: \(state.googleConnectedEmail)")
+                        Text(L10n.tr("Verbunden: {0}", state.googleConnectedEmail))
                             .font(.callout)
                             .foregroundStyle(.secondary)
                         Spacer()
-                        Button("Trennen") { state.disconnectGoogleCalendarAction?() }
+                        Button(L10n.tr("Trennen")) { state.disconnectGoogleCalendarAction?() }
                             .controlSize(.small)
                     }
 
@@ -364,12 +366,12 @@ struct OverlayView: View {
                             if state.calendarListStatus.contains("geladen") {
                                 ProgressView().controlSize(.small)
                             }
-                            Text(state.calendarListStatus)
+                            Text(L10n.render(state.calendarListStatus))
                                 .font(.callout)
                                 .foregroundStyle(.secondary)
                         }
                     } else {
-                        Picker("Kalender", selection: $state.selectedCalendarID) {
+                        Picker(L10n.tr("Kalender"), selection: $state.selectedCalendarID) {
                             ForEach(state.calendarOptions) { calendar in
                                 Text(calendar.title).tag(calendar.id)
                             }
@@ -387,8 +389,8 @@ struct OverlayView: View {
 
     private var paymentFooter: some View {
         WorkspaceActionBar(
-            secondaryTitle: "Zurück", primaryTitle: "Überweisungsdaten kopieren",
-            hint: "Es wird keine Zahlung ausgelöst.",
+            secondaryTitle: L10n.tr("Zurück"), primaryTitle: L10n.tr("Überweisungsdaten kopieren"),
+            hint: L10n.tr("Es wird keine Zahlung ausgelöst."),
             disabled: state.paymentRecipient.isEmpty && state.paymentIBAN.isEmpty && state.paymentAmount.isEmpty,
             secondaryAction: { state.stage = .instruction },
             primaryAction: { state.copyPaymentAction?() }
@@ -397,8 +399,8 @@ struct OverlayView: View {
 
     private var calendarFooter: some View {
         WorkspaceActionBar(
-            secondaryTitle: "Zurück", primaryTitle: "Im Kalender anlegen",
-            hint: "Zeit und Zielkalender prüfen.",
+            secondaryTitle: L10n.tr("Zurück"), primaryTitle: L10n.tr("Im Kalender anlegen"),
+            hint: L10n.tr("Zeit und Zielkalender prüfen."),
             disabled: state.calendarTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || state.calendarEnd <= state.calendarStart || state.selectedCalendarID.isEmpty || state.googleConnectedEmail.isEmpty,
             secondaryAction: { state.stage = .instruction },
             primaryAction: { state.createCalendarAction?() }
@@ -407,11 +409,11 @@ struct OverlayView: View {
 
     private var previewTitle: String {
         switch state.outputMode {
-        case .reply: return "Antwortvorschlag"
-        case .newMail: return "Neue Mail"
-        case .forward: return "Weiterleitung"
-        case .calendar: return "Termin"
-        case .payment: return "Überweisung"
+        case .reply: return L10n.tr("Antwortvorschlag")
+        case .newMail: return L10n.tr("Neue Mail")
+        case .forward: return L10n.tr("Weiterleitung")
+        case .calendar: return L10n.tr("Termin")
+        case .payment: return L10n.tr("Überweisung")
         }
     }
 
@@ -419,32 +421,32 @@ struct OverlayView: View {
         VStack(spacing: 16) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 42))
-            Text("Fertig")
+            Text(L10n.tr("Fertig"))
                 .font(.title2.bold())
             Text(state.outputMode == .calendar
-                 ? state.successMessage
+                 ? L10n.render(state.successMessage)
                  : (state.outputMode == .newMail
-                    ? "Der Text wurde in eine neue Outlook-Mail eingesetzt. Bitte Empfänger und Betreff ergänzen, prüfen und selbst senden."
-                    : "Die Antwort ist in Outlook eingesetzt. Bitte noch kurz prüfen und selbst senden."))
+                    ? L10n.tr("Der Text wurde in eine neue Outlook-Mail eingesetzt. Bitte Empfänger und Betreff ergänzen, prüfen und selbst senden.")
+                    : L10n.tr("Die Antwort ist in Outlook eingesetzt. Bitte noch kurz prüfen und selbst senden.")))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
-            Button("Schließen") { state.closeAction?() }
+            Button(L10n.tr("Schließen")) { state.closeAction?() }
                 .keyboardShortcut(.defaultAction)
         }
     }
 
     private var accessibilityView: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Einmalige Berechtigung")
+            Text(L10n.tr("Einmalige Berechtigung"))
                 .font(.title2.bold())
-            Text("Für das Lesen aus Outlook und das automatische Einsetzen braucht Replyzen Zugriff auf Bedienungshilfen. New Mail erstellen kannst du auch ohne Mail-Kontext.")
+            Text(L10n.tr("Für das Lesen aus Outlook und das automatische Einsetzen braucht Replyzen Zugriff auf Bedienungshilfen. New Mail erstellen kannst du auch ohne Mail-Kontext."))
                 .foregroundStyle(.secondary)
-            Text("Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen → Replyzen einschalten.")
+            Text(L10n.tr("Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen → Replyzen einschalten."))
                 .font(.callout)
             HStack {
-                Button("Systemeinstellungen öffnen") { state.openAccessibilityAction?() }
+                Button(L10n.tr("Systemeinstellungen öffnen")) { state.openAccessibilityAction?() }
                 Spacer()
-                Button("Zurück zu Replyzen") { state.retryAction?() }
+                Button(L10n.tr("Zurück zu Replyzen")) { state.retryAction?() }
                     .keyboardShortcut(.defaultAction)
             }
         }
@@ -452,18 +454,18 @@ struct OverlayView: View {
 
     private var apiKeyView: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("OpenAI API-Key")
+            Text(L10n.tr("OpenAI API-Key"))
                 .font(.title2.bold())
-            Text("Der Key wird einmalig im macOS-Schlüsselbund gespeichert.")
+            Text(L10n.tr("Der Key wird einmalig im macOS-Schlüsselbund gespeichert."))
                 .foregroundStyle(.secondary)
 
             SecureField("sk-…", text: $state.apiKeyDraft)
                 .textFieldStyle(.roundedBorder)
 
             HStack {
-                Button("Abbrechen") { state.closeAction?() }
+                Button(L10n.tr("Abbrechen")) { state.closeAction?() }
                 Spacer()
-                Button("Speichern") { state.saveAPIKeyAction?() }
+                Button(L10n.tr("Speichern")) { state.saveAPIKeyAction?() }
                     .keyboardShortcut(.defaultAction)
                     .disabled(state.apiKeyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
@@ -474,18 +476,18 @@ struct OverlayView: View {
         VStack(alignment: .leading, spacing: 16) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 34))
-            Text("Das hat nicht geklappt")
+            Text(L10n.tr("Das hat nicht geklappt"))
                 .font(.title2.bold())
             ScrollView {
-                Text(state.errorMessage)
+                Text(L10n.render(state.errorMessage))
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             HStack {
-                Button("Schließen") { state.closeAction?() }
+                Button(L10n.tr("Schließen")) { state.closeAction?() }
                 Spacer()
-                Button("Zurück") {
+                Button(L10n.tr("Zurück")) {
                     state.stage = .instruction
                 }
                 .keyboardShortcut(.defaultAction)
@@ -495,6 +497,7 @@ struct OverlayView: View {
 }
 
 private struct CommandManagerView: View {
+    @ObservedObject private var appLocalization = AppLocalization.shared
     @ObservedObject var store: CommandStore
     @Environment(\.dismiss) private var dismiss
 
@@ -507,14 +510,14 @@ private struct CommandManagerView: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Commands")
+                    Text(L10n.tr("Commands"))
                         .font(.title2.bold())
-                    Text("Name, Prompt und Tone festlegen. Die Sprache steuerst du weiterhin über 🇩🇪 / 🇺🇸.")
+                    Text(L10n.tr("Name, Prompt und Tone festlegen. Die Sprache steuerst du weiterhin über 🇩🇪 / 🇺🇸."))
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button("+ Add Command") {
+                Button(L10n.tr("+ Add Command")) {
                     let command = store.addCommand()
                     select(command)
                 }
@@ -552,13 +555,13 @@ private struct CommandManagerView: View {
                 .background(.background.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
 
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Name")
+                    Text(L10n.tr("Name"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    TextField("Command name", text: $draftName)
+                    TextField(L10n.tr("Command name"), text: $draftName)
                         .textFieldStyle(.roundedBorder)
 
-                    Text("Prompt")
+                    Text(L10n.tr("Prompt"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     TextEditor(text: $draftPrompt)
@@ -567,11 +570,11 @@ private struct CommandManagerView: View {
                         .background(.background.opacity(0.7), in: RoundedRectangle(cornerRadius: 8))
 
                     HStack {
-                        Text("Tone")
+                        Text(L10n.tr("Tone"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         Spacer()
-                        Picker("Tone", selection: $draftTone) {
+                        Picker(L10n.tr("Tone"), selection: $draftTone) {
                             ForEach(ReplyTone.allCases) { tone in
                                 Text(tone.displayName).tag(tone)
                             }
@@ -583,14 +586,14 @@ private struct CommandManagerView: View {
                     Spacer()
 
                     HStack {
-                        Button("Delete", role: .destructive) {
+                        Button(L10n.tr("Delete"), role: .destructive) {
                             deleteSelected()
                         }
                         .disabled(selectedID == nil)
 
                         Spacer()
 
-                        Button("Save") {
+                        Button(L10n.tr("Save")) {
                             saveSelected()
                         }
                         .keyboardShortcut(.defaultAction)
@@ -603,12 +606,12 @@ private struct CommandManagerView: View {
             Divider()
 
             HStack {
-                Button("Reset Defaults") {
+                Button(L10n.tr("Reset Defaults")) {
                     store.resetToDefaults()
                     if let first = store.commands.first { select(first) }
                 }
                 Spacer()
-                Button("Done") { dismiss() }
+                Button(L10n.tr("Done")) { dismiss() }
             }
         }
         .padding(22)

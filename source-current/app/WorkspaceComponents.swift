@@ -28,6 +28,7 @@ struct WorkspaceChoiceStyle: ButtonStyle {
 }
 
 struct WorkspaceHeader: View {
+    @ObservedObject private var appLocalization = AppLocalization.shared
     @ObservedObject var state: AppState
     @State private var showsOptions = false
 
@@ -47,7 +48,7 @@ struct WorkspaceHeader: View {
                 Text(ReplyZenBrand.displayName)
                     .font(.system(size: 21, weight: .semibold))
                     .accessibilityAddTraits(.isHeader)
-                Text("Mail AI")
+                Text(L10n.tr("Mail AI"))
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
             }
@@ -61,29 +62,31 @@ struct WorkspaceHeader: View {
                 Image(systemName: "gearshape").frame(width: 28, height: 28)
             }
             .buttonStyle(.borderless)
-            .help("Einstellungen und Hinweise")
-            .accessibilityLabel("Einstellungen und Hinweise")
+            .help(L10n.tr("Einstellungen und Hinweise"))
+            .accessibilityLabel(L10n.tr("Einstellungen und Hinweise"))
             .popover(isPresented: $showsOptions, arrowEdge: .bottom) {
                 VStack(alignment: .leading, spacing: 16) {
                     Text(ReplyZenBrand.displayName).font(.headline)
-                    Text("Öffnen in Outlook: ⌃⌥R")
-                    Text("Der Editor-Zoom verändert nur die Anzeige. Mailtext wird weiterhin in Calibri Light, 10,5 pt eingesetzt.")
+                    InterfaceLanguagePicker()
+                    Divider()
+                    Text(L10n.tr("Öffnen in Outlook: ⌃⌥R"))
+                    Text(L10n.tr("Der Editor-Zoom verändert nur die Anzeige. Mailtext wird weiterhin in Calibri Light, 10,5 pt eingesetzt."))
                         .font(.callout).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                     Divider()
-                    Button("API-Key ändern …") {
+                    Button(L10n.tr("API-Key ändern …")) {
                         showsOptions = false
                         state.stage = .apiKey
                     }
-                    Button("Bedienungshilfen öffnen …") {
+                    Button(L10n.tr("Bedienungshilfen öffnen …")) {
                         showsOptions = false
                         state.openAccessibilityAction?()
                     }
-                    Text("Updates und weitere Optionen findest du im ReplyZen-Menü in der macOS-Menüleiste.")
+                    Text(L10n.tr("Updates und weitere Optionen findest du im ReplyZen-Menü in der macOS-Menüleiste."))
                         .font(.caption).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                .padding(20).frame(width: 300)
+                .padding(20).frame(width: 360)
             }
         }
         // Reserve space for native window controls in full-size content.
@@ -93,16 +96,17 @@ struct WorkspaceHeader: View {
 
     private var statusTitle: String {
         switch state.stage {
-        case .preview: return "Entwurf prüfen"
-        case .calendarPreview: return "Termin prüfen"
-        case .paymentPreview: return "Daten prüfen"
-        default: return "Bereit"
+        case .preview: return L10n.tr("Entwurf prüfen")
+        case .calendarPreview: return L10n.tr("Termin prüfen")
+        case .paymentPreview: return L10n.tr("Daten prüfen")
+        default: return L10n.tr("Bereit")
         }
     }
 }
 
 /// Kept outside scrolling content so primary actions remain visible.
 struct WorkspaceActionBar: View {
+    @ObservedObject private var appLocalization = AppLocalization.shared
     let secondaryTitle: String
     let primaryTitle: String
     var hint: String = ""

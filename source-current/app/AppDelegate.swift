@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 import ApplicationServices
 import NaturalLanguage
 
@@ -15,6 +16,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let calendarManager = CalendarManager()
     private let attachmentExtractor = AttachmentTextExtractor()
     private lazy var toolbarButton = OutlookToolbarButtonController(outlook: outlook)
+
+    private var languageObserver: NSObjectProtocol?
+    private var languageSettingsWindow: NSWindow?
 
     private var statusItem: NSStatusItem?
     private var activeSnapshot: OutlookAccessibility.Snapshot?
@@ -36,6 +40,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in self?.suppressLegacySettingsWindows() }
 
         migrateExistingAPIKeyIfPossible()
+        _ = AppLocalization.shared
+        languageObserver = NotificationCenter.default.addObserver(
+            forName: .replyZenLanguageDidChange, object: nil, queue: .main
+        ) { [weak self] _ in self?.refreshInterfaceLanguage() }
         configureStateActions()
         panel.onClose = { [weak self] in self?.closePanel() }
         configureHotKey()
@@ -59,6 +67,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let center = NSWorkspace.shared.notificationCenter
         if let outlookLaunchObserver { center.removeObserver(outlookLaunchObserver) }
         if let outlookTerminateObserver { center.removeObserver(outlookTerminateObserver) }
+        if let languageObserver { NotificationCenter.default.removeObserver(languageObserver) }
         toolbarButton.stop()
     }
 
@@ -82,18 +91,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func startupJoke() -> String {
         let jokes = [
-            "Warum sind E-Mails schlechte Geheimnisträger? Weil am Ende doch jemand auf ‚Allen antworten‘ klickt.",
-            "Mein Kalender wollte spontan sein. Ich habe ihm dafür einen Termin eingetragen.",
-            "CC ist die höfliche Art zu sagen: Jetzt weißt du es auch.",
-            "Warum war die Mail so entspannt? Sie hatte keinen Anhang zu tragen.",
-            "Der kürzeste Büro-Witz? ‚Kurze Abstimmung‘.",
-            "Ich wollte meinem Posteingang Urlaub geben. Er hat die Abwesenheitsnotiz abgelehnt.",
-            "Warum mag Replyzen Montagmorgen? Weil selbst eine kurze Antwort schon wie Fortschritt aussieht.",
-            "Mein Kalender und ich haben eine gute Beziehung: Er sagt mir ständig, wo ich sein soll.",
-            "Eine E-Mail ohne Betreff ist wie ein Termin ohne Uhrzeit: spannend, aber unnötig.",
-            "Warum hat der Termin nicht zurückgerufen? Er war schon vergeben."
+            L10n.source("Warum sind E-Mails schlechte Geheimnisträger? Weil am Ende doch jemand auf ‚Allen antworten‘ klickt."),
+            L10n.source("Mein Kalender wollte spontan sein. Ich habe ihm dafür einen Termin eingetragen."),
+            L10n.source("CC ist die höfliche Art zu sagen: Jetzt weißt du es auch."),
+            L10n.source("Warum war die Mail so entspannt? Sie hatte keinen Anhang zu tragen."),
+            L10n.source("Der kürzeste Büro-Witz? ‚Kurze Abstimmung‘."),
+            L10n.source("Ich wollte meinem Posteingang Urlaub geben. Er hat die Abwesenheitsnotiz abgelehnt."),
+            L10n.source("Warum mag Replyzen Montagmorgen? Weil selbst eine kurze Antwort schon wie Fortschritt aussieht."),
+            L10n.source("Mein Kalender und ich haben eine gute Beziehung: Er sagt mir ständig, wo ich sein soll."),
+            L10n.source("Eine E-Mail ohne Betreff ist wie ein Termin ohne Uhrzeit: spannend, aber unnötig."),
+            L10n.source("Warum hat der Termin nicht zurückgerufen? Er war schon vergeben.")
         ]
-        return jokes.randomElement() ?? "Replyzen läuft. Das ist heute schon die halbe Miete."
+        return jokes.randomElement() ?? L10n.source("Replyzen läuft. Das ist heute schon die halbe Miete.")
     }
 
     private func configureStateActions() {
@@ -127,32 +136,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let menu = NSMenu()
 
-        let reply = NSMenuItem(title: "ReplyZen öffnen   ⌃⌥R", action: #selector(menuReply), keyEquivalent: "")
+        let reply = NSMenuItem(title: L10n.tr("ReplyZen öffnen   ⌃⌥R"), action: #selector(menuReply), keyEquivalent: "")
         reply.target = self
         menu.addItem(reply)
 
-        let login = NSMenuItem(title: "Bei Anmeldung starten", action: #selector(menuEnableLogin), keyEquivalent: "")
+        let settings = NSMenuItem(title: L10n.tr("Einstellungen…"), action: #selector(menuSettings), keyEquivalent: ",")
+        settings.target = self
+        menu.addItem(settings)
+
+        let login = NSMenuItem(title: L10n.tr("Bei Anmeldung starten"), action: #selector(menuEnableLogin), keyEquivalent: "")
         login.target = self
         menu.addItem(login)
 
-        let key = NSMenuItem(title: "API-Key ändern…", action: #selector(menuAPIKey), keyEquivalent: "")
+        let key = NSMenuItem(title: L10n.tr("API-Key ändern…"), action: #selector(menuAPIKey), keyEquivalent: "")
         key.target = self
         menu.addItem(key)
 
         menu.addItem(.separator())
 
-        let updates = NSMenuItem(title: "Nach Updates suchen…", action: #selector(menuCheckUpdates), keyEquivalent: "")
+        let updates = NSMenuItem(title: L10n.tr("Nach Updates suchen…"), action: #selector(menuCheckUpdates), keyEquivalent: "")
         updates.target = self
         menu.addItem(updates)
         updateMenuItem = updates
 
-        let source = NSMenuItem(title: "Update-Quelle…", action: #selector(menuUpdateSource), keyEquivalent: "")
+        let source = NSMenuItem(title: L10n.tr("Update-Quelle…"), action: #selector(menuUpdateSource), keyEquivalent: "")
         source.target = self
         menu.addItem(source)
 
         menu.addItem(.separator())
 
-        let quit = NSMenuItem(title: "Beenden", action: #selector(menuQuit), keyEquivalent: "q")
+        let quit = NSMenuItem(title: L10n.tr("Beenden"), action: #selector(menuQuit), keyEquivalent: "q")
         quit.target = self
         menu.addItem(quit)
 
@@ -310,8 +323,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self.isRunningFlow = false
                     self.toolbarButton.setSuppressed(false)
                     self.showSimpleAlert(
-                        title: "Termin nicht erstellt",
-                        message: "Die geöffnete Outlook-Mail konnte nicht gelesen werden."
+                        title: L10n.source("Termin nicht erstellt"),
+                        message: L10n.source("Die geöffnete Outlook-Mail konnte nicht gelesen werden.")
                     )
                 }
             }
@@ -377,8 +390,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self.isRunningFlow = false
                     self.toolbarButton.setSuppressed(false)
                     self.showSimpleAlert(
-                        title: "Überweisung nicht erkannt",
-                        message: "Die geöffnete Outlook-Mail konnte nicht gelesen werden."
+                        title: L10n.source("Überweisung nicht erkannt"),
+                        message: L10n.source("Die geöffnete Outlook-Mail konnte nicht gelesen werden.")
                     )
                 }
             }
@@ -421,7 +434,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                             guard !reply.isEmpty else {
                                 self.isRunningFlow = false
                                 self.toolbarButton.setSuppressed(false)
-                                self.showSimpleAlert(title: "Absage fehlgeschlagen", message: "OpenAI hat keinen Antworttext geliefert.")
+                                self.showSimpleAlert(title: L10n.source("Absage fehlgeschlagen"), message: L10n.source("OpenAI hat keinen Antworttext geliefert."))
                                 return
                             }
                             self.activeSnapshot = snapshot
@@ -429,7 +442,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         case .failure(let error):
                             self.isRunningFlow = false
                             self.toolbarButton.setSuppressed(false)
-                            self.showSimpleAlert(title: "Absage fehlgeschlagen", message: error.localizedDescription)
+                            self.showSimpleAlert(title: L10n.source("Absage fehlgeschlagen"), message: error.localizedDescription)
                         }
                     }
                 }
@@ -437,7 +450,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 DispatchQueue.main.async {
                     self.isRunningFlow = false
                     self.toolbarButton.setSuppressed(false)
-                    self.showSimpleAlert(title: "Absage fehlgeschlagen", message: "Die geöffnete Outlook-Mail konnte nicht gelesen werden.")
+                    self.showSimpleAlert(title: L10n.source("Absage fehlgeschlagen"), message: L10n.source("Die geöffnete Outlook-Mail konnte nicht gelesen werden."))
                 }
             }
         }
@@ -461,6 +474,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
         }
+    }
+
+    @objc private func menuSettings() {
+        if languageSettingsWindow == nil {
+            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 460, height: 250),
+                                  styleMask: [.titled, .closable], backing: .buffered, defer: false)
+            window.isReleasedWhenClosed = false
+            window.contentViewController = NSHostingController(rootView: InterfaceSettingsView())
+            window.center()
+            languageSettingsWindow = window
+        }
+        languageSettingsWindow?.title = L10n.tr("Einstellungen")
+        languageSettingsWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private func refreshInterfaceLanguage() {
+        if let item = statusItem {
+            NSStatusBar.system.removeStatusItem(item)
+            statusItem = nil
+            configureStatusItem()
+            if let update = availableUpdate {
+                updateMenuItem?.title = L10n.tr("Update verfügbar: {0}…", update.manifest.version)
+            }
+        }
+        toolbarButton.refreshLocalization()
+        languageSettingsWindow?.title = L10n.tr("Einstellungen")
+        state.objectWillChange.send()
     }
 
     @objc private func menuReply() {
@@ -505,10 +546,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func configureUpdateSource(showSuccess: Bool) {
         let alert = NSAlert()
         brandAlert(alert)
-        alert.messageText = "Replyzen · Update-Quelle"
-        alert.informativeText = "Replyzen nutzt standardmäßig den offiziellen Update-Kanal. Hier kannst du die HTTPS-Adresse zu update.json bei Bedarf ändern."
-        alert.addButton(withTitle: "Speichern")
-        alert.addButton(withTitle: "Abbrechen")
+        alert.messageText = L10n.tr("Replyzen · Update-Quelle")
+        alert.informativeText = L10n.tr("Replyzen nutzt standardmäßig den offiziellen Update-Kanal. Hier kannst du die HTTPS-Adresse zu update.json bei Bedarf ändern.")
+        alert.addButton(withTitle: L10n.tr("Speichern"))
+        alert.addButton(withTitle: L10n.tr("Abbrechen"))
 
         let field = NSTextField(string: updateManager.feedURLString)
         field.placeholderString = "https://…/update.json"
@@ -521,18 +562,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let value = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         if value.isEmpty {
             updateManager.feedURLString = ""
-            updateMenuItem?.title = "Nach Updates suchen…"
+            updateMenuItem?.title = L10n.tr("Nach Updates suchen…")
             return
         }
 
         guard let url = URL(string: value), url.scheme?.lowercased() == "https" else {
-            showSimpleAlert(title: "Ungültige Update-URL", message: "Bitte eine vollständige HTTPS-Adresse zu update.json eintragen.")
+            showSimpleAlert(title: L10n.source("Ungültige Update-URL"), message: L10n.source("Bitte eine vollständige HTTPS-Adresse zu update.json eintragen."))
             return
         }
 
         updateManager.feedURLString = value
         if showSuccess {
-            showSimpleAlert(title: "Update-Quelle gespeichert", message: "Künftig prüft die App beim Start automatisch auf neue Versionen. Installiert wird erst nach deinem Klick auf „Installieren“. ")
+            showSimpleAlert(title: L10n.source("Update-Quelle gespeichert"), message: L10n.source("Künftig prüft die App beim Start automatisch auf neue Versionen. Installiert wird erst nach deinem Klick auf „Installieren“. "))
         }
         checkForUpdates(interactive: false)
     }
@@ -546,19 +587,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 case .success(let update):
                     self.availableUpdate = update
                     if let update {
-                        self.updateMenuItem?.title = "Update verfügbar: \(update.manifest.version)…"
+                        self.updateMenuItem?.title = L10n.tr("Update verfügbar: {0}…", update.manifest.version)
                         if interactive {
                             self.offerUpdate(update)
                         }
                     } else {
-                        self.updateMenuItem?.title = "Nach Updates suchen…"
+                        self.updateMenuItem?.title = L10n.tr("Nach Updates suchen…")
                         if interactive {
-                            self.showSimpleAlert(title: "Replyzen", message: "Du verwendest bereits die aktuelle Version \(self.updateManager.currentVersion).")
+                            self.showSimpleAlert(title: "Replyzen", message: L10n.source("Du verwendest bereits die aktuelle Version {0}.", self.updateManager.currentVersion))
                         }
                     }
                 case .failure(let error):
                     if interactive {
-                        self.showSimpleAlert(title: "Update-Prüfung fehlgeschlagen", message: error.localizedDescription)
+                        self.showSimpleAlert(title: L10n.source("Update-Prüfung fehlgeschlagen"), message: error.localizedDescription)
                     }
                 }
             }
@@ -568,12 +609,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func offerUpdate(_ update: UpdateManager.AvailableUpdate) {
         let alert = NSAlert()
         brandAlert(alert)
-        alert.messageText = "Replyzen \(update.manifest.version) ist verfügbar"
-        alert.informativeText = update.manifest.notes?.isEmpty == false
-            ? update.manifest.notes!
-            : "Die neue Version kann jetzt automatisch geladen und installiert werden."
-        alert.addButton(withTitle: "Installieren")
-        alert.addButton(withTitle: "Später")
+        alert.messageText = L10n.tr("Replyzen {0} ist verfügbar", update.manifest.version)
+        alert.informativeText = update.manifest.localizedNotes
+        alert.addButton(withTitle: L10n.tr("Installieren"))
+        alert.addButton(withTitle: L10n.tr("Später"))
 
         NSApp.activate(ignoringOtherApps: true)
         guard alert.runModal() == .alertFirstButtonReturn else { return }
@@ -583,7 +622,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func installUpdate(_ update: UpdateManager.AvailableUpdate) {
         toolbarButton.setSuppressed(true)
         state.stage = .updating
-        state.statusText = "Version \(update.manifest.version) wird heruntergeladen"
+        state.statusText = L10n.source("Version {0} wird heruntergeladen", update.manifest.version)
         panel.show()
 
         updateManager.install(update) { [weak self] result in
@@ -591,7 +630,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 guard let self else { return }
                 switch result {
                 case .success:
-                    self.state.statusText = "Update ist vorbereitet – App startet gleich neu"
+                    self.state.statusText = L10n.source("Update ist vorbereitet – App startet gleich neu")
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                         NSApp.terminate(nil)
                     }
@@ -605,9 +644,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func showSimpleAlert(title: String, message: String) {
         let alert = NSAlert()
         brandAlert(alert)
-        alert.messageText = title == "Replyzen" ? "Replyzen" : "Replyzen · \(title)"
-        alert.informativeText = message
-        alert.addButton(withTitle: "OK")
+        alert.messageText = title == "Replyzen" ? ReplyZenBrand.displayName : ReplyZenBrand.displayName + " · " + L10n.render(title)
+        alert.informativeText = L10n.render(message)
+        alert.addButton(withTitle: L10n.tr("OK"))
         NSApp.activate(ignoringOtherApps: true)
         alert.runModal()
     }
@@ -712,7 +751,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         guard outlook.isTrusted() else {
             state.outputMode = .newMail
-            state.mailStatus = .unavailable("Keine Outlook-Mail verfügbar. Reply ist ausgeblendet.")
+            state.mailStatus = .unavailable(L10n.source("Keine Outlook-Mail verfügbar. Reply ist ausgeblendet."))
             outlook.requestTrustPrompt()
             return
         }
@@ -781,12 +820,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     if let outlookError = error as? OutlookAccessibility.OutlookError {
                         switch outlookError {
                         case .notRunning:
-                            message = "Outlook läuft gerade nicht. New Mail funktioniert trotzdem."
+                            message = L10n.source("Outlook läuft gerade nicht. New Mail funktioniert trotzdem.")
                         case .noWindow, .noMailText:
-                            message = "Keine lesbare Outlook-Mail erkannt. New Mail funktioniert trotzdem."
+                            message = L10n.source("Keine lesbare Outlook-Mail erkannt. New Mail funktioniert trotzdem.")
                         }
                     } else {
-                        message = "Mail-Kontext konnte nicht geladen werden. New Mail funktioniert trotzdem."
+                        message = L10n.source("Mail-Kontext konnte nicht geladen werden. New Mail funktioniert trotzdem.")
                     }
 
                     self.state.mailStatus = .unavailable(message)
@@ -827,14 +866,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let instruction = state.instruction.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !instruction.isEmpty else { return }
         guard !state.mailText.isEmpty else {
-            state.mailStatus = .unavailable("Keine lesbare Outlook-Mail erkannt. Nutze New Mail oder versuche es erneut.")
+            state.mailStatus = .unavailable(L10n.source("Keine lesbare Outlook-Mail erkannt. Nutze New Mail oder versuche es erneut."))
             return
         }
 
         isRunningFlow = true
         toolbarButton.setSuppressed(true)
         state.stage = .generating
-        state.statusText = "OpenAI verarbeitet die Mail"
+        state.statusText = L10n.source("OpenAI verarbeitet die Mail")
 
         openAI.generateReply(
             apiKey: apiKey,
@@ -873,7 +912,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         isRunningFlow = true
         toolbarButton.setSuppressed(true)
         state.stage = .generating
-        state.statusText = "OpenAI formuliert eine neue Mail"
+        state.statusText = L10n.source("OpenAI formuliert eine neue Mail")
 
         openAI.generateNewMail(
             apiKey: apiKey,
@@ -909,14 +948,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let instruction = state.instruction.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !instruction.isEmpty else { return }
         guard !state.mailText.isEmpty, activeSnapshot != nil else {
-            state.mailStatus = .unavailable("Keine lesbare Outlook-Mail erkannt. Für Forward bitte eine Mail öffnen und erneut versuchen.")
+            state.mailStatus = .unavailable(L10n.source("Keine lesbare Outlook-Mail erkannt. Für Forward bitte eine Mail öffnen und erneut versuchen."))
             return
         }
 
         isRunningFlow = true
         toolbarButton.setSuppressed(true)
         state.stage = .generating
-        state.statusText = "OpenAI formuliert den Forward Text"
+        state.statusText = L10n.source("OpenAI formuliert den Forward Text")
 
         openAI.generateForwardNote(
             apiKey: apiKey,
@@ -954,7 +993,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func generateCalendarSuggestion(apiKey: String) {
         guard !state.mailText.isEmpty else {
-            state.mailStatus = .unavailable("Keine lesbare Outlook-Mail erkannt. Für einen Termin bitte eine Mail öffnen und erneut versuchen.")
+            state.mailStatus = .unavailable(L10n.source("Keine lesbare Outlook-Mail erkannt. Für einen Termin bitte eine Mail öffnen und erneut versuchen."))
             isRunningFlow = false
             toolbarButton.setSuppressed(false)
             return
@@ -963,7 +1002,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         isRunningFlow = true
         toolbarButton.setSuppressed(true)
         state.stage = .generating
-        state.statusText = "Replyzen erstellt den Terminvorschlag"
+        state.statusText = L10n.source("Replyzen erstellt den Terminvorschlag")
 
         openAI.createCalendarSuggestion(
             apiKey: apiKey,
@@ -991,7 +1030,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         let fallback = self.nextRoundedHour()
                         self.state.calendarStart = fallback
                         self.state.calendarEnd = fallback.addingTimeInterval(30 * 60)
-                        self.state.calendarWarning = "Im Mailverlauf wurde kein eindeutiger Terminzeitpunkt erkannt. Bitte Datum und Uhrzeit prüfen."
+                        self.state.calendarWarning = L10n.source("Im Mailverlauf wurde kein eindeutiger Terminzeitpunkt erkannt. Bitte Datum und Uhrzeit prüfen.")
                     }
 
                     self.state.stage = .calendarPreview
@@ -1011,14 +1050,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         guard !state.mailText.isEmpty, let snapshot = activeSnapshot else {
-            state.mailStatus = .unavailable("Keine lesbare Outlook-Mail erkannt. Für eine Überweisung bitte die Rechnungsmail öffnen und erneut versuchen.")
+            state.mailStatus = .unavailable(L10n.source("Keine lesbare Outlook-Mail erkannt. Für eine Überweisung bitte die Rechnungsmail öffnen und erneut versuchen."))
             return
         }
 
         isRunningFlow = true
         toolbarButton.setSuppressed(true)
         state.stage = .generating
-        state.statusText = "Replyzen sucht den PDF-Anhang …"
+        state.statusText = L10n.source("Replyzen sucht den PDF-Anhang …")
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
@@ -1032,7 +1071,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
             if selectedPDFs.isEmpty, let pdfName = mentionedPDF {
                 DispatchQueue.main.sync {
-                    self.state.statusText = "PDF wird aus Outlook geladen …"
+                    self.state.statusText = L10n.source("PDF wird aus Outlook geladen …")
                     self.outlook.activateOutlook(pid: snapshot.pid)
                     _ = self.outlook.activateAttachment(named: pdfName, from: snapshot)
                 }
@@ -1049,7 +1088,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 if selectedPDFs.isEmpty {
                     var savedURL: URL?
                     DispatchQueue.main.sync {
-                        self.state.statusText = "PDF wird automatisch aus Outlook gespeichert …"
+                        self.state.statusText = L10n.source("PDF wird automatisch aus Outlook gespeichert …")
                         self.outlook.activateOutlook(pid: snapshot.pid)
                         savedURL = self.outlook.materializeAttachmentToTemporaryFile(named: pdfName, from: retrySnapshot)
                     }
@@ -1071,7 +1110,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if selectedPDFs.isEmpty, let pdfName = mentionedPDF {
                 var manuallySelectedPDF: URL?
                 DispatchQueue.main.sync {
-                    self.state.statusText = "Outlook blockiert den PDF-Zugriff – bitte Rechnung auswählen …"
+                    self.state.statusText = L10n.source("Outlook blockiert den PDF-Zugriff – bitte Rechnung auswählen …")
                     manuallySelectedPDF = self.choosePaymentPDFFallback(suggestedName: pdfName)
                 }
                 if let manuallySelectedPDF {
@@ -1086,8 +1125,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self.isRunningFlow = false
                     self.toolbarButton.setSuppressed(false)
                     self.showSimpleAlert(
-                        title: "PDF nicht verfügbar",
-                        message: "Outlook gibt den PDF-Anhang nicht frei. Bitte Payment erneut klicken und im Dateidialog die Rechnung auswählen."
+                        title: L10n.source("PDF nicht verfügbar"),
+                        message: L10n.source("Outlook gibt den PDF-Anhang nicht frei. Bitte Payment erneut klicken und im Dateidialog die Rechnung auswählen.")
                     )
                 }
                 return
@@ -1103,10 +1142,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
             if !selectedPDFs.isEmpty {
                 let wasAutoSaved = !replyzenTempDirectories.isEmpty
-                sourceStatus = (wasAutoSaved ? "PDF automatisch aus Outlook gespeichert und direkt mit OpenAI gelesen: " : "PDF direkt mit OpenAI gelesen: ")
-                    + selectedPDFs.map(\.lastPathComponent).joined(separator: ", ")
+                sourceStatus = L10n.source(wasAutoSaved ? "PDF automatisch aus Outlook gespeichert und direkt mit OpenAI gelesen: {0}" : "PDF direkt mit OpenAI gelesen: {0}", selectedPDFs.map(\.lastPathComponent).joined(separator: ", "))
                 DispatchQueue.main.async {
-                    self.state.statusText = "PDF wird direkt an OpenAI übergeben und gelesen …"
+                    self.state.statusText = L10n.source("PDF wird direkt an OpenAI übergeben und gelesen …")
                 }
             } else {
                 let fallback = self.attachmentExtractor.extract(filenames: filenames)
@@ -1114,11 +1152,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
                 let pdfMentioned = filenames.contains { $0.lowercased().hasSuffix(".pdf") }
                 if !fallback.usedFiles.isEmpty {
-                    sourceStatus = "Kein direkt zugängliches PDF; lokal gelesen: " + fallback.usedFiles.joined(separator: ", ")
+                    sourceStatus = L10n.source("Kein direkt zugängliches PDF; lokal gelesen: {0}", fallback.usedFiles.joined(separator: ", "))
                 } else if pdfMentioned {
-                    sourceStatus = "PDF-Anhang erkannt, aber Outlook konnte ihn weder lokal bereitstellen noch automatisch speichern."
+                    sourceStatus = L10n.source("PDF-Anhang erkannt, aber Outlook konnte ihn weder lokal bereitstellen noch automatisch speichern.")
                 } else {
-                    sourceStatus = "Kein PDF-Anhang erkannt. Extraktion aus dem Mailtext."
+                    sourceStatus = L10n.source("Kein PDF-Anhang erkannt. Extraktion aus dem Mailtext.")
                 }
                 DispatchQueue.main.async {
                     self.state.statusText = sourceStatus
@@ -1154,11 +1192,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         let confidence = suggestion.confidence?.lowercased() ?? "low"
                         let missingCore = self.state.paymentRecipient.isEmpty || self.state.paymentIBAN.isEmpty || self.state.paymentAmount.isEmpty
                         if selectedPDFs.isEmpty {
-                            self.state.paymentWarning = "Kein PDF wurde direkt von OpenAI gelesen. Bitte Empfänger, IBAN und Betrag besonders sorgfältig prüfen."
+                            self.state.paymentWarning = L10n.source("Kein PDF wurde direkt von OpenAI gelesen. Bitte Empfänger, IBAN und Betrag besonders sorgfältig prüfen.")
                         } else if confidence == "low" || missingCore {
-                            self.state.paymentWarning = "Die Extraktion ist nicht eindeutig. Bitte die PDF-Rechnung mit den Feldern unten vergleichen."
+                            self.state.paymentWarning = L10n.source("Die Extraktion ist nicht eindeutig. Bitte die PDF-Rechnung mit den Feldern unten vergleichen.")
                         } else {
-                            self.state.paymentWarning = "Bitte IBAN, Betrag und Verwendungszweck vor einer Überweisung immer mit der PDF-Rechnung vergleichen."
+                            self.state.paymentWarning = L10n.source("Bitte IBAN, Betrag und Verwendungszweck vor einer Überweisung immer mit der PDF-Rechnung vergleichen.")
                         }
 
                         self.state.stage = .paymentPreview
@@ -1173,9 +1211,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func choosePaymentPDFFallback(suggestedName: String?) -> URL? {
         let picker = NSOpenPanel()
-        picker.title = "Rechnung auswählen"
-        picker.message = "Outlook stellt den erkannten PDF-Anhang nicht als Datei bereit. Wähle die Rechnung einmal aus; Replyzen liest sie danach direkt mit OpenAI."
-        picker.prompt = "PDF verwenden"
+        picker.title = L10n.tr("Rechnung auswählen")
+        picker.message = L10n.source("Outlook stellt den erkannten PDF-Anhang nicht als Datei bereit. Wähle die Rechnung einmal aus; Replyzen liest sie danach direkt mit OpenAI.")
+        picker.prompt = L10n.tr("PDF verwenden")
         picker.canChooseFiles = true
         picker.canChooseDirectories = false
         picker.allowsMultipleSelection = false
@@ -1198,15 +1236,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func copyPaymentDetails() {
         let lines = [
-            state.paymentRecipient.isEmpty ? nil : "Empfänger: \(state.paymentRecipient)",
+            state.paymentRecipient.isEmpty ? nil : L10n.tr("Empfänger: {0}", state.paymentRecipient),
             state.paymentIBAN.isEmpty ? nil : "IBAN: \(state.paymentIBAN)",
             state.paymentBIC.isEmpty ? nil : "BIC: \(state.paymentBIC)",
-            state.paymentAmount.isEmpty ? nil : "Betrag: \(state.paymentAmount) \(state.paymentCurrency)",
-            state.paymentPurpose.isEmpty ? nil : "Verwendungszweck: \(state.paymentPurpose)"
+            state.paymentAmount.isEmpty ? nil : L10n.tr("Betrag: {0} {1}", state.paymentAmount, state.paymentCurrency),
+            state.paymentPurpose.isEmpty ? nil : L10n.tr("Verwendungszweck: {0}", state.paymentPurpose)
         ].compactMap { $0 }
         guard !lines.isEmpty else { return }
         copyToPasteboard(lines.joined(separator: "\n"))
-        state.successMessage = "Überweisungsdaten wurden in die Zwischenablage kopiert. Bitte vor der Zahlung im Banking prüfen."
+        state.successMessage = L10n.tr("Überweisungsdaten wurden in die Zwischenablage kopiert. Bitte vor der Zahlung im Banking prüfen.")
         state.stage = .success
         panel.show()
     }
@@ -1215,12 +1253,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let title = state.calendarTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty else { return }
         guard state.calendarEnd > state.calendarStart else {
-            showError("Die Endzeit muss nach der Startzeit liegen.")
+            showError(L10n.source("Die Endzeit muss nach der Startzeit liegen."))
             return
         }
 
         guard !state.selectedCalendarID.isEmpty else {
-            showError("Bitte zuerst einen Kalender auswählen.")
+            showError(L10n.source("Bitte zuerst einen Kalender auswählen."))
             return
         }
         UserDefaults.standard.set(state.selectedCalendarID, forKey: "Replyzen.SelectedMinuboCalendarID")
@@ -1228,9 +1266,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         isRunningFlow = true
         toolbarButton.setSuppressed(true)
         state.stage = .generating
-        state.statusText = "Termin wird direkt in Google Calendar angelegt"
+        state.statusText = L10n.source("Termin wird direkt in Google Calendar angelegt")
 
-        let selectedCalendarName = state.calendarOptions.first(where: { $0.id == state.selectedCalendarID })?.title ?? "Kalender"
+        let selectedCalendarName = state.calendarOptions.first(where: { $0.id == state.selectedCalendarID })?.title ?? L10n.source("Kalender")
         calendarManager.createEvent(
             title: title,
             notes: state.calendarNotes,
@@ -1244,11 +1282,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 switch result {
                 case .success:
                     let formatter = DateFormatter()
-                    formatter.locale = Locale(identifier: "de_DE")
+                    formatter.locale = L10n.locale
                     formatter.timeZone = CalendarManager.eventTimeZone
                     formatter.dateStyle = .medium
                     formatter.timeStyle = .short
-                    self.state.successMessage = "„\(title)“ wurde am \(formatter.string(from: self.state.calendarStart)) direkt in Google Calendar · „\(selectedCalendarName)“ angelegt."
+                    self.state.successMessage = L10n.source("„{0}“ wurde am {1} direkt in Google Calendar · „{2}“ angelegt.", title, L10n.DateValue(self.state.calendarStart, timeZone: CalendarManager.eventTimeZone), selectedCalendarName)
                     self.state.stage = .success
                     self.panel.show()
                 case .failure(let error):
@@ -1265,29 +1303,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         guard calendarManager.isConfigured() else {
             state.googleNeedsOAuthCredentials = true
-            state.googleOAuthStatus = "Einmalig Google OAuth einrichten."
-            state.calendarListStatus = "Google Calendar ist noch nicht verbunden."
+            state.googleOAuthStatus = L10n.source("Einmalig Google OAuth einrichten.")
+            state.calendarListStatus = L10n.source("Google Calendar ist noch nicht verbunden.")
             return
         }
 
         state.googleNeedsOAuthCredentials = false
         guard let email = calendarManager.connectedEmail() else {
-            state.googleOAuthStatus = "Noch nicht mit Google verbunden."
-            state.calendarListStatus = "Bitte mit lennard@minubo.com verbinden."
+            state.googleOAuthStatus = L10n.source("Noch nicht mit Google verbunden.")
+            state.calendarListStatus = L10n.source("Bitte mit lennard@minubo.com verbinden.")
             return
         }
 
         guard email.caseInsensitiveCompare(CalendarManager.targetEmail) == .orderedSame else {
             calendarManager.disconnect()
             state.googleConnectedEmail = ""
-            state.googleOAuthStatus = "Bitte mit lennard@minubo.com verbinden."
-            state.calendarListStatus = "Falsches Google-Konto."
+            state.googleOAuthStatus = L10n.source("Bitte mit lennard@minubo.com verbinden.")
+            state.calendarListStatus = L10n.source("Falsches Google-Konto.")
             return
         }
 
         state.googleConnectedEmail = email
-        state.googleOAuthStatus = "Verbunden mit \(email)"
-        state.calendarListStatus = "Google-Kalender werden geladen …"
+        state.googleOAuthStatus = L10n.source("Verbunden mit {0}", email)
+        state.calendarListStatus = L10n.source("Google-Kalender werden geladen …")
 
         calendarManager.loadCalendarOptions { [weak self] result in
             DispatchQueue.main.async {
@@ -1297,7 +1335,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self.state.calendarOptions = options
                     if options.isEmpty {
                         self.state.selectedCalendarID = ""
-                        self.state.calendarListStatus = "Keine beschreibbaren Google-Kalender gefunden."
+                        self.state.calendarListStatus = L10n.source("Keine beschreibbaren Google-Kalender gefunden.")
                         return
                     }
 
@@ -1325,12 +1363,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         if !calendarManager.isConfigured() && (clientID.isEmpty || clientSecret.isEmpty) {
             state.googleNeedsOAuthCredentials = true
-            state.googleOAuthStatus = "Bitte Client-ID und Client Secret eintragen."
+            state.googleOAuthStatus = L10n.source("Bitte Client-ID und Client Secret eintragen.")
             return
         }
 
         state.googleIsConnecting = true
-        state.googleOAuthStatus = "Google-Anmeldung wird im Browser geöffnet …"
+        state.googleOAuthStatus = L10n.source("Google-Anmeldung wird im Browser geöffnet …")
 
         calendarManager.connect(clientID: clientID, clientSecret: clientSecret) { [weak self] result in
             DispatchQueue.main.async {
@@ -1341,7 +1379,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self.state.googleConnectedEmail = email
                     self.state.googleNeedsOAuthCredentials = false
                     self.state.googleClientSecretDraft = ""
-                    self.state.googleOAuthStatus = "Verbunden mit \(email)"
+                    self.state.googleOAuthStatus = L10n.source("Verbunden mit {0}", email)
                     self.loadCalendarOptions()
                 case .failure(let error):
                     self.state.googleOAuthStatus = error.localizedDescription
@@ -1356,8 +1394,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         state.googleConnectedEmail = ""
         state.calendarOptions = []
         state.selectedCalendarID = ""
-        state.googleOAuthStatus = "Google Calendar wurde getrennt."
-        state.calendarListStatus = "Bitte erneut mit lennard@minubo.com verbinden."
+        state.googleOAuthStatus = L10n.source("Google Calendar wurde getrennt.")
+        state.calendarListStatus = L10n.source("Bitte erneut mit lennard@minubo.com verbinden.")
     }
 
     private func openGoogleCloudCredentials() {
@@ -1415,7 +1453,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func insertReply() {
         guard let snapshot = activeSnapshot else {
             state.stage = .instruction
-            state.mailStatus = .unavailable("Die ursprüngliche Outlook-Mail ist nicht mehr verfügbar. Bitte erneut laden.")
+            state.mailStatus = .unavailable(L10n.source("Die ursprüngliche Outlook-Mail ist nicht mehr verfügbar. Bitte erneut laden."))
             return
         }
 
@@ -1424,12 +1462,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         guard outlook.isTrusted() else {
             copyMailToPasteboard(plainText: reply, html: state.replyHTML)
-            showError("Replyzen braucht Bedienungshilfen, um den Text automatisch in Outlook einzusetzen. Der Text wurde in die Zwischenablage kopiert.")
+            showError(L10n.source("Replyzen braucht Bedienungshilfen, um den Text automatisch in Outlook einzusetzen. Der Text wurde in die Zwischenablage kopiert."))
             return
         }
 
         state.stage = .inserting
-        state.statusText = "Outlook wird aktiviert"
+        state.statusText = L10n.source("Outlook wird aktiviert")
         isRunningFlow = true
         toolbarButton.setSuppressed(true)
 
@@ -1465,7 +1503,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func insertForwardDraft() {
         guard let snapshot = activeSnapshot else {
             state.stage = .instruction
-            state.mailStatus = .unavailable("Die ursprüngliche Outlook-Mail ist nicht mehr verfügbar. Bitte erneut laden.")
+            state.mailStatus = .unavailable(L10n.source("Die ursprüngliche Outlook-Mail ist nicht mehr verfügbar. Bitte erneut laden."))
             return
         }
 
@@ -1475,12 +1513,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         guard outlook.isTrusted() else {
             copyMailToPasteboard(plainText: body, html: html)
-            showError("Replyzen braucht Bedienungshilfen, um den Forward automatisch in Outlook vorzubereiten. Dein Text wurde in die Zwischenablage kopiert.")
+            showError(L10n.source("Replyzen braucht Bedienungshilfen, um den Forward automatisch in Outlook vorzubereiten. Dein Text wurde in die Zwischenablage kopiert."))
             return
         }
 
         state.stage = .inserting
-        state.statusText = "Outlook Forward wird geöffnet; Thread und Anhänge bleiben erhalten"
+        state.statusText = L10n.source("Outlook Forward wird geöffnet; Thread und Anhänge bleiben erhalten")
         isRunningFlow = true
         toolbarButton.setSuppressed(true)
         panel.hide()
@@ -1544,7 +1582,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
             self.copyMailToPasteboard(plainText: body, html: html)
             self.isRunningFlow = false
-            self.showError("Der Forward wurde in Outlook geöffnet, aber Replyzen konnte den Text nicht automatisch über dem Thread einsetzen. Der Text liegt in der Zwischenablage.")
+            self.showError(L10n.source("Der Forward wurde in Outlook geöffnet, aber Replyzen konnte den Text nicht automatisch über dem Thread einsetzen. Der Text liegt in der Zwischenablage."))
         }
     }
 
@@ -1556,19 +1594,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         guard let pid = outlook.runningPID() else {
             copyMailToPasteboard(plainText: body, html: html)
-            showError("Microsoft Outlook läuft nicht. Der Mailtext wurde in die Zwischenablage kopiert.")
+            showError(L10n.source("Microsoft Outlook läuft nicht. Der Mailtext wurde in die Zwischenablage kopiert."))
             return
         }
 
         guard outlook.isTrusted() else {
             copyMailToPasteboard(plainText: body, html: html)
             outlook.requestTrustPrompt()
-            showError("Replyzen braucht Bedienungshilfen, um automatisch eine neue Outlook-Mail zu befüllen. Der Mailtext wurde in die Zwischenablage kopiert.")
+            showError(L10n.source("Replyzen braucht Bedienungshilfen, um automatisch eine neue Outlook-Mail zu befüllen. Der Mailtext wurde in die Zwischenablage kopiert."))
             return
         }
 
         state.stage = .inserting
-        state.statusText = "Neue Outlook-Mail wird geöffnet und befüllt"
+        state.statusText = L10n.source("Neue Outlook-Mail wird geöffnet und befüllt")
         isRunningFlow = true
         toolbarButton.setSuppressed(true)
 
@@ -1638,7 +1676,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             } else {
                 self.copyMailToPasteboard(plainText: body, html: html)
                 self.isRunningFlow = false
-                self.showError("Der Mailtext konnte nicht automatisch eingesetzt werden. Er liegt in der Zwischenablage.")
+                self.showError(L10n.source("Der Mailtext konnte nicht automatisch eingesetzt werden. Er liegt in der Zwischenablage."))
             }
         }
     }
@@ -1669,7 +1707,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             state.stage = .instruction
             openWorkspace()
         } else {
-            showError("Der API-Key konnte nicht im macOS-Schlüsselbund gespeichert werden.")
+            showError(L10n.source("Der API-Key konnte nicht im macOS-Schlüsselbund gespeichert werden."))
         }
     }
 

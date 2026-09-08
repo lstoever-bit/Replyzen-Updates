@@ -13,11 +13,11 @@ final class AppState: ObservableObject {
 
         var displayName: String {
             switch self {
-            case .reply: return "Reply"
-            case .newMail: return "New Mail"
-            case .forward: return "Forward"
-            case .calendar: return "Termin"
-            case .payment: return "Überweisung"
+            case .reply: return L10n.tr("Reply")
+            case .newMail: return L10n.tr("New Mail")
+            case .forward: return L10n.tr("Forward")
+            case .calendar: return L10n.tr("Termin")
+            case .payment: return L10n.tr("Überweisung")
             }
         }
     }
@@ -28,8 +28,8 @@ final class AppState: ObservableObject {
 
         var displayName: String {
             switch self {
-            case .german: return "Deutsch"
-            case .usEnglish: return "US English"
+            case .german: return L10n.tr("Deutsch")
+            case .usEnglish: return L10n.tr("US English")
             }
         }
     }
@@ -83,7 +83,7 @@ final class AppState: ObservableObject {
     @Published var calendarWarning: String = ""
     @Published var calendarOptions: [CalendarOption] = []
     @Published var selectedCalendarID: String = ""
-    @Published var calendarListStatus: String = "Google-Kalender werden geladen …"
+    @Published var calendarListStatus: String = L10n.source("Google-Kalender werden geladen …")
     @Published var googleNeedsOAuthCredentials: Bool = false
     @Published var googleClientIDDraft: String = ""
     @Published var googleClientSecretDraft: String = ""

@@ -29,25 +29,25 @@ final class CalendarManager {
         var errorDescription: String? {
             switch self {
             case .oauthNotConfigured:
-                return "Google OAuth ist noch nicht eingerichtet. Bitte einmalig Client-ID und Client Secret eines Google-OAuth-Clients vom Typ Desktop-App hinterlegen."
+                return L10n.source("Google OAuth ist noch nicht eingerichtet. Bitte einmalig Client-ID und Client Secret eines Google-OAuth-Clients vom Typ Desktop-App hinterlegen.")
             case .notConnected:
-                return "Replyzen ist noch nicht mit Google Calendar verbunden. Bitte zuerst mit lennard@minubo.com anmelden."
+                return L10n.source("Replyzen ist noch nicht mit Google Calendar verbunden. Bitte zuerst mit lennard@minubo.com anmelden.")
             case .authorizationCancelled:
-                return "Die Google-Anmeldung wurde abgebrochen."
+                return L10n.source("Die Google-Anmeldung wurde abgebrochen.")
             case .authorizationFailed(let message):
-                return "Google-Anmeldung fehlgeschlagen: \(message)"
+                return L10n.source("Google-Anmeldung fehlgeschlagen: {0}", L10n.diagnostic(message))
             case .wrongAccount(let email):
-                return "Bitte mit lennard@minubo.com anmelden. Angemeldet wurde \(email)."
+                return L10n.source("Bitte mit lennard@minubo.com anmelden. Angemeldet wurde {0}.", email)
             case .invalidResponse:
-                return "Google hat eine unerwartete Antwort geliefert."
+                return L10n.source("Google hat eine unerwartete Antwort geliefert.")
             case .selectedCalendarNotFound:
-                return "Der ausgewählte Google-Kalender ist nicht mehr verfügbar. Bitte einen anderen Kalender wählen."
+                return L10n.source("Der ausgewählte Google-Kalender ist nicht mehr verfügbar. Bitte einen anderen Kalender wählen.")
             case .invalidDates:
-                return "Start- und Endzeit des Termins sind ungültig."
+                return L10n.source("Start- und Endzeit des Termins sind ungültig.")
             case .apiError(let message):
-                return "Google Calendar: \(message)"
+                return L10n.source("Google Calendar: {0}", L10n.diagnostic(message))
             case .keychainError(let status):
-                return "Google-Zugangsdaten konnten nicht im Schlüsselbund gespeichert werden (\(status))."
+                return L10n.source("Google-Zugangsdaten konnten nicht im Schlüsselbund gespeichert werden ({0}).", status)
             }
         }
     }
@@ -161,7 +161,7 @@ final class CalendarManager {
                     switch state {
                     case .ready:
                         guard let port = listener?.port else {
-                            self.finishOAuth(.failure(CalendarError.authorizationFailed("Lokaler Callback-Port konnte nicht geöffnet werden.")))
+                            self.finishOAuth(.failure(CalendarError.authorizationFailed(L10n.source("Lokaler Callback-Port konnte nicht geöffnet werden."))))
                             return
                         }
                         let redirect = "http://127.0.0.1:\(port.rawValue)/oauth2callback"
@@ -261,7 +261,7 @@ final class CalendarManager {
     private func openAuthorizationPage(clientID: String, redirectURI: String) {
         guard var components = URLComponents(string: "https://accounts.google.com/o/oauth2/v2/auth"),
               let state = oauthState else {
-            finishOAuth(.failure(CalendarError.authorizationFailed("OAuth-URL konnte nicht erstellt werden.")))
+            finishOAuth(.failure(CalendarError.authorizationFailed(L10n.source("OAuth-URL konnte nicht erstellt werden."))))
             return
         }
 
@@ -278,7 +278,7 @@ final class CalendarManager {
         ]
 
         guard let url = components.url else {
-            finishOAuth(.failure(CalendarError.authorizationFailed("OAuth-URL konnte nicht erstellt werden.")))
+            finishOAuth(.failure(CalendarError.authorizationFailed(L10n.source("OAuth-URL konnte nicht erstellt werden."))))
             return
         }
         DispatchQueue.main.async {
@@ -292,30 +292,30 @@ final class CalendarManager {
             guard let self else { return }
             guard let data, let requestText = String(data: data, encoding: .utf8),
                   let firstLine = requestText.split(separator: "\n").first else {
-                self.sendBrowserResponse(connection, success: false, message: "Ungültige OAuth-Antwort.")
+                self.sendBrowserResponse(connection, success: false, message: L10n.source("Ungültige OAuth-Antwort."))
                 return
             }
 
             let parts = firstLine.split(separator: " ")
             guard parts.count >= 2 else {
-                self.sendBrowserResponse(connection, success: false, message: "Ungültige OAuth-Antwort.")
+                self.sendBrowserResponse(connection, success: false, message: L10n.source("Ungültige OAuth-Antwort."))
                 return
             }
 
             let target = String(parts[1])
             guard target.hasPrefix("/oauth2callback") else {
-                self.sendBrowserResponse(connection, success: false, message: "Replyzen wartet auf die Google-Anmeldung.")
+                self.sendBrowserResponse(connection, success: false, message: L10n.source("Replyzen wartet auf die Google-Anmeldung."))
                 return
             }
 
             guard let components = URLComponents(string: "http://127.0.0.1\(target)") else {
-                self.sendBrowserResponse(connection, success: false, message: "Ungültige OAuth-Antwort.")
+                self.sendBrowserResponse(connection, success: false, message: L10n.source("Ungültige OAuth-Antwort."))
                 return
             }
 
             let values = Dictionary(uniqueKeysWithValues: (components.queryItems ?? []).map { ($0.name, $0.value ?? "") })
             if let error = values["error"], !error.isEmpty {
-                self.sendBrowserResponse(connection, success: false, message: "Google-Anmeldung wurde abgebrochen.")
+                self.sendBrowserResponse(connection, success: false, message: L10n.source("Google-Anmeldung wurde abgebrochen."))
                 self.finishOAuth(.failure(CalendarError.authorizationCancelled))
                 return
             }
@@ -323,12 +323,12 @@ final class CalendarManager {
             guard values["state"] == self.oauthState,
                   let code = values["code"], !code.isEmpty,
                   let redirect = self.oauthRedirectURI else {
-                self.sendBrowserResponse(connection, success: false, message: "OAuth-Prüfung fehlgeschlagen.")
-                self.finishOAuth(.failure(CalendarError.authorizationFailed("State oder Autorisierungscode fehlt.")))
+                self.sendBrowserResponse(connection, success: false, message: L10n.source("OAuth-Prüfung fehlgeschlagen."))
+                self.finishOAuth(.failure(CalendarError.authorizationFailed(L10n.source("State oder Autorisierungscode fehlt."))))
                 return
             }
 
-            self.sendBrowserResponse(connection, success: true, message: "Replyzen ist mit Google Calendar verbunden. Dieses Fenster kann geschlossen werden.")
+            self.sendBrowserResponse(connection, success: true, message: L10n.source("Replyzen ist mit Google Calendar verbunden. Dieses Fenster kann geschlossen werden."))
             self.listener?.cancel()
             self.listener = nil
             self.exchangeAuthorizationCode(code, clientID: clientID, clientSecret: clientSecret, redirectURI: redirect)
@@ -337,7 +337,7 @@ final class CalendarManager {
 
     private func sendBrowserResponse(_ connection: NWConnection, success: Bool, message: String) {
         let symbol = success ? "✓" : "!"
-        let body = "<html><head><meta charset=\"utf-8\"><title>Replyzen</title></head><body style=\"font-family:-apple-system;padding:48px;max-width:620px;margin:auto\"><h2>\(symbol) Replyzen</h2><p>\(message)</p></body></html>"
+        let body = "<html><head><meta charset=\"utf-8\"><title>ReplyZen</title></head><body style=\"font-family:-apple-system;padding:48px;max-width:620px;margin:auto\"><h2>\(symbol) ReplyZen</h2><p>\(L10n.render(message))</p></body></html>"
         let response = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: \(body.utf8.count)\r\nConnection: close\r\n\r\n\(body)"
         connection.send(content: response.data(using: .utf8), completion: .contentProcessed { _ in
             connection.cancel()
@@ -346,7 +346,7 @@ final class CalendarManager {
 
     private func exchangeAuthorizationCode(_ code: String, clientID: String, clientSecret: String, redirectURI: String) {
         guard let url = URL(string: "https://oauth2.googleapis.com/token") else {
-            finishOAuth(.failure(CalendarError.authorizationFailed("Token-URL fehlt.")))
+            finishOAuth(.failure(CalendarError.authorizationFailed(L10n.source("Token-URL fehlt."))))
             return
         }
         var request = URLRequest(url: url)
@@ -367,7 +367,7 @@ final class CalendarManager {
                 return
             }
             guard let http = response as? HTTPURLResponse, let data, (200..<300).contains(http.statusCode) else {
-                self.finishOAuth(.failure(CalendarError.authorizationFailed(self.googleMessage(from: data) ?? "Token konnte nicht abgerufen werden.")))
+                self.finishOAuth(.failure(CalendarError.authorizationFailed(self.googleMessage(from: data) ?? L10n.source("Token konnte nicht abgerufen werden."))))
                 return
             }
             do {
@@ -392,7 +392,7 @@ final class CalendarManager {
                     }
                 }
             } catch {
-                self.finishOAuth(.failure(CalendarError.authorizationFailed("Token-Antwort konnte nicht gelesen werden.")))
+                self.finishOAuth(.failure(CalendarError.authorizationFailed(L10n.source("Token-Antwort konnte nicht gelesen werden."))))
             }
         }.resume()
     }
@@ -461,7 +461,7 @@ final class CalendarManager {
                 return
             }
             guard let http = response as? HTTPURLResponse, let data, (200..<300).contains(http.statusCode) else {
-                completion(.failure(CalendarError.apiError(self.googleMessage(from: data) ?? "Google-Zugriff muss erneut autorisiert werden.")))
+                completion(.failure(CalendarError.apiError(self.googleMessage(from: data) ?? L10n.source("Google-Zugriff muss erneut autorisiert werden."))))
                 return
             }
             do {
@@ -514,7 +514,7 @@ final class CalendarManager {
                 return
             }
             guard let http = response as? HTTPURLResponse, let data, (200..<300).contains(http.statusCode) else {
-                completion(.failure(CalendarError.apiError(self.googleMessage(from: data) ?? "Kalender konnten nicht geladen werden.")))
+                completion(.failure(CalendarError.apiError(self.googleMessage(from: data) ?? L10n.source("Kalender konnten nicht geladen werden."))))
                 return
             }
             do {

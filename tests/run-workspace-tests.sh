@@ -8,8 +8,8 @@ SOURCES=()
 for path in "$SOURCE"/app/*.swift; do
   if [ "$(basename "$path")" != ReplyzenApp.swift ]; then SOURCES+=("$path"); fi
 done
-swiftc -parse-as-library -framework AppKit -framework SwiftUI -framework ApplicationServices \
+swiftc -DLOCALIZATION_TESTS -parse-as-library -framework AppKit -framework SwiftUI -framework ApplicationServices \
   -framework Security -framework ServiceManagement -framework Network -framework PDFKit \
   -framework Vision -framework NaturalLanguage -framework CoreText \
   "${SOURCES[@]}" "$ROOT/tests/WorkspaceUITests.swift" -o "$TMP/workspace-tests"
-"$TMP/workspace-tests" "$SOURCE/.ui-previews"
+REPLYZEN_TEST_CATALOG="$SOURCE/app/Resources/Localization.json" "$TMP/workspace-tests" "$SOURCE/.ui-previews"

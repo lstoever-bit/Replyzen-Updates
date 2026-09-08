@@ -12,12 +12,12 @@ enum ReplyTone: String, Codable, CaseIterable, Identifiable, Equatable, Hashable
 
     var displayName: String {
         switch self {
-        case .friendly: return "Friendly"
-        case .direct: return "Direct"
-        case .professional: return "Professional"
-        case .formal: return "Formal"
-        case .casual: return "Casual"
-        case .neutral: return "Neutral"
+        case .friendly: return L10n.tr("Friendly")
+        case .direct: return L10n.tr("Direct")
+        case .professional: return L10n.tr("Professional")
+        case .formal: return L10n.tr("Formal")
+        case .casual: return L10n.tr("Casual")
+        case .neutral: return L10n.tr("Neutral")
         }
     }
 

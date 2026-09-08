@@ -65,6 +65,7 @@ manifest = {
     "download_url": package,
     "sha256": hashlib.sha256((root / package).read_bytes()).hexdigest(),
     "notes": (root / "Release-notes.txt").read_text(encoding="utf-8").strip(),
+    "notes_localized": json.loads((root / "Release-notes.localized.json").read_text(encoding="utf-8")),
 }
 (root / "update.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 PY

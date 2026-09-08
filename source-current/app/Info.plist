@@ -17,9 +17,9 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.46.0</string>
+	<string>1.47.0</string>
 	<key>CFBundleVersion</key>
-	<string>47</string>
+	<string>48</string>
 	<key>CFBundleIconFile</key>
 	<string>Replyzen.icns</string>
 	<key>LSMinimumSystemVersion</key>
@@ -28,5 +28,11 @@
 	<true/>
 	<key>NSHighResolutionCapable</key>
 	<true/>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>de</string>
+		<string>es</string>
+	</array>
 </dict>
 </plist>

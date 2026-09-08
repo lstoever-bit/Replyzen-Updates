@@ -15,11 +15,11 @@ final class OutlookAccessibility {
         var errorDescription: String? {
             switch self {
             case .notRunning:
-                return "Microsoft Outlook läuft nicht."
+                return L10n.source("Microsoft Outlook läuft nicht.")
             case .noWindow:
-                return "Ich finde kein Outlook-Fenster. Öffne die Mail bitte sichtbar in Outlook."
+                return L10n.source("Ich finde kein Outlook-Fenster. Öffne die Mail bitte sichtbar in Outlook.")
             case .noMailText:
-                return "Ich konnte in der geöffneten Outlook-Mail keinen lesbaren Mailtext finden."
+                return L10n.source("Ich konnte in der geöffneten Outlook-Mail keinen lesbaren Mailtext finden.")
             }
         }
     }
