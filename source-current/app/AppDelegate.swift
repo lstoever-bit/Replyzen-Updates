@@ -27,7 +27,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var availableUpdate: UpdateManager.AvailableUpdate?
     private var updateMenuItem: NSMenuItem?
     private var requestedMailMode: AppState.OutputMode?
-    private var replyAllForCurrentDraft = true
     private var outlookLaunchObserver: NSObjectProtocol?
     private var outlookTerminateObserver: NSObjectProtocol?
     private var outlookSessionActive = false
@@ -260,19 +259,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func openNewMailWorkspace() {
         requestedMailMode = .newMail
-        replyAllForCurrentDraft = true
         openWorkspace()
     }
 
     private func openReplyWorkspace(replyAll: Bool) {
         requestedMailMode = .reply
-        replyAllForCurrentDraft = replyAll
+        state.replyScope = replyAll ? .all : .sender
         openWorkspace()
     }
 
     private func openForwardWorkspace() {
         requestedMailMode = .forward
-        replyAllForCurrentDraft = true
         openWorkspace()
     }
 
@@ -671,8 +668,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // same form. The Outlook overlay can request either mode explicitly.
         // When Reply is entered through the generic Replyzen window, keep the
         // historical default of Reply All. The explicit overlay buttons override it.
-        if requestedMailMode != .reply {
-            replyAllForCurrentDraft = true
+        if requestedMailMode == nil {
+            state.replyScope = .all
         }
         if requestedMailMode == .reply {
             state.outputMode = .reply
@@ -707,40 +704,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func detectReplyLanguage(in mailText: String) -> AppState.ReplyLanguage? {
-        let cleaned = mailText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard cleaned.count >= 8 else { return nil }
-
-        // The currently opened/latest message is normally at the beginning of the
-        // accessibility text. Limiting the sample reduces influence from older quoted
-        // messages in long bilingual threads.
-        let sample = String(cleaned.prefix(6_000))
-        let recognizer = NLLanguageRecognizer()
-        recognizer.processString(sample)
-
-        guard let language = recognizer.dominantLanguage else { return nil }
-        switch language {
-        case .german:
-            return .german
-        case .english:
-            return .usEnglish
-        default:
-            return nil
-        }
+        MailLanguageDetector.detect(in: mailText)
     }
 
     private func defaultReplyInstruction(for language: AppState.ReplyLanguage) -> String {
-        switch language {
-        case .german:
-            return "Kurz, freundlich und direkt antworten."
-        case .usEnglish:
-            return "Reply briefly, friendly and directly."
-        }
+        language.defaultReplyInstruction
     }
 
     private func isDefaultReplyInstruction(_ text: String) -> Bool {
         let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        return cleaned == defaultReplyInstruction(for: .german) ||
-               cleaned == defaultReplyInstruction(for: .usEnglish)
+        return AppState.ReplyLanguage.allCases.map(\.defaultReplyInstruction).contains(cleaned)
     }
 
     private func refreshMailContext() {
@@ -1471,32 +1444,47 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         isRunningFlow = true
         toolbarButton.setSuppressed(true)
 
+        let replyAll = state.replyScope == .all
         copyMailToPasteboard(plainText: reply, html: state.replyHTML)
         panel.hide()
         outlook.activateOutlook(pid: snapshot.pid)
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.20) { [weak self] in
             guard let self else { return }
-            if self.replyAllForCurrentDraft {
-                self.keyboard.sendCommandShiftR()
-            } else {
-                self.keyboard.sendCommandR()
+            let openedThroughAccessibility = self.outlook.openReplyComposer(replyAll: replyAll, from: snapshot)
+            if !openedThroughAccessibility {
+                if replyAll { self.keyboard.sendCommandShiftR() }
+                else { self.keyboard.sendCommandR() }
             }
+            self.populateReplyDraft(reply: reply, html: self.state.replyHTML, attempt: 0)
+        }
+    }
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.05) { [weak self] in
-                guard let self else { return }
+    private func populateReplyDraft(reply: String, html: String, attempt: Int) {
+        let delay = attempt == 0 ? 0.45 : 0.25
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+            guard let self else { return }
+
+            if self.outlook.focusComposeBodyField() {
                 if let reminder = self.reminderBCCAddress() {
                     _ = self.outlook.setComposeBCCValue(reminder)
                     _ = self.outlook.focusComposeBodyField()
-                    self.copyMailToPasteboard(plainText: reply, html: self.state.replyHTML)
                 }
+                self.copyMailToPasteboard(plainText: reply, html: html)
                 self.keyboard.sendCommandV()
-                self.isRunningFlow = false
-                self.state.stage = .idle
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                    self.toolbarButton.setSuppressed(false)
-                }
+                self.finishNewMailInsertion()
+                return
             }
+
+            if attempt < 10 {
+                self.populateReplyDraft(reply: reply, html: html, attempt: attempt + 1)
+                return
+            }
+
+            self.copyMailToPasteboard(plainText: reply, html: html)
+            self.isRunningFlow = false
+            self.toolbarButton.setSuppressed(false)
+            self.showError(L10n.source("Outlook hat den Antworteditor nicht geöffnet. Der Text wurde in die Zwischenablage kopiert."))
         }
     }
 

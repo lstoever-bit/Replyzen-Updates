@@ -1623,5 +1623,15 @@
     "en-US": "Redo",
     "de": "Wiederholen",
     "es": "Rehacer"
+  },
+  "Español": {
+    "en-US": "Spanish",
+    "de": "Spanisch",
+    "es": "Español"
+  },
+  "Outlook hat den Antworteditor nicht geöffnet. Der Text wurde in die Zwischenablage kopiert.": {
+    "en-US": "Outlook did not open the reply editor. The text was copied to the clipboard.",
+    "de": "Outlook hat den Antworteditor nicht geöffnet. Der Text wurde in die Zwischenablage kopiert.",
+    "es": "Outlook no ha abierto el editor de respuesta. El texto se ha copiado al portapapeles."
   }
 }

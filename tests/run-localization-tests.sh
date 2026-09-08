@@ -10,6 +10,10 @@ swiftc -DLOCALIZATION_TESTS -parse-as-library -framework AppKit -framework Swift
  "$SOURCE/app/LocalizationCore.swift" "$SOURCE/app/AppLocalization.swift" \
  "$ROOT/tests/LocalizationTests.swift" -o "$TMP/localization-tests"
 "$TMP/localization-tests"
+swiftc -parse-as-library -framework NaturalLanguage \
+ "$SOURCE/app/MailLanguageDetector.swift" "$SOURCE/app/OutlookReplyControlMatcher.swift" \
+ "$ROOT/tests/ReplyBehaviorTests.swift" -o "$TMP/reply-behavior-tests"
+"$TMP/reply-behavior-tests"
 # Reuse existing native UI checks in every language, without network access.
 python3 - "$ROOT/tests/WorkspaceUITests.swift" "$TMP/LocalizedWorkspaceTests.swift" <<'PY'
 from pathlib import Path

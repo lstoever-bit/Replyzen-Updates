@@ -19,8 +19,8 @@ class SourceContracts(unittest.TestCase):
         self.assertEqual(info['CFBundleExecutable'], 'Replyzen')
         self.assertEqual(info['CFBundleName'], 'Replyzen')
         self.assertEqual(info['CFBundleDisplayName'], 'ReplyZen')
-        self.assertEqual(info['CFBundleShortVersionString'], '1.47.0')
-        self.assertEqual(info['CFBundleVersion'], '48')
+        self.assertEqual(info['CFBundleShortVersionString'], '1.48.0')
+        self.assertEqual(info['CFBundleVersion'], '49')
 
     def test_visible_header_and_cached_logo(self):
         view = self.read('OverlayView.swift')
@@ -48,6 +48,9 @@ class SourceContracts(unittest.TestCase):
         for flow in ['openNewMailWorkspace', 'openReplyWorkspace', 'openForwardWorkspace', 'quickDecline', 'createCalendarFromOverlay', 'createPaymentFromOverlay']:
             self.assertIn(flow + '(', app)
         self.assertIn('openSelectedMessageWindowIfNeeded', self.read('OutlookAccessibility.swift'))
+        self.assertIn('openReplyComposer(replyAll:', self.read('OutlookAccessibility.swift'))
+        self.assertIn('replyScope', self.read('AppState.swift'))
+        self.assertIn('case spanish', self.read('AppState.swift'))
 
     def test_json_and_upload_pipeline(self):
         client = self.read('OpenAIClient.swift')

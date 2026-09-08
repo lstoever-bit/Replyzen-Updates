@@ -285,10 +285,19 @@ final class OpenAIClient {
         nowFormatter.timeZone = CalendarManager.eventTimeZone
         let now = nowFormatter.string(from: Date())
         let timezone = CalendarManager.eventTimeZoneIdentifier
-        let titleLanguage = language == .german ? "German" : L10n.source("US English")
-        let strictLanguageInstruction = language == .german
-            ? "OUTPUT LANGUAGE IS GERMAN. The title and description MUST be written in German, regardless of the language used in the email thread."
-            : "OUTPUT LANGUAGE IS US ENGLISH. The title and description MUST be written in natural US English, regardless of the language used in the email thread. Translate ordinary descriptive words; preserve only true proper names such as people, companies, products, and projects."
+        let titleLanguage: String
+        let strictLanguageInstruction: String
+        switch language {
+        case .german:
+            titleLanguage = "German"
+            strictLanguageInstruction = "OUTPUT LANGUAGE IS GERMAN. The title and description MUST be written in German, regardless of the language used in the email thread."
+        case .usEnglish:
+            titleLanguage = "US English"
+            strictLanguageInstruction = "OUTPUT LANGUAGE IS US ENGLISH. The title and description MUST be written in natural US English, regardless of the language used in the email thread. Translate ordinary descriptive words; preserve only true proper names such as people, companies, products, and projects."
+        case .spanish:
+            titleLanguage = "Spanish"
+            strictLanguageInstruction = "OUTPUT LANGUAGE IS SPANISH. The title and description MUST be written in natural Spanish, regardless of the language used in the email thread. Translate ordinary descriptive words; preserve only true proper names such as people, companies, products, and projects."
+        }
 
         let systemInstructions = [
             "Create a calendar event suggestion from the email thread.",
@@ -582,6 +591,8 @@ final class OpenAIClient {
             return "FINAL OUTPUT LANGUAGE IS GERMAN. Write the entire \(purpose) in natural German. The USER INSTRUCTION may be written in any language; treat its language only as input and translate its requested meaning into German. Never switch the final email to another language because the instruction itself is written in that language. Preserve exact names, brands, URLs, email addresses and explicitly requested verbatim quotations."
         case .usEnglish:
             return "FINAL OUTPUT LANGUAGE IS US ENGLISH. Write the entire \(purpose) in natural US English using American spelling and phrasing. The USER INSTRUCTION may be written in any language; treat its language only as input and translate its requested meaning into US English. Never switch the final email to German or another language because the instruction itself is written in that language. Preserve exact names, brands, URLs, email addresses and explicitly requested verbatim quotations."
+        case .spanish:
+            return "FINAL OUTPUT LANGUAGE IS SPANISH. Write the entire \(purpose) in natural Spanish. The USER INSTRUCTION may be written in any language; treat its language only as input and translate its requested meaning into Spanish. Never switch the final email to German, English or another language because the instruction itself is written in that language. Preserve exact names, brands, URLs, email addresses and explicitly requested verbatim quotations."
         }
     }
 

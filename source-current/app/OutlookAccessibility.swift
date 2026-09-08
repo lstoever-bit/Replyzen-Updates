@@ -523,6 +523,36 @@ final class OutlookAccessibility {
         NSRunningApplication(processIdentifier: pid)?.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
     }
 
+    func openReplyComposer(replyAll: Bool, from snapshot: Snapshot) -> Bool {
+        guard let sourceWindow = snapshot.windows.first else { return false }
+        activateOutlook(pid: snapshot.pid)
+
+        let appElement = AXUIElementCreateApplication(snapshot.pid)
+        _ = AXUIElementSetAttributeValue(appElement, kAXFocusedWindowAttribute as CFString, sourceWindow)
+        _ = AXUIElementPerformAction(sourceWindow, kAXRaiseAction as CFString)
+        if looksLikeMainOutlookWindow(sourceWindow) {
+            focusSelectedMessageRow(in: sourceWindow)
+        }
+
+        var stack: [AXUIElement] = [sourceWindow]
+        var visited = 0
+        var best: (element: AXUIElement, score: Int)?
+        while let element = stack.popLast(), visited < 16_000 {
+            visited += 1
+            let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
+            if role == "AXButton" || role == "AXMenuButton" || role == "AXLink" || role == "AXMenuItem" {
+                let score = OutlookReplyControlMatcher.score(metadata: composeMetadata(for: element), replyAll: replyAll)
+                if score > 0 && (best == nil || score > best!.score) {
+                    best = (element, score)
+                }
+            }
+            for child in children(of: element).reversed() { stack.append(child) }
+        }
+
+        guard let best else { return false }
+        return AXUIElementPerformAction(best.element, kAXPressAction as CFString) == .success
+    }
+
     func setComposeBCCValue(_ bcc: String) -> Bool {
         guard let window = focusedOutlookWindow() else { return false }
         if let element = composeBCCElement(in: window) {
@@ -531,7 +561,7 @@ final class OutlookAccessibility {
 
         // Some Outlook layouts hide BCC until its small Bcc control is pressed.
         // Reveal it once, then resolve the actual BCC field again by accessibility metadata.
-        if pressComposeControl(in: window, matching: ["bcc", "blind carbon", "blind copy", "blindkopie"]) ,
+        if pressComposeControl(in: window, matching: ["bcc", "blind carbon", "blind copy", "blindkopie", "cco", "copia oculta"]) ,
            let refreshed = focusedOutlookWindow(),
            let element = composeBCCElement(in: refreshed) {
             return setValue(bcc, on: element)
@@ -573,7 +603,7 @@ final class OutlookAccessibility {
             let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
             if role == "AXTextField" || role == "AXTextArea" || role == "AXComboBox" {
                 let meta = composeMetadata(for: element)
-                if meta.contains("bcc") || meta.contains("blind carbon") || meta.contains("blind copy") || meta.contains("blindkopie") {
+                if meta.contains("bcc") || meta.contains("blind carbon") || meta.contains("blind copy") || meta.contains("blindkopie") || meta.contains("cco") || meta.contains("copia oculta") {
                     return element
                 }
             }
@@ -613,7 +643,7 @@ final class OutlookAccessibility {
             let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
             if role == "AXTextField" || role == "AXTextArea" || role == "AXComboBox" {
                 let meta = composeMetadata(for: element)
-                if meta.contains("subject") || meta.contains("betreff") {
+                if meta.contains("subject") || meta.contains("betreff") || meta.contains("asunto") {
                     return element
                 }
 
@@ -643,7 +673,7 @@ final class OutlookAccessibility {
             let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
             if role == "AXTextArea" || role == "AXWebArea" {
                 let meta = composeMetadata(for: element)
-                if meta.contains("message body") || meta.contains("mail body") || meta.contains("nachrichtentext") || meta.contains("compose body") {
+                if meta.contains("message body") || meta.contains("mail body") || meta.contains("nachrichtentext") || meta.contains("compose body") || meta.contains("cuerpo del mensaje") || meta.contains("cuerpo del correo") {
                     return element
                 }
 
@@ -655,7 +685,24 @@ final class OutlookAccessibility {
             }
             for child in children(of: element).reversed() { stack.append(child) }
         }
-        return best?.0
+        return looksLikeComposeWindow(window) ? best?.0 : nil
+    }
+
+    private func looksLikeComposeWindow(_ window: AXUIElement) -> Bool {
+        var stack: [AXUIElement] = [window]
+        var visited = 0
+        while let element = stack.popLast(), visited < 12_000 {
+            visited += 1
+            let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
+            if role == "AXButton" || role == "AXMenuButton" {
+                let meta = composeMetadata(for: element)
+                if meta.contains("send") || meta.contains("senden") || meta.contains("enviar") {
+                    return true
+                }
+            }
+            for child in children(of: element).reversed() { stack.append(child) }
+        }
+        return false
     }
 
     private func composeMetadata(for element: AXUIElement) -> String {

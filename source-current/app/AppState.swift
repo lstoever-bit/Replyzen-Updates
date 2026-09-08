@@ -22,16 +22,31 @@ final class AppState: ObservableObject {
         }
     }
 
-    enum ReplyLanguage: Equatable {
+    enum ReplyLanguage: Equatable, CaseIterable {
         case german
         case usEnglish
+        case spanish
 
         var displayName: String {
             switch self {
             case .german: return L10n.tr("Deutsch")
             case .usEnglish: return L10n.tr("US English")
+            case .spanish: return L10n.tr("Español")
             }
         }
+
+        var defaultReplyInstruction: String {
+            switch self {
+            case .german: return "Kurz, freundlich und direkt antworten."
+            case .usEnglish: return "Reply briefly, friendly and directly."
+            case .spanish: return "Responder de forma breve, amable y directa."
+            }
+        }
+    }
+
+    enum ReplyScope: Equatable {
+        case sender
+        case all
     }
 
     enum MailStatus: Equatable {
@@ -67,6 +82,7 @@ final class AppState: ObservableObject {
     @Published var statusText: String = ""
     @Published var startupJoke: String = ""
     @Published var replyLanguage: ReplyLanguage = .german
+    @Published var replyScope: ReplyScope = .all
     @Published var replyTone: ReplyTone = .friendly
     @Published var newMailCompact: Bool = false
     @Published var reminderEnabled: Bool = false

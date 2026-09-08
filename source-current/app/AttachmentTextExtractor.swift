@@ -144,7 +144,7 @@ final class AttachmentTextExtractor {
         let request = VNRecognizeTextRequest()
         request.recognitionLevel = .accurate
         request.usesLanguageCorrection = false
-        request.recognitionLanguages = ["de-DE", "en-US"]
+        request.recognitionLanguages = ["de-DE", "en-US", "es-ES"]
         let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
         do {
             try handler.perform([request])

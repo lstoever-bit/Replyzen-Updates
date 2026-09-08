@@ -16,8 +16,7 @@ enum MailWorkspaceLogic {
         guard state.outputMode != mode else { return }
         state.outputMode = mode
         let trimmed = state.instruction.trimmingCharacters(in: .whitespacesAndNewlines)
-        let isDefault = trimmed == "Kurz, freundlich und direkt antworten." ||
-            trimmed == "Reply briefly, friendly and directly."
+        let isDefault = AppState.ReplyLanguage.allCases.map(\.defaultReplyInstruction).contains(trimmed)
         switch mode {
         case .newMail, .forward:
             if isDefault {
@@ -27,12 +26,20 @@ enum MailWorkspaceLogic {
             if mode == .newMail { state.newMailSubject = "" }
         case .reply:
             if trimmed.isEmpty {
-                state.instruction = state.replyLanguage == .german
-                    ? "Kurz, freundlich und direkt antworten."
-                    : "Reply briefly, friendly and directly."
+                state.instruction = state.replyLanguage.defaultReplyInstruction
                 state.instructionHTML = ""
             }
         case .calendar, .payment: break
+        }
+    }
+
+    static func selectReply(all: Bool, in state: AppState) {
+        state.replyScope = all ? .all : .sender
+        if state.outputMode != .reply {
+            select(.reply, in: state)
+        } else if state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            state.instruction = state.replyLanguage.defaultReplyInstruction
+            state.instructionHTML = ""
         }
     }
 }
@@ -90,7 +97,10 @@ struct MailWorkspaceView: View {
     private var modeRow: some View {
         HStack(spacing: 12) {
             HStack(spacing: 2) {
-                if hasMail { modeButton(.reply, symbol: "arrowshape.turn.up.left") }
+                if hasMail {
+                    replyButton(all: false)
+                    replyButton(all: true)
+                }
                 modeButton(.newMail, symbol: "square.and.pencil")
                 if hasMail { modeButton(.forward, symbol: "arrowshape.turn.up.right") }
             }
@@ -99,6 +109,18 @@ struct MailWorkspaceView: View {
             Spacer(minLength: 4)
             contextLabel
         }
+    }
+
+    private func replyButton(all: Bool) -> some View {
+        let scope: AppState.ReplyScope = all ? .all : .sender
+        let selected = state.outputMode == .reply && state.replyScope == scope
+        return Button { MailWorkspaceLogic.selectReply(all: all, in: state) } label: {
+            Label(L10n.tr(all ? "Reply All" : "Reply"),
+                  systemImage: all ? "arrowshape.turn.up.left.2" : "arrowshape.turn.up.left")
+                .lineLimit(1)
+        }
+        .buttonStyle(WorkspaceChoiceStyle(selected: selected))
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
     private func modeButton(_ mode: AppState.OutputMode, symbol: String) -> some View {
@@ -155,6 +177,7 @@ struct MailWorkspaceView: View {
         HStack(spacing: 2) {
             languageButton("DE", language: .german, title: L10n.tr("Deutsch"))
             languageButton("EN", language: .usEnglish, title: L10n.tr("US English"))
+            languageButton("ES", language: .spanish, title: L10n.tr("Español"))
         }
         .padding(3)
         .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 9))
