@@ -7,13 +7,15 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
     private let state: AppState
     private var cancellables = Set<AnyCancellable>()
     private var resizeWorkItem: DispatchWorkItem?
+    private var layoutRevision = 0
     private var workspaceActivationObserver: NSObjectProtocol?
     private var wantsVisibleInOutlookContext = false
-    private var hasPositionedPanel = false
     var onClose: (() -> Void)?
 
-    init(state: AppState) {
+    init(state: AppState, defaults: UserDefaults = .standard) {
         self.state = state
+        // Delete the old preference, but never read or write a workspace position.
+        defaults.removeObject(forKey: "Replyzen.FloatingPanel.Frame.v1")
         panel = NSPanel(
             contentRect: NSRect(x: 0, y: 0, width: 820, height: 700),
             styleMask: [.titled, .closable, .resizable, .fullSizeContentView],
@@ -23,7 +25,6 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
 
         let host = NSHostingController(rootView: OverlayView(state: state))
         panel.contentViewController = host
-
         panel.title = ReplyZenBrand.displayName
         panel.titleVisibility = .hidden
         panel.titlebarAppearsTransparent = true
@@ -36,6 +37,8 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
         panel.hasShadow = true
         panel.isMovable = true
         panel.isMovableByWindowBackground = true
+        panel.isRestorable = false
+        _ = panel.setFrameAutosaveName("")
         panel.minSize = NSSize(width: 680, height: 560)
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient, .ignoresCycle]
         panel.standardWindowButton(.zoomButton)?.isHidden = true
@@ -52,10 +55,11 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
     }
 
     func show(activate: Bool = true) {
+        cancelScheduledResize()
         wantsVisibleInOutlookContext = true
-        resizeForCurrentState(animated: false)
+        // Every explicit opening starts centered, independent of any old frame.
+        resizeForCurrentState(animated: false, centered: true)
         panel.orderFrontRegardless()
-
         if activate {
             panel.makeKey()
             NSApp.activate(ignoringOtherApps: true)
@@ -72,12 +76,10 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
     }
 
     private func selectInstructionTextIfPossible() {
-        guard state.stage == .instruction, state.outputMode == .reply,
+        guard panel.isVisible, state.stage == .instruction, state.outputMode == .reply,
               let root = panel.contentView else { return }
-
         let expected = state.instruction
         guard !expected.isEmpty else { return }
-
         if let textView = findInstructionTextView(in: root, expectedText: expected) {
             panel.makeKey()
             panel.makeFirstResponder(textView)
@@ -87,150 +89,118 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
     }
 
     private func findInstructionTextView(in view: NSView, expectedText: String) -> NSTextView? {
-        if let textView = view as? NSTextView, textView.isEditable {
-            if textView.string == expectedText { return textView }
-        }
+        if let textView = view as? NSTextView, textView.isEditable,
+           textView.string == expectedText { return textView }
         for child in view.subviews {
-            if let found = findInstructionTextView(in: child, expectedText: expectedText) {
-                return found
-            }
+            if let found = findInstructionTextView(in: child, expectedText: expectedText) { return found }
         }
         return nil
     }
 
     func hide() {
+        cancelScheduledResize()
         wantsVisibleInOutlookContext = false
-        hasPositionedPanel = false
         panel.orderOut(nil)
     }
 
     private func hideForExternalApp() {
+        cancelScheduledResize()
         panel.orderOut(nil)
     }
 
     private func restoreForOutlookIfNeeded() {
-        guard wantsVisibleInOutlookContext else { return }
-        resizeForCurrentState(animated: false)
-        panel.orderFrontRegardless()
+        guard wantsVisibleInOutlookContext, !panel.isVisible else { return }
+        // A temporarily hidden workspace is a new appearance too: always center.
+        show(activate: false)
     }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
-        hasPositionedPanel = false
+        hide()
         onClose?()
         return false
     }
 
+    // Shared by real workspace notifications and lifecycle regression tests.
+    func handleWorkspaceActivation(bundleIdentifier: String) {
+        if bundleIdentifier == "com.microsoft.Outlook" {
+            restoreForOutlookIfNeeded()
+        } else if bundleIdentifier != Bundle.main.bundleIdentifier, panel.isVisible {
+            hideForExternalApp()
+        }
+    }
+
     private func observeWorkspaceContext() {
         workspaceActivationObserver = NSWorkspace.shared.notificationCenter.addObserver(
-            forName: NSWorkspace.didActivateApplicationNotification,
-            object: nil,
-            queue: .main
+            forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
         ) { [weak self] notification in
-            guard let self,
-                  let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else { return }
-
-            let bundleID = app.bundleIdentifier ?? ""
-            if bundleID == "com.microsoft.Outlook" {
-                self.restoreForOutlookIfNeeded()
-                return
-            }
-
-            if bundleID == Bundle.main.bundleIdentifier {
-                return
-            }
-
-            if self.panel.isVisible {
-                self.hideForExternalApp()
-            }
+            guard let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else { return }
+            self?.handleWorkspaceActivation(bundleIdentifier: app.bundleIdentifier ?? "")
         }
     }
 
     deinit {
+        resizeWorkItem?.cancel()
         if let workspaceActivationObserver {
             NSWorkspace.shared.notificationCenter.removeObserver(workspaceActivationObserver)
         }
     }
 
     private func observeLayoutState() {
-        state.$stage
-            .removeDuplicates()
-            .dropFirst()
-            .sink { [weak self] _ in self?.scheduleAdaptiveResize() }
-            .store(in: &cancellables)
+        state.$stage.removeDuplicates().dropFirst()
+            .sink { [weak self] _ in self?.scheduleAdaptiveResize() }.store(in: &cancellables)
+        state.$outputMode.removeDuplicates().dropFirst()
+            .sink { [weak self] _ in self?.scheduleAdaptiveResize() }.store(in: &cancellables)
+        state.$googleNeedsOAuthCredentials.removeDuplicates().dropFirst()
+            .sink { [weak self] _ in self?.scheduleAdaptiveResize() }.store(in: &cancellables)
+        state.$googleConnectedEmail.map { $0.isEmpty }.removeDuplicates().dropFirst()
+            .sink { [weak self] _ in self?.scheduleAdaptiveResize() }.store(in: &cancellables)
+        state.$calendarWarning.map { $0.isEmpty }.removeDuplicates().dropFirst()
+            .sink { [weak self] _ in self?.scheduleAdaptiveResize() }.store(in: &cancellables)
+    }
 
-        state.$outputMode
-            .removeDuplicates()
-            .dropFirst()
-            .sink { [weak self] _ in self?.scheduleAdaptiveResize() }
-            .store(in: &cancellables)
-
-        state.$googleNeedsOAuthCredentials
-            .removeDuplicates()
-            .dropFirst()
-            .sink { [weak self] _ in self?.scheduleAdaptiveResize() }
-            .store(in: &cancellables)
-
-        state.$googleConnectedEmail
-            .map { $0.isEmpty }
-            .removeDuplicates()
-            .dropFirst()
-            .sink { [weak self] _ in self?.scheduleAdaptiveResize() }
-            .store(in: &cancellables)
-
-        state.$calendarWarning
-            .map { $0.isEmpty }
-            .removeDuplicates()
-            .dropFirst()
-            .sink { [weak self] _ in self?.scheduleAdaptiveResize() }
-            .store(in: &cancellables)
+    private func cancelScheduledResize() {
+        layoutRevision += 1
+        resizeWorkItem?.cancel()
+        resizeWorkItem = nil
     }
 
     private func scheduleAdaptiveResize() {
-        resizeWorkItem?.cancel()
+        cancelScheduledResize()
+        guard panel.isVisible else { return }
+        let revision = layoutRevision
         let item = DispatchWorkItem { [weak self] in
-            self?.resizeForCurrentState(animated: true)
+            guard let self, self.layoutRevision == revision, self.panel.isVisible else { return }
+            self.resizeWorkItem = nil
+            self.resizeForCurrentState(animated: true)
         }
         resizeWorkItem = item
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.06, execute: item)
     }
 
-    private func resizeForCurrentState(animated: Bool) {
-        let referenceFrame: NSRect? = hasPositionedPanel ? panel.frame : nil
+    private func resizeForCurrentState(animated: Bool, centered: Bool = false) {
+        // Only the live, currently visible frame may anchor an in-place resize.
+        // There is no position cache or restoration path for a hidden window.
+        let referenceFrame: NSRect? = !centered && panel.isVisible ? panel.frame : nil
         let preferredScreen = referenceFrame.flatMap { screen(containing: $0) }
-        guard let targetScreen = preferredScreen ?? screenUnderMouse() ?? panel.screen ?? NSScreen.main else { return }
+        guard let targetScreen = preferredScreen ?? screenUnderMouse() ?? NSScreen.main else { return }
         let visible = targetScreen.visibleFrame.insetBy(dx: 10, dy: 10)
         let preferred = preferredContentSize()
-
         let chromeWidth = max(0, panel.frame.width - panel.contentLayoutRect.width)
         let chromeHeight = max(0, panel.frame.height - panel.contentLayoutRect.height)
-        let maxContentWidth = max(560, visible.width - chromeWidth)
-        let maxContentHeight = max(380, visible.height - chromeHeight)
-
         let contentSize = NSSize(
-            width: min(preferred.width, maxContentWidth),
-            height: min(preferred.height, maxContentHeight)
+            width: min(preferred.width, max(560, visible.width - chromeWidth)),
+            height: min(preferred.height, max(380, visible.height - chromeHeight))
         )
-
         var targetFrame = panel.frameRect(forContentRect: NSRect(origin: .zero, size: contentSize))
-
         if let referenceFrame, screen(containing: referenceFrame) != nil {
-            targetFrame.origin = NSPoint(
-                x: referenceFrame.minX,
-                y: referenceFrame.maxY - targetFrame.height
-            )
+            targetFrame.origin = NSPoint(x: referenceFrame.minX, y: referenceFrame.maxY - targetFrame.height)
         } else {
-            targetFrame.origin = NSPoint(
-                x: visible.midX - targetFrame.width / 2,
-                y: visible.midY - targetFrame.height / 2
-            )
+            targetFrame.origin = NSPoint(x: visible.midX - targetFrame.width / 2, y: visible.midY - targetFrame.height / 2)
         }
-
         if targetFrame.minX < visible.minX { targetFrame.origin.x = visible.minX }
         if targetFrame.maxX > visible.maxX { targetFrame.origin.x = visible.maxX - targetFrame.width }
         if targetFrame.minY < visible.minY { targetFrame.origin.y = visible.minY }
         if targetFrame.maxY > visible.maxY { targetFrame.origin.y = visible.maxY - targetFrame.height }
-
-        hasPositionedPanel = true
         panel.setFrame(targetFrame, display: true, animate: animated && panel.isVisible)
     }
 
@@ -246,25 +216,18 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
             return NSSize(width: 650, height: 430)
         case .instruction:
             switch state.outputMode {
-            case .reply, .newMail, .forward:
-                return NSSize(width: 900, height: 740)
-            case .calendar, .payment:
-                return NSSize(width: 840, height: 640)
+            case .reply, .newMail, .forward: return NSSize(width: 900, height: 740)
+            case .calendar, .payment: return NSSize(width: 840, height: 640)
             }
         case .calendarPreview:
             let extraOAuthHeight = state.googleNeedsOAuthCredentials ? 130.0 : 0.0
             let warningHeight = state.calendarWarning.isEmpty ? 0.0 : 50.0
             return NSSize(width: 880, height: 760 + extraOAuthHeight + warningHeight)
-        case .paymentPreview:
-            return NSSize(width: 840, height: 690)
-        case .preview:
-            return NSSize(width: 900, height: 740)
-        case .apiKey, .needsAccessibility, .error:
-            return NSSize(width: 720, height: 520)
-        case .generating, .updating, .inserting:
-            return NSSize(width: 680, height: 400)
-        case .success, .idle:
-            return NSSize(width: 650, height: 430)
+        case .paymentPreview: return NSSize(width: 840, height: 690)
+        case .preview: return NSSize(width: 900, height: 740)
+        case .apiKey, .needsAccessibility, .error: return NSSize(width: 720, height: 520)
+        case .generating, .updating, .inserting: return NSSize(width: 680, height: 400)
+        case .success, .idle: return NSSize(width: 650, height: 430)
         }
     }
 
