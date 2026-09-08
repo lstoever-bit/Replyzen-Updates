@@ -1,3 +1,4 @@
+15: case downloadURL = "download_url"
 41: return "Es ist noch keine Update-Quelle eingerichtet."
 43: return "Die Update-URL ist ungültig. Bitte eine HTTPS-Adresse verwenden."
 45: return "Die Update-Quelle hat keine gültige Antwort geliefert."
@@ -8,3 +9,72 @@
 55: return "Das Update gehört nicht zu Replyzen."
 57: return "Die installierte App kann nicht ersetzt werden. Bitte Replyzen in den Programme-Ordner verschieben und erneut versuchen."
 59: return "Das Update konnte nicht vorbereitet werden: \(message)"
+65: private let localSigningIdentity = "Replyzen Local Signing"
+66: private let feedKey = "Replyzen.UpdateFeedURL"
+67: private let lastCheckKey = "Replyzen.LastUpdateCheck"
+69: private let defaultFeedURL = "https://raw.githubusercontent.com/lstoever-bit/Replyzen-Updates/main/update.json"
+70: private let githubAPIFeedURL = "https://api.github.com/repos/lstoever-bit/Replyzen-Updates/contents/update.json?ref=main"
+74: let stored = defaults.string(forKey: feedKey)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+95: url.host?.lowercased() == "raw.githubusercontent.com" else { return false }
+96: return url.path.hasPrefix("/lstoever-bit/Replyzen-Updates/") &&
+97: url.lastPathComponent.lowercased().hasPrefix("update") &&
+98: url.pathExtension.lowercased() == "json"
+102: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0"
+106: let raw = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "0"
+134: guard let url = URL(string: raw), url.scheme?.lowercased() == "https" else {
+170: let token = "\(Int(Date().timeIntervalSince1970))-\(UUID().uuidString)"
+182: if feedURL.host?.lowercased() == "raw.githubusercontent.com",
+183: feedURL.path.hasPrefix("/lstoever-bit/Replyzen-Updates/"),
+188: acceptHeader: "application/vnd.github.raw+json"
+211: request.setValue("no-cache, no-store, max-age=0", forHTTPHeaderField: "Cache-Control")
+212: request.setValue("no-cache", forHTTPHeaderField: "Pragma")
+213: request.setValue("Replyzen/\(currentVersion)", forHTTPHeaderField: "User-Agent")
+215: request.setValue(acceptHeader, forHTTPHeaderField: "Accept")
+256: !(manifest.sha256 ?? "").isEmpty {
+263: wrapper.encoding?.lowercased() == "base64",
+265: let compact = content.replacingOccurrences(of: "\n", with: "")
+271: !(manifest.sha256 ?? "").isEmpty {
+299: let root = FileManager.default.temporaryDirectory.appendingPathComponent("Replyzen-Update-\(UUID().uuidString)", isDirectory: true)
+300: let archive = root.appendingPathComponent("update.zip")
+301: let extract = root.appendingPathComponent("extract", isDirectory: true)
+306: let expected = (update.manifest.sha256 ?? "").lowercased()
+310: try self.run("/usr/bin/ditto", ["-x", "-k", archive.path, extract.path])
+321: let updatedBuild = Int(updatedBundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "0") ?? 0
+329: try self.run("/usr/bin/codesign", ["--force", "--deep", "--sign", self.localSigningIdentity, appURL.path])
+330: try self.run("/usr/bin/codesign", ["--verify", "--deep", "--strict", appURL.path])
+334: guard destination.pathExtension == "app", FileManager.default.isWritableFile(atPath: parent.path) else {
+349: guard absolute.scheme?.lowercased() == "https" else { return nil }
+356: return cacheBustedURL(resolved, token: "build-\(update.manifest.build)")
+362: items.removeAll { $0.name == "replyzen_cb" }
+363: items.append(URLQueryItem(name: "replyzen_cb", value: token))
+369: let output = try runWithOutput("/usr/bin/shasum", ["-a", "256", url.path])
+371: throw UpdateError.installPreparationFailed("SHA-256 konnte nicht berechnet werden.")
+379: if let app = direct.first(where: { $0.pathExtension == "app" }) {
+385: for case let url as URL in enumerator where url.pathExtension == "app" {
+393: let scriptURL = FileManager.default.temporaryDirectory.appendingPathComponent("replyzen-updater-\(UUID().uuidString).sh")
+394: let script = """
+397: PID="$1"
+398: SRC="$2"
+399: DEST="$3"
+400: ROOT="$4"
+401: PARENT="$(dirname "$DEST")"
+402: NAME="$(basename "$DEST")"
+403: NEW="$PARENT/.${NAME}.update.$$"
+404: OLD="$PARENT/.${NAME}.old.$$"
+406: while /bin/kill -0 "$PID" >/dev/null 2>&1; do
+410: /bin/rm -rf "$NEW" "$OLD"
+411: /usr/bin/ditto "$SRC" "$NEW"
+412: /usr/bin/xattr -cr "$NEW" >/dev/null 2>&1 || true
+413: /usr/bin/codesign --verify --deep --strict "$NEW"
+415: if ! /bin/mv "$DEST" "$OLD"; then
+416: /usr/bin/open "$DEST" >/dev/null 2>&1 || true
+420: if ! /bin/mv "$NEW" "$DEST"; then
+421: /bin/mv "$OLD" "$DEST" >/dev/null 2>&1 || true
+422: /usr/bin/open "$DEST" >/dev/null 2>&1 || true
+426: /bin/rm -rf "$OLD" "$ROOT"
+427: /usr/bin/open "$DEST"
+428: /bin/rm -f "$0"
+429: """
+435: process.executableURL = URL(fileURLWithPath: "/bin/bash")
+436: process.arguments = [scriptURL.path, "\(ProcessInfo.processInfo.processIdentifier)", stagedApp.path, destination.path, updateRoot.path]
+456: let output = String(data: data, encoding: .utf8) ?? ""

@@ -1,0 +1,2 @@
+5: static let displayName = "ReplyZen"
+7: guard let url = Bundle.main.url(forResource: "ReplyzenLogo", withExtension: "png") else { return nil }

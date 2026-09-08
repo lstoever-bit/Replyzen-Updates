@@ -1,3 +1,25 @@
+34: if ext == "pdf" {
+36: } else if ["png", "jpg", "jpeg", "tif", "tiff"].contains(ext) {
+39: text = ""
+44: chunks.append("ATTACHMENT \(url.lastPathComponent):\n\(String(cleaned.prefix(18_000)))")
+48: return Result(text: String(chunks.joined(separator: "\n\n").prefix(30_000)), usedFiles: used)
+58: if cleaned.hasPrefix("/"), fm.fileExists(atPath: cleaned) {
+72: home.appendingPathComponent("Library/Containers/com.microsoft.Outlook/Data/tmp", isDirectory: true),
+73: home.appendingPathComponent("Library/Containers/com.microsoft.Outlook/Data/Library/Caches", isDirectory: true),
+74: home.appendingPathComponent("Library/Containers/com.microsoft.Outlook/Data/Library/Application Support", isDirectory: true),
+75: home.appendingPathComponent("Library/Group Containers/UBF8T346G9.Office/TemporaryItems", isDirectory: true),
+76: home.appendingPathComponent("Library/Group Containers/UBF8T346G9.Office/Outlook", isDirectory: true),
+77: home.appendingPathComponent("Library/Caches/com.microsoft.Outlook", isDirectory: true),
+78: home.appendingPathComponent("Downloads", isDirectory: true),
+107: let escaped = filename.replacingOccurrences(of: "'", with: "\\'")
+110: process.executableURL = URL(fileURLWithPath: "/usr/bin/mdfind")
+111: process.arguments = ["kMDItemFSName == '\(escaped)'c"]
+119: let output = String(data: data, encoding: .utf8) ?? ""
+120: let candidates = output.split(separator: "\n").map(String.init)
+123: return lower.contains("outlook") || lower.contains("downloads") || lower.contains("temporary") || lower.contains("/var/folders/")
 131: guard let document = PDFDocument(url: url) else { return "" }
+138: return pieces.joined(separator: "\n")
 143: let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return "" }
+147: request.recognitionLanguages = ["de-DE", "en-US"]
+151: return (request.results ?? []).compactMap { $0.topCandidates(1).first?.string }.joined(separator: "\n")
 153: return ""

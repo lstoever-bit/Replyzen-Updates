@@ -1,63 +1,191 @@
+33: UserDefaults.standard.set(false, forKey: "NSQuitAlwaysKeepsWindows")
+76: if title.contains("replyzen-einstellungen") || title.contains("replyzen settings") {
 85: "Warum sind E-Mails schlechte Geheimnisträger? Weil am Ende doch jemand auf ‚Allen antworten‘ klickt.",
 86: "Mein Kalender wollte spontan sein. Ich habe ihm dafür einen Termin eingetragen.",
 87: "CC ist die höfliche Art zu sagen: Jetzt weißt du es auch.",
+88: "Warum war die Mail so entspannt? Sie hatte keinen Anhang zu tragen.",
 89: "Der kürzeste Büro-Witz? ‚Kurze Abstimmung‘.",
+90: "Ich wollte meinem Posteingang Urlaub geben. Er hat die Abwesenheitsnotiz abgelehnt.",
+91: "Warum mag Replyzen Montagmorgen? Weil selbst eine kurze Antwort schon wie Fortschritt aussieht.",
 92: "Mein Kalender und ich haben eine gute Beziehung: Er sagt mir ständig, wo ich sein soll.",
 93: "Eine E-Mail ohne Betreff ist wie ein Termin ohne Uhrzeit: spannend, aber unnötig.",
 94: "Warum hat der Termin nicht zurückgerufen? Er war schon vergeben."
 96: return jokes.randomElement() ?? "Replyzen läuft. Das ist heute schon die halbe Miete."
 120: } else if let fallback = NSImage(systemSymbolName: "envelope.badge", accessibilityDescription: ReplyZenBrand.displayName) {
+124: item.button?.title = ""
 130: let reply = NSMenuItem(title: "ReplyZen öffnen   ⌃⌥R", action: #selector(menuReply), keyEquivalent: "")
 134: let login = NSMenuItem(title: "Bei Anmeldung starten", action: #selector(menuEnableLogin), keyEquivalent: "")
 138: let key = NSMenuItem(title: "API-Key ändern…", action: #selector(menuAPIKey), keyEquivalent: "")
 144: let updates = NSMenuItem(title: "Nach Updates suchen…", action: #selector(menuCheckUpdates), keyEquivalent: "")
 149: let source = NSMenuItem(title: "Update-Quelle…", action: #selector(menuUpdateSource), keyEquivalent: "")
 155: let quit = NSMenuItem(title: "Beenden", action: #selector(menuQuit), keyEquivalent: "q")
+182: NSWorkspace.shared.runningApplications.contains { $0.bundleIdentifier == "com.microsoft.Outlook" }
+195: app.bundleIdentifier == "com.microsoft.Outlook" else { return }
+206: app.bundleIdentifier == "com.microsoft.Outlook" else { return }
+270: state.apiKeyDraft = ""
 313: title: "Termin nicht erstellt",
 314: message: "Die geöffnete Outlook-Mail konnte nicht gelesen werden."
+327: state.apiKeyDraft = ""
 380: title: "Überweisung nicht erkannt",
 381: message: "Die geöffnete Outlook-Mail konnte nicht gelesen werden."
 424: self.showSimpleAlert(title: "Absage fehlgeschlagen", message: "OpenAI hat keinen Antworttext geliefert.")
 432: self.showSimpleAlert(title: "Absage fehlgeschlagen", message: error.localizedDescription)
 440: self.showSimpleAlert(title: "Absage fehlgeschlagen", message: "Die geöffnete Outlook-Mail konnte nicht gelesen werden.")
+447: copyMailToPasteboard(plainText: reply, html: "")
+456: self.copyMailToPasteboard(plainText: reply, html: "")
+478: state.apiKeyDraft = ""
 508: alert.messageText = "Replyzen · Update-Quelle"
 509: alert.informativeText = "Replyzen nutzt standardmäßig den offiziellen Update-Kanal. Hier kannst du die HTTPS-Adresse zu update.json bei Bedarf ändern."
+510: alert.addButton(withTitle: "Speichern")
+511: alert.addButton(withTitle: "Abbrechen")
+514: field.placeholderString = "https://…/update.json"
+523: updateManager.feedURLString = ""
+524: updateMenuItem?.title = "Nach Updates suchen…"
+528: guard let url = URL(string: value), url.scheme?.lowercased() == "https" else {
 529: showSimpleAlert(title: "Ungültige Update-URL", message: "Bitte eine vollständige HTTPS-Adresse zu update.json eintragen.")
 535: showSimpleAlert(title: "Update-Quelle gespeichert", message: "Künftig prüft die App beim Start automatisch auf neue Versionen. Installiert wird erst nach deinem Klick auf „Installieren“. ")
 549: self.updateMenuItem?.title = "Update verfügbar: \(update.manifest.version)…"
+554: self.updateMenuItem?.title = "Nach Updates suchen…"
 556: self.showSimpleAlert(title: "Replyzen", message: "Du verwendest bereits die aktuelle Version \(self.updateManager.currentVersion).")
 561: self.showSimpleAlert(title: "Update-Prüfung fehlgeschlagen", message: error.localizedDescription)
 571: alert.messageText = "Replyzen \(update.manifest.version) ist verfügbar"
+574: : "Die neue Version kann jetzt automatisch geladen und installiert werden."
+575: alert.addButton(withTitle: "Installieren")
 576: alert.addButton(withTitle: "Später")
+586: state.statusText = "Version \(update.manifest.version) wird heruntergeladen"
+594: self.state.statusText = "Update ist vorbereitet – App startet gleich neu"
 608: alert.messageText = title == "Replyzen" ? "Replyzen" : "Replyzen · \(title)"
+610: alert.addButton(withTitle: "OK")
+616: if let url = Bundle.main.url(forResource: "ReplyzenLogo", withExtension: "png"),
+643: state.instruction = ""
+646: state.instruction = ""
+649: state.instruction = ""
+651: state.instructionHTML = ""
+653: state.reminderTime = "06:00"
+657: state.apiKeyDraft = ""
 695: return "Kurz, freundlich und direkt antworten."
 697: return "Reply briefly, friendly and directly."
+711: state.mailText = ""
 715: state.mailStatus = .unavailable("Keine Outlook-Mail verfügbar. Reply ist ausgeblendet.")
+766: self.state.instructionHTML = ""
+778: self.state.mailText = ""
 784: message = "Outlook läuft gerade nicht. New Mail funktioniert trotzdem."
+786: message = "Keine lesbare Outlook-Mail erkannt. New Mail funktioniert trotzdem."
+789: message = "Mail-Kontext konnte nicht geladen werden. New Mail funktioniert trotzdem."
+797: self.state.instruction = ""
+798: self.state.instructionHTML = ""
+830: state.mailStatus = .unavailable("Keine lesbare Outlook-Mail erkannt. Nutze New Mail oder versuche es erneut.")
+837: state.statusText = "OpenAI verarbeitet die Mail"
+855: self.state.replyHTML = draft.html?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+876: state.statusText = "OpenAI formuliert eine neue Mail"
+894: self.state.replyHTML = draft.html?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 912: state.mailStatus = .unavailable("Keine lesbare Outlook-Mail erkannt. Für Forward bitte eine Mail öffnen und erneut versuchen.")
+919: state.statusText = "OpenAI formuliert den Forward Text"
+937: self.state.replyHTML = draft.html?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 957: state.mailStatus = .unavailable("Keine lesbare Outlook-Mail erkannt. Für einen Termin bitte eine Mail öffnen und erneut versuchen.")
+966: state.statusText = "Replyzen erstellt den Terminvorschlag"
+989: self.state.calendarWarning = ""
 994: self.state.calendarWarning = "Im Mailverlauf wurde kein eindeutiger Terminzeitpunkt erkannt. Bitte Datum und Uhrzeit prüfen."
 1014: state.mailStatus = .unavailable("Keine lesbare Outlook-Mail erkannt. Für eine Überweisung bitte die Rechnungsmail öffnen und erneut versuchen.")
+1021: state.statusText = "Replyzen sucht den PDF-Anhang …"
+1027: let mentionedPDF = filenames.first { $0.lowercased().hasSuffix(".pdf") }
+1031: var selectedPDFs = Array(resolvedFiles.filter { $0.pathExtension.lowercased() == "pdf" }.prefix(3))
+1035: self.state.statusText = "PDF wird aus Outlook geladen …"
+1044: selectedPDFs = Array(resolvedFiles.filter { $0.pathExtension.lowercased() == "pdf" }.prefix(3))
+1052: self.state.statusText = "PDF wird automatisch aus Outlook gespeichert …"
+1066: selectedPDFs = Array(resolvedFiles.filter { $0.pathExtension.lowercased() == "pdf" }.prefix(3))
 1074: self.state.statusText = "Outlook blockiert den PDF-Zugriff – bitte Rechnung auswählen …"
 1089: title: "PDF nicht verfügbar",
 1090: message: "Outlook gibt den PDF-Anhang nicht frei. Bitte Payment erneut klicken und im Dateidialog die Rechnung auswählen."
+1097: guard url.path.contains("/Replyzen-Attachments/") else { return nil }
+1101: var fallbackText = ""
+1106: sourceStatus = (wasAutoSaved ? "PDF automatisch aus Outlook gespeichert und direkt mit OpenAI gelesen: " : "PDF direkt mit OpenAI gelesen: ")
+1107: + selectedPDFs.map(\.lastPathComponent).joined(separator: ", ")
 1109: self.state.statusText = "PDF wird direkt an OpenAI übergeben und gelesen …"
+1115: let pdfMentioned = filenames.contains { $0.lowercased().hasSuffix(".pdf") }
 1117: sourceStatus = "Kein direkt zugängliches PDF; lokal gelesen: " + fallback.usedFiles.joined(separator: ", ")
+1119: sourceStatus = "PDF-Anhang erkannt, aber Outlook konnte ihn weder lokal bereitstellen noch automatisch speichern."
+1121: sourceStatus = "Kein PDF-Anhang erkannt. Extraktion aus dem Mailtext."
+1146: self.state.paymentRecipient = suggestion.recipient?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+1147: self.state.paymentIBAN = suggestion.iban?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+1148: self.state.paymentBIC = suggestion.bic?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+1149: self.state.paymentAmount = suggestion.amount?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+1150: self.state.paymentCurrency = suggestion.currency?.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() ?? "EUR"
+1151: self.state.paymentPurpose = suggestion.purpose?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+1154: let confidence = suggestion.confidence?.lowercased() ?? "low"
 1157: self.state.paymentWarning = "Kein PDF wurde direkt von OpenAI gelesen. Bitte Empfänger, IBAN und Betrag besonders sorgfältig prüfen."
+1158: } else if confidence == "low" || missingCore {
+1159: self.state.paymentWarning = "Die Extraktion ist nicht eindeutig. Bitte die PDF-Rechnung mit den Feldern unten vergleichen."
 1161: self.state.paymentWarning = "Bitte IBAN, Betrag und Verwendungszweck vor einer Überweisung immer mit der PDF-Rechnung vergleichen."
 1176: picker.title = "Rechnung auswählen"
 1177: picker.message = "Outlook stellt den erkannten PDF-Anhang nicht als Datei bereit. Wähle die Rechnung einmal aus; Replyzen liest sie danach direkt mit OpenAI."
+1178: picker.prompt = "PDF verwenden"
+1182: picker.allowedFileTypes = ["pdf"]
+1184: let downloads = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Downloads", isDirectory: true)
+1195: url.pathExtension.lowercased() == "pdf" else { return nil }
 1201: state.paymentRecipient.isEmpty ? nil : "Empfänger: \(state.paymentRecipient)",
+1202: state.paymentIBAN.isEmpty ? nil : "IBAN: \(state.paymentIBAN)",
+1203: state.paymentBIC.isEmpty ? nil : "BIC: \(state.paymentBIC)",
+1204: state.paymentAmount.isEmpty ? nil : "Betrag: \(state.paymentAmount) \(state.paymentCurrency)",
+1205: state.paymentPurpose.isEmpty ? nil : "Verwendungszweck: \(state.paymentPurpose)"
+1208: copyToPasteboard(lines.joined(separator: "\n"))
 1209: state.successMessage = "Überweisungsdaten wurden in die Zwischenablage kopiert. Bitte vor der Zahlung im Banking prüfen."
+1218: showError("Die Endzeit muss nach der Startzeit liegen.")
 1223: showError("Bitte zuerst einen Kalender auswählen.")
+1226: UserDefaults.standard.set(state.selectedCalendarID, forKey: "Replyzen.SelectedMinuboCalendarID")
+1231: state.statusText = "Termin wird direkt in Google Calendar angelegt"
+1233: let selectedCalendarName = state.calendarOptions.first(where: { $0.id == state.selectedCalendarID })?.title ?? "Kalender"
+1247: formatter.locale = Locale(identifier: "de_DE")
+1251: self.state.successMessage = "„\(title)“ wurde am \(formatter.string(from: self.state.calendarStart)) direkt in Google Calendar · „\(selectedCalendarName)“ angelegt."
+1263: state.selectedCalendarID = ""
+1264: state.googleConnectedEmail = calendarManager.connectedEmail() ?? ""
+1268: state.googleOAuthStatus = "Einmalig Google OAuth einrichten."
+1269: state.calendarListStatus = "Google Calendar ist noch nicht verbunden."
+1275: state.googleOAuthStatus = "Noch nicht mit Google verbunden."
+1276: state.calendarListStatus = "Bitte mit lennard@minubo.com verbinden."
+1282: state.googleConnectedEmail = ""
+1283: state.googleOAuthStatus = "Bitte mit lennard@minubo.com verbinden."
+1284: state.calendarListStatus = "Falsches Google-Konto."
+1289: state.googleOAuthStatus = "Verbunden mit \(email)"
+1290: state.calendarListStatus = "Google-Kalender werden geladen …"
+1299: self.state.selectedCalendarID = ""
+1300: self.state.calendarListStatus = "Keine beschreibbaren Google-Kalender gefunden."
+1304: let savedID = UserDefaults.standard.string(forKey: "Replyzen.SelectedMinuboCalendarID") ?? ""
+1307: } else if let preferred = options.first(where: { $0.title.lowercased() == "minubo" }) {
+1312: self.state.calendarListStatus = ""
+1314: self.state.selectedCalendarID = ""
+1328: state.googleOAuthStatus = "Bitte Client-ID und Client Secret eintragen."
 1333: state.googleOAuthStatus = "Google-Anmeldung wird im Browser geöffnet …"
+1343: self.state.googleClientSecretDraft = ""
+1344: self.state.googleOAuthStatus = "Verbunden mit \(email)"
+1356: state.googleConnectedEmail = ""
+1358: state.selectedCalendarID = ""
+1359: state.googleOAuthStatus = "Google Calendar wurde getrennt."
+1360: state.calendarListStatus = "Bitte erneut mit lennard@minubo.com verbinden."
+1364: if let url = URL(string: "https://console.cloud.google.com/apis/credentials") {
+1392: guard ["mon", "tues", "wed", "thurs", "fri", "sat", "sun"].contains(day), !time.isEmpty else { return nil }
+1394: let compactTime = time.replacingOccurrences(of: ":", with: "")
+1396: if compactTime == "0600" {
 1397: return "\(day)@fut.io"
 1399: return "\(day)\(compactTime)@fut.io"
 1418: state.mailStatus = .unavailable("Die ursprüngliche Outlook-Mail ist nicht mehr verfügbar. Bitte erneut laden.")
+1427: showError("Replyzen braucht Bedienungshilfen, um den Text automatisch in Outlook einzusetzen. Der Text wurde in die Zwischenablage kopiert.")
+1432: state.statusText = "Outlook wird aktiviert"
 1468: state.mailStatus = .unavailable("Die ursprüngliche Outlook-Mail ist nicht mehr verfügbar. Bitte erneut laden.")
+1478: showError("Replyzen braucht Bedienungshilfen, um den Forward automatisch in Outlook vorzubereiten. Dein Text wurde in die Zwischenablage kopiert.")
 1483: state.statusText = "Outlook Forward wird geöffnet; Thread und Anhänge bleiben erhalten"
+1511: let plain = body + "\n\n"
+1512: let rich = html.isEmpty ? "" : html + "<br><br>"
+1530: let plain = body + "\n\n"
+1531: let rich = html.isEmpty ? "" : html + "<br><br>"
 1547: self.showError("Der Forward wurde in Outlook geöffnet, aber Replyzen konnte den Text nicht automatisch über dem Thread einsetzen. Der Text liegt in der Zwischenablage.")
 1559: showError("Microsoft Outlook läuft nicht. Der Mailtext wurde in die Zwischenablage kopiert.")
 1566: showError("Replyzen braucht Bedienungshilfen, um automatisch eine neue Outlook-Mail zu befüllen. Der Mailtext wurde in die Zwischenablage kopiert.")
 1571: state.statusText = "Neue Outlook-Mail wird geöffnet und befüllt"
+1641: self.showError("Der Mailtext konnte nicht automatisch eingesetzt werden. Er liegt in der Zwischenablage.")
+1668: state.apiKeyDraft = ""
 1672: showError("Der API-Key konnte nicht im macOS-Schlüsselbund gespeichert werden.")
+1692: if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+1700: let path = NSString(string: "~/Downloads/LennardOutlookAI/.env").expandingTildeInPath
+1705: guard line.hasPrefix("OPENAI_API_KEY=") else { continue }
+1706: let key = String(line.dropFirst("OPENAI_API_KEY=".count)).trimmingCharacters(in: .whitespacesAndNewlines)

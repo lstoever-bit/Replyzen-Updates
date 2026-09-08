@@ -1,3 +1,5 @@
+13: static let targetEmail = "lennard@minubo.com"
+14: static let eventTimeZoneIdentifier = "Europe/Berlin"
 32: return "Google OAuth ist noch nicht eingerichtet. Bitte einmalig Client-ID und Client Secret eines Google-OAuth-Clients vom Typ Desktop-App hinterlegen."
 34: return "Replyzen ist noch nicht mit Google Calendar verbunden. Bitte zuerst mit lennard@minubo.com anmelden."
 36: return "Die Google-Anmeldung wurde abgebrochen."
@@ -8,9 +10,96 @@
 46: return "Start- und Endzeit des Termins sind ungültig."
 48: return "Google Calendar: \(message)"
 50: return "Google-Zugangsdaten konnten nicht im Schlüsselbund gespeichert werden (\(status))."
+56: static let clientID = "google.oauth.client_id"
+57: static let clientSecret = "google.oauth.client_secret"
+58: static let accessToken = "google.oauth.access_token"
+59: static let refreshToken = "google.oauth.refresh_token"
+60: static let expiry = "google.oauth.expiry"
+61: static let email = "google.oauth.email"
+94: private let oauthQueue = DispatchQueue(label: "Replyzen.GoogleOAuth")
+101: !(keychain.load(Key.clientID) ?? "").isEmpty && !(keychain.load(Key.clientSecret) ?? "").isEmpty
+149: self.oauthState = UUID().uuidString.replacingOccurrences(of: "-", with: "")
 164: self.finishOAuth(.failure(CalendarError.authorizationFailed("Lokaler Callback-Port konnte nicht geöffnet werden.")))
+167: let redirect = "http://127.0.0.1:\(port.rawValue)/oauth2callback"
+220: allowed.remove(charactersIn: "/")
+222: let url = URL(string: "https://www.googleapis.com/calendar/v3/calendars/\(encodedCalendar)/events") else {
+232: "summary": title.trimmingCharacters(in: .whitespacesAndNewlines),
+233: "start": ["dateTime": formatter.string(from: start), "timeZone": timezone],
+234: "end": ["dateTime": formatter.string(from: end), "timeZone": timezone]
+237: body["description"] = trimmedNotes
+242: request.httpMethod = "POST"
+243: request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+244: request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+262: guard var components = URLComponents(string: "https://accounts.google.com/o/oauth2/v2/auth"),
+264: finishOAuth(.failure(CalendarError.authorizationFailed("OAuth-URL konnte nicht erstellt werden.")))
+269: URLQueryItem(name: "client_id", value: clientID),
+270: URLQueryItem(name: "redirect_uri", value: redirectURI),
+271: URLQueryItem(name: "response_type", value: "code"),
+272: URLQueryItem(name: "scope", value: "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.calendarlist.readonly https://www.googleapis.com/auth/userinfo.email"),
+273: URLQueryItem(name: "access_type", value: "offline"),
+274: URLQueryItem(name: "prompt", value: "consent"),
+275: URLQueryItem(name: "include_granted_scopes", value: "true"),
+276: URLQueryItem(name: "login_hint", value: Self.targetEmail),
+277: URLQueryItem(name: "state", value: state)
+281: finishOAuth(.failure(CalendarError.authorizationFailed("OAuth-URL konnte nicht erstellt werden.")))
+294: let firstLine = requestText.split(separator: "\n").first else {
 295: self.sendBrowserResponse(connection, success: false, message: "Ungültige OAuth-Antwort.")
+299: let parts = firstLine.split(separator: " ")
 301: self.sendBrowserResponse(connection, success: false, message: "Ungültige OAuth-Antwort.")
+306: guard target.hasPrefix("/oauth2callback") else {
+307: self.sendBrowserResponse(connection, success: false, message: "Replyzen wartet auf die Google-Anmeldung.")
+311: guard let components = URLComponents(string: "http://127.0.0.1\(target)") else {
 312: self.sendBrowserResponse(connection, success: false, message: "Ungültige OAuth-Antwort.")
+316: let values = Dictionary(uniqueKeysWithValues: (components.queryItems ?? []).map { ($0.name, $0.value ?? "") })
+317: if let error = values["error"], !error.isEmpty {
+318: self.sendBrowserResponse(connection, success: false, message: "Google-Anmeldung wurde abgebrochen.")
+323: guard values["state"] == self.oauthState,
+324: let code = values["code"], !code.isEmpty,
 326: self.sendBrowserResponse(connection, success: false, message: "OAuth-Prüfung fehlgeschlagen.")
+327: self.finishOAuth(.failure(CalendarError.authorizationFailed("State oder Autorisierungscode fehlt.")))
+331: self.sendBrowserResponse(connection, success: true, message: "Replyzen ist mit Google Calendar verbunden. Dieses Fenster kann geschlossen werden.")
+339: let symbol = success ? "✓" : "!"
+340: let body = "<html><head><meta charset=\"utf-8\"><title>Replyzen</title></head><body style=\"font-family:-apple-system;padding:48px;max-width:620px;margin:auto\"><h2>\(symbol) Replyzen</h2><p>\(message)</p></body></html>"
+341: let response = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: \(body.utf8.count)\r\nConnection: close\r\n\r\n\(body)"
+348: guard let url = URL(string: "https://oauth2.googleapis.com/token") else {
+349: finishOAuth(.failure(CalendarError.authorizationFailed("Token-URL fehlt.")))
+353: request.httpMethod = "POST"
+354: request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+356: "code": code,
+357: "client_id": clientID,
+358: "client_secret": clientSecret,
+359: "redirect_uri": redirectURI,
+360: "grant_type": "authorization_code"
+370: self.finishOAuth(.failure(CalendarError.authorizationFailed(self.googleMessage(from: data) ?? "Token konnte nicht abgerufen werden.")))
+395: self.finishOAuth(.failure(CalendarError.authorizationFailed("Token-Antwort konnte nicht gelesen werden.")))
+401: guard let url = URL(string: "https://www.googleapis.com/oauth2/v2/userinfo") else {
+406: request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+431: let expiry = Double(keychain.load(Key.expiry) ?? "") ?? 0
+443: let url = URL(string: "https://oauth2.googleapis.com/token") else {
+448: request.httpMethod = "POST"
+449: request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+451: "client_id": clientID,
+452: "client_secret": clientSecret,
+453: "refresh_token": refreshToken,
+454: "grant_type": "refresh_token"
+464: completion(.failure(CalendarError.apiError(self.googleMessage(from: data) ?? "Google-Zugriff muss erneut autorisiert werden.")))
+493: guard var components = URLComponents(string: "https://www.googleapis.com/calendar/v3/users/me/calendarList") else {
+498: URLQueryItem(name: "minAccessRole", value: "writer"),
+499: URLQueryItem(name: "maxResults", value: "250")
+501: if let pageToken { items.append(URLQueryItem(name: "pageToken", value: pageToken)) }
+509: request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+517: completion(.failure(CalendarError.apiError(self.googleMessage(from: data) ?? "Kalender konnten nicht geladen werden.")))
+550: completion(.failure(CalendarError.apiError(self.googleMessage(from: data) ?? "HTTP \(http.statusCode)")))
+564: let description = object["error_description"] as? String {
+571: let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-._~"))
 576: return "\(k)=\(v)"
+579: .joined(separator: "&")
+601: private let service = "com.lstoever.replyzen.google.v2"
+602: private let account = "oauth-bundle"
+603: private let legacyService = "com.lstoever.replyzen.google"
+604: private let migrationDisabledKey = "Replyzen.GoogleKeychainV2.LegacyDisabled"
+727: "google.oauth.client_id",
+728: "google.oauth.client_secret",
+729: "google.oauth.refresh_token",
+730: "google.oauth.email"
+732: if essentials.allSatisfy({ !(cache[$0] ?? "").isEmpty }) {

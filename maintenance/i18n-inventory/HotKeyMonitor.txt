@@ -1,0 +1,2 @@
+12: event.charactersIgnoringModifiers?.lowercased() == "r" else { return }
+20: event.charactersIgnoringModifiers?.lowercased() == "r" {

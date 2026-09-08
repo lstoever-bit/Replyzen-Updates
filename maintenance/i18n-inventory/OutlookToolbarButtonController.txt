@@ -1,3 +1,5 @@
+15: fatalError("init(coder:) has not been implemented")
+161: button.title = ""
 173: let pipe = NSTextField(labelWithString: "|")
 181: newButton = makeButton(symbol: "square.and.pencil", x: 6, tooltip: "New")
 182: replyButton = makeButton(symbol: "arrowshape.turn.up.left", x: 46, tooltip: "Reply")
@@ -6,3 +8,4 @@
 185: cancelButton = makeButton(symbol: "xmark.circle", x: 178, tooltip: "Cancel")
 186: calendarButton = makeButton(symbol: "calendar.badge.plus", x: 218, tooltip: "Calendar")
 187: paymentButton = makeButton(symbol: "banknote", x: 258, tooltip: "Payment")
+270: NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.microsoft.Outlook"

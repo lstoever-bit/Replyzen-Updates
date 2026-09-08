@@ -1,22 +1,177 @@
+4: private let fileIOQueue = DispatchQueue(label: "com.lstoever.replyzen.file-io", qos: .userInitiated)
+27: "Draft an email reply for the user.",
+28: "Return ONLY valid JSON with exactly these keys: body, html.",
+29: "body is the plain text final reply.",
+30: "html is the same final reply as a clean email safe HTML fragment. Use only p, br, strong, em, ul, ol and li. Do not use CSS, script, html or body tags.",
+31: "If the user's rich text instruction intentionally uses bold, italic, bullets or numbering, preserve that formatting in the final email where it makes sense.",
+32: "Be concise, natural, and appropriate for email.",
+35: languageInstruction(for: language, purpose: "reply"),
+36: "Follow the user's instruction precisely. The language of the instruction is input only and must never override the selected output language.",
+37: "Do not invent facts, promises, dates, attachments, or commitments.",
+38: "Do not add a subject line.",
+39: "Do not add a signature or the user's name."
+42: systemInstructions.append("COMPACT MODE IS ON: make the reply as short as possible while preserving the requested meaning. Prefer 1 to 3 short sentences and normally stay under 70 words.")
+46: let input = "USER INSTRUCTION PLAIN:\n\(instruction)" +
+47: (richInstruction.isEmpty ? "" : "\n\nUSER INSTRUCTION HTML FORMATTING CUES:\n\(richInstruction)") +
+48: "\n\nEMAIL CONTENT:\n\(String(mailText.prefix(30_000)))"
+52: instructions: systemInstructions.joined(separator: "\n"),
+78: "Draft the short note that the user will place above an existing forwarded email thread.",
+79: "Return ONLY valid JSON with exactly these keys: body, html.",
+80: "body is the plain text forwarding note only.",
+81: "html is the same note as a clean email safe HTML fragment. Use only p, br, strong, em, ul, ol and li. Do not use CSS, script, html or body tags.",
+82: "If the user's rich text instruction intentionally uses bold, italic, bullets or numbering, preserve that formatting in the final note where it makes sense.",
+83: "The original email thread and attachments will be preserved by Outlook below this note. Do not reproduce or summarize the whole forwarded thread unless the user explicitly asks for that.",
+84: "Do not invent a recipient. Do not add To, CC, BCC or a subject line.",
+85: "Do not add a signature or the user's name unless explicitly requested.",
+86: "Be concise, natural, and appropriate for email.",
+89: languageInstruction(for: language, purpose: "forwarding note"),
+90: "Follow the user's instruction precisely. The language of the instruction is input only and must never override the selected output language.",
+91: "Do not invent facts, promises, dates, attachments, or commitments."
+94: systemInstructions.append("COMPACT MODE IS ON: make the forwarding note as short as possible while preserving the requested meaning. Prefer 1 to 3 short sentences and normally stay under 70 words.")
+98: let input = "USER INSTRUCTION PLAIN:\n\(instruction)" +
+99: (richInstruction.isEmpty ? "" : "\n\nUSER INSTRUCTION HTML FORMATTING CUES:\n\(richInstruction)") +
+100: "\n\nEMAIL BEING FORWARDED:\n\(String(mailText.prefix(30_000)))"
+104: instructions: systemInstructions.joined(separator: "\n"),
+125: "Draft a very short, friendly decline as an email reply.",
+126: "Automatically detect the language of the latest relevant incoming message and write the reply in that same language.",
+127: "If the thread mixes languages, use the language of the most recent request that is being declined.",
+128: "Keep it warm, polite and concise: normally 1-3 short sentences.",
+130: "Clearly decline the request or invitation, but do not invent a reason, excuse, date, promise or alternative unless it is explicitly supported by the email.",
+131: "Do not add a subject line, greeting-only filler, signature or the user's name.",
+132: "Return only the reply text."
+133: ].joined(separator: "\n")
+138: input: "EMAIL THREAD:\n\(String(mailText.prefix(30_000)))",
+139: model: "gpt-5.6-luna",
+140: reasoningEffort: "none",
+163: "Draft a new email for the user based only on the user's instruction.",
+164: "Return ONLY valid JSON with exactly these keys: subject, body, html.",
+165: "subject: write a short useful email subject in the selected output language, ideally 2 to 7 words. Do not prefix it with Subject, Betreff, Re or Fwd.",
+166: "body: write the actual email body only as plain text. Do not repeat the subject in the body.",
+167: "html: the same final body as a clean email safe HTML fragment. Use only p, br, strong, em, ul, ol and li. Do not use CSS, script, html or body tags.",
+168: "If the user's rich text instruction intentionally uses bold, italic, bullets or numbering, preserve that formatting in the final email where it makes sense.",
+169: "Be concise, natural, and appropriate for email.",
+171: languageInstruction(for: language, purpose: "email subject and body"),
+173: "Follow the user's instruction precisely. The language of the instruction is input only and must never override the selected output language.",
+174: "Do not invent facts, promises, dates, attachments, recipients, or commitments that the user did not provide.",
+175: "Do not add a signature or the user's name unless the user explicitly asks for it."
+178: systemInstructions.append("COMPACT MODE IS ON: make the body as short as possible while preserving the requested meaning. Prefer 2 to 4 short sentences and normally stay under 80 words.")
+182: let input = "USER INSTRUCTION PLAIN:\n\(instruction)" +
+183: (richInstruction.isEmpty ? "" : "\n\nUSER INSTRUCTION HTML FORMATTING CUES:\n\(richInstruction)")
+187: instructions: systemInstructions.joined(separator: "\n"),
+203: "Avoid hyphens, en dashes, and em dashes in normal prose. Use them only when absolutely necessary for correctness or when preserving exact source text such as names, dates, URLs, email addresses, or reference numbers. Prefer commas, periods, or separate sentences instead."
 209: throw APIError(message: "OpenAI hat keinen gültigen Antwortentwurf geliefert.")
 214: throw APIError(message: "OpenAI hat keinen Antworttext geliefert.")
 220: throw APIError(message: "OpenAI hat den Antwortentwurf nicht im erwarteten Format geliefert.")
 227: throw APIError(message: "OpenAI hat keinen gültigen Mailentwurf geliefert.")
 232: throw APIError(message: "OpenAI hat keinen Mailtext geliefert.")
 238: throw APIError(message: "OpenAI hat den Mailentwurf nicht im erwarteten Format geliefert.")
+249: "Summarize the full email thread for the user. Do not draft an email reply.",
+250: languageInstruction(for: language, purpose: "summary"),
+251: "Be concise, clear, and structured.",
+253: "Capture the key points, decisions or commitments, open questions, and action items or next steps.",
+254: "Preserve names, dates, amounts, and deadlines only when they are relevant.",
+255: "Do not invent facts or infer commitments that are not supported by the email thread.",
+256: "Prefer short bullet points unless the thread is so short that a brief paragraph is clearer.",
+257: "Return only the summary."
+258: ].joined(separator: "\n")
+263: input: "EMAIL THREAD:\n\(String(mailText.prefix(30_000)))",
+286: let titleLanguage = language == .german ? "German" : "US English"
+288: ? "OUTPUT LANGUAGE IS GERMAN. The title and description MUST be written in German, regardless of the language used in the email thread."
+289: : "OUTPUT LANGUAGE IS US ENGLISH. The title and description MUST be written in natural US English, regardless of the language used in the email thread. Translate ordinary descriptive words; preserve only true proper names such as people, companies, products, and projects."
+292: "Create a calendar event suggestion from the email thread.",
+293: "Return ONLY valid JSON with exactly these keys: title, description, start, end, confidence.",
 294: "title: the shortest useful calendar title possible, ideally 1-4 words, maximum 6 words. No filler such as Meeting, Call, Appointment, Termin unless it is necessary to understand the event.",
+295: "description: an extremely compact description of what the appointment is about. Prefer one short sentence or a few compact phrases, maximum 180 characters. No greeting, no sign-off, no generic filler, no repeated title. Include only information useful when opening the calendar event later.",
+298: "Write title and description in \(titleLanguage). Preserve important project or person names, but never copy the source language merely because the thread uses it.",
+299: "start and end: ISO-8601 timestamps with timezone offset, or null.",
+300: "Use a date/time only if one future appointment time is clearly agreed or clearly proposed in the thread. If several dates/times are possible or the timing is ambiguous, set start and end to null.",
+301: "If a start time is clear but no end time or duration is given, set end to 30 minutes after start.",
+302: "confidence must be one of explicit, ambiguous, missing.",
+303: "Do not invent a date, time, attendee, location, or commitment.",
+304: "Default calendar timezone is Europe/Berlin (Central European time: CET/CEST). Interpret date and time references in this timezone by default. If the email explicitly states another timezone, convert the resulting event time to Europe/Berlin.",
+305: "Current time in \(timezone) is \(now). Resolve explicit relative dates such as tomorrow using this context."
+306: ].joined(separator: "\n")
+311: input: "SELECTED OUTPUT LANGUAGE: \(titleLanguage)\n\nEMAIL THREAD:\n\(String(mailText.prefix(30_000)))",
+312: model: "gpt-5.6-luna",
+313: reasoningEffort: "none",
 333: throw APIError(message: "OpenAI hat keinen gültigen Terminvorschlag geliefert.")
 338: throw APIError(message: "OpenAI hat den Terminvorschlag nicht im erwarteten Format geliefert.")
+361: "Extract bank transfer details from the supplied email and invoice PDF files.",
+362: "The PDF invoice is the PRIMARY SOURCE. Read the PDF itself, including page layout, tables and scanned/visual content. Use the email only as supporting context.",
+363: "Return ONLY valid JSON with exactly these keys: recipient, iban, bic, amount, currency, purpose, confidence.",
+364: "Never invent or guess banking details. If a field is not clearly supported, return null for that field.",
+365: "recipient: exact payee/account holder name from the invoice.",
+366: "iban: exact IBAN, preferably without spaces. Preserve every character accurately.",
+367: "bic: exact BIC/SWIFT if stated, otherwise null.",
+368: "amount: exact amount that is currently payable, digits and decimal separator only, without currency symbol.",
+369: "currency: ISO currency code such as EUR only when supported by the source.",
+370: "purpose: shortest useful payment reference, prioritizing the invoice number, customer/reference number or explicitly requested payment reference.",
+371: "confidence must be one of high, medium, low.",
+372: "If the email conflicts with the invoice PDF, prefer the invoice PDF unless the email explicitly states corrected payment details. If there is still ambiguity, return null for the conflicting field and confidence low.",
+373: "This is extraction only. Never initiate, authorize or imply that a payment has been made."
+374: ].joined(separator: "\n")
+376: let pdfs = Array(fileURLs.filter { $0.pathExtension.lowercased() == "pdf" }.prefix(3))
+385: var contextText = "EMAIL CONTEXT:\n\(String(mailText.prefix(18_000)))"
+387: contextText += "\n\nFALLBACK LOCAL ATTACHMENT TEXT (only because no PDF file was available):\n\(String(fallbackAttachmentText.prefix(24_000)))"
+391: ["type": "input_text", "text": contextText]
+395: "type": "input_file",
+396: "file_id": fileID,
+397: "detail": "auto"
+402: "role": "user",
+403: "content": content
+410: model: "gpt-5.6-luna",
+411: reasoningEffort: "none",
+480: guard let endpoint = URL(string: "https://api.openai.com/v1/files") else {
 481: completion(.failure(APIError(message: "Ungültige OpenAI-Datei-URL.")))
 489: completion(.failure(APIError(message: "Der PDF-Anhang konnte nicht gelesen werden: \(url.lastPathComponent)")))
+493: let boundary = "Replyzen-\(UUID().uuidString)"
+494: let originalFilename = url.lastPathComponent.replacingOccurrences(of: "\"", with: "_")
+496: if url.pathExtension.lowercased() == "pdf" {
+498: safeFilename = (stem.isEmpty ? "invoice" : stem) + ".pdf"
+511: append("--\(boundary)\r\n")
+512: append("Content-Disposition: form-data; name=\"purpose\"\r\n\r\n")
+513: append("user_data\r\n")
+514: append("--\(boundary)\r\n")
+515: append("Content-Disposition: form-data; name=\"file\"; filename=\"\(safeFilename)\"\r\n")
+516: append("Content-Type: application/pdf\r\n\r\n")
+518: append("\r\n--\(boundary)--\r\n")
+521: request.httpMethod = "POST"
+523: request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+524: request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
 533: completion(.failure(APIError(message: "Keine Antwort beim PDF-Upload von OpenAI erhalten.")))
+537: let message = Self.extractErrorMessage(from: data) ?? "OpenAI-PDF-Upload fehlgeschlagen (HTTP \(http.statusCode))."
+544: guard let fileID = object?["id"] as? String, !fileID.isEmpty else {
 545: throw APIError(message: "OpenAI hat keine Datei-ID für den PDF-Anhang geliefert.")
 551: completion(.failure(APIError(message: "Die OpenAI-Antwort auf den PDF-Upload war ungültig.")))
+557: guard let url = URL(string: "https://api.openai.com/v1/files/\(fileID)") else { return }
+559: request.httpMethod = "DELETE"
+561: request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
 568: throw APIError(message: "OpenAI hat keine gültigen Überweisungsdaten geliefert.")
 573: throw APIError(message: "OpenAI hat die Überweisungsdaten nicht im erwarteten Format geliefert.")
 580: return "FINAL OUTPUT LANGUAGE IS GERMAN. Write the entire \(purpose) in natural German. The USER INSTRUCTION may be written in any language; treat its language only as input and translate its requested meaning into German. Never switch the final email to another language because the instruction itself is written in that language. Preserve exact names, brands, URLs, email addresses and explicitly requested verbatim quotations."
 582: return "FINAL OUTPUT LANGUAGE IS US ENGLISH. Write the entire \(purpose) in natural US English using American spelling and phrasing. The USER INSTRUCTION may be written in any language; treat its language only as input and translate its requested meaning into US English. Never switch the final email to German or another language because the instruction itself is written in that language. Preserve exact names, brands, URLs, email addresses and explicitly requested verbatim quotations."
+590: model: String = "gpt-5.6-luna",
+591: reasoningEffort: String? = "none",
+596: guard let url = URL(string: "https://api.openai.com/v1/responses") else {
 597: completion(.failure(APIError(message: "Ungültige OpenAI-URL.")))
+602: "model": model,
+603: "store": false,
+604: "instructions": instructions,
+605: "input": input
+608: payload["reasoning"] = ["effort": reasoningEffort]
+611: payload["max_output_tokens"] = maxOutputTokens
+614: payload["text"] = ["verbosity": "low"]
+618: request.httpMethod = "POST"
+620: request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+621: request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
 637: completion(.failure(APIError(message: "Keine Antwort von OpenAI erhalten.")))
+642: let message = Self.extractErrorMessage(from: data) ?? "OpenAI-Fehler HTTP \(http.statusCode)."
+658: let error = json["error"] as? [String: Any],
+659: let message = error["message"] as? String else {
+667: let output = json["output"] as? [[String: Any]] else {
 668: throw APIError(message: "OpenAI hat ein unerwartetes Antwortformat geliefert.")
+673: guard let content = item["content"] as? [[String: Any]] else { continue }
+675: if part["type"] as? String == "output_text",
+676: let text = part["text"] as? String {
+682: let result = pieces.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
 684: throw APIError(message: "OpenAI hat keinen Antworttext geliefert.")

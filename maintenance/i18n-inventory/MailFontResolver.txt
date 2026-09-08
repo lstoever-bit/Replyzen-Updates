@@ -1,0 +1,4 @@
+9: for name in ["Calibri-Light", "Calibri Light", "CalibriLight"] {
+16: for identifier in ["com.microsoft.Outlook", "com.microsoft.Word", "com.microsoft.Excel", "com.microsoft.Powerpoint"] {
+19: for folder in ["DFonts", "Fonts"] {
+22: for url in files where url.lastPathComponent.lowercased().hasPrefix("calibri") && ["ttf", "otf"].contains(url.pathExtension.lowercased()) {

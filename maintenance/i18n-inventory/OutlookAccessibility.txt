@@ -1,3 +1,65 @@
 18: return "Microsoft Outlook läuft nicht."
 20: return "Ich finde kein Outlook-Fenster. Öffne die Mail bitte sichtbar in Outlook."
 22: return "Ich konnte in der geöffneten Outlook-Mail keinen lesbaren Mailtext finden."
+38: guard let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == "com.microsoft.Outlook" }) else {
+61: var best = ""
+64: let webAreas = findElements(role: "AXWebArea", root: window, maxNodes: 18_000)
+80: let pattern = #"(?i)([^/\\\n\r\t<>:\"|?*]{1,180}\.(?:pdf|png|jpe?g|tiff?))"#
+87: "AXFilename" as CFString,
+88: "AXURL" as CFString
+120: "AXURL" as CFString,
+121: "AXFilename" as CFString,
+140: guard ["pdf", "png", "jpg", "jpeg", "tif", "tiff"].contains(ext),
+176: let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
+178: if role == "AXWebArea" { continue }
+180: if depth <= 9 && (role == "AXOutline" || role == "AXTable") {
+201: let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
+202: if role == "AXRow", boolAttribute(kAXSelectedAttribute as CFString, from: element) == true {
+206: if role != "AXWebArea" {
+238: .appendingPathComponent("Replyzen-Attachments", isDirectory: true)
+262: if lowerTitle.contains("download") || lowerTitle.contains("herunter") {
+304: $0.pathExtension.lowercased() == "pdf" &&
+324: "AXFilename" as CFString,
+325: "AXURL" as CFString
+335: .joined(separator: " ")
+338: let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
+341: case "AXButton", "AXLink", "AXGroup": score = 3
+342: case "AXStaticText": score = 2
+360: if AXUIElementPerformAction(candidate, "AXShowMenu" as CFString) == .success {
+403: "save attachment as", "save attachment", "save as",
+404: "anlage speichern unter", "anhang speichern unter", "speichern unter",
+405: "anlage speichern", "anhang speichern",
+406: "download", "herunterladen"
+421: if stringAttribute(kAXRoleAttribute as CFString, from: element) == "AXMenuItem" {
+426: ]) ?? ""
+458: let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
+459: if role == "AXSheet" {
+462: if role == "AXWindow" || role == "AXDialog" {
+466: ])?.lowercased() ?? ""
+467: if text.contains("save") || text.contains("speichern") || text.contains("sichern") {
+503: if decoded.hasPrefix("/") {
+507: let pattern = #"file://[^\s\"'<>]+\.(?:pdf|png|jpe?g|tiff?)"#
+519: NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == "com.microsoft.Outlook" })?.processIdentifier
+534: if pressComposeControl(in: window, matching: ["bcc", "blind carbon", "blind copy", "blindkopie"]) ,
+563: guard let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == "com.microsoft.Outlook" }) else { return nil }
+573: let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
+574: if role == "AXTextField" || role == "AXTextArea" || role == "AXComboBox" {
+576: if meta.contains("bcc") || meta.contains("blind carbon") || meta.contains("blind copy") || meta.contains("blindkopie") {
+590: let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
+591: if role == "AXButton" || role == "AXCheckBox" || role == "AXMenuButton" {
+613: let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
+614: if role == "AXTextField" || role == "AXTextArea" || role == "AXComboBox" {
+616: if meta.contains("subject") || meta.contains("betreff") {
+643: let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
+644: if role == "AXTextArea" || role == "AXWebArea" {
+646: if meta.contains("message body") || meta.contains("mail body") || meta.contains("nachrichtentext") || meta.contains("compose body") {
+666: "AXPlaceholderValue" as CFString,
+667: "AXIdentifier" as CFString,
+668: "AXDOMIdentifier" as CFString,
+669: "AXRoleDescription" as CFString
+672: .joined(separator: " ")
+694: guard let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == "com.microsoft.Outlook" }) else {
+708: guard let screenNumber = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else { continue }
+758: if role == "AXStaticText" || role == "AXTextArea" {
+777: return lines.joined(separator: "\n")
+782: .replacingOccurrences(of: "\u{00A0}", with: " ")

@@ -1,2 +1,12 @@
+120: if remaining.hasPrefix("• ") { return 2 }
+121: if remaining.hasPrefix("- ") { return 2 }
+123: if let match = prefix.range(of: #"^\d+\.\s"#, options: .regularExpression) {
+132: return starts.allSatisfy { (textView.string as NSString).substring(from: $0).hasPrefix("• ") }
+136: return prefix.range(of: #"^\d+\.\s"#, options: .regularExpression) != nil
+152: prefix = "• "
+154: prefix = "\(reverseIndex + 1). "
+203: event.charactersIgnoringModifiers?.lowercased() == "a" {
+233: scrollView.identifier = NSUserInterfaceItemIdentifier("replyzen.mailEditor")
 296: guard attributed.length > 0 else { return "" }
+305: return String(data: data, encoding: .utf8) ?? ""
 307: return ""

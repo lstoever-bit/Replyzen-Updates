@@ -1,1 +1,29 @@
+5: static let family = "Calibri Light"
+7: static let inlineFont = "font-family: 'Calibri Light', Calibri, sans-serif; font-size: 10.5pt;"
+9: static let baseFont = installedFont ?? NSFont(name: "Helvetica", size: pointSize) ?? NSFont.systemFont(ofSize: pointSize)
+15: (1, ["Calibri-Bold", "Calibri Bold"], .boldFontMask, "Helvetica-Bold"),
+16: (2, ["Calibri-LightItalic", "Calibri Light Italic", "CalibriLight-Italic", "Calibri-Italic"], .italicFontMask, "Helvetica-Oblique"),
+17: (3, ["Calibri-BoldItalic", "Calibri Bold Italic"], [.boldFontMask, .italicFontMask], "Helvetica-BoldOblique")
+51: precondition(Thread.isMainThread, "AppKit HTML import must run on the main thread")
+107: var fragment = escapeHTML(normalized.string).replacingOccurrences(of: "\r\n", with: "\n")
+108: .replacingOccurrences(of: "\r", with: "\n").replacingOccurrences(of: "\n", with: "<br>")
+113: let body = firstMatch(#"(?is)<body\b[^>]*>(.*?)</body>"#, in: exported) {
+115: let stylesheet = firstMatch(#"(?is)<style\b[^>]*>(.*?)</style>"#, in: exported) ?? ""
+116: for match in matches(#"(?is)([a-z][a-z0-9]*)(?:\.([a-z0-9_-]+))?\s*\{([^{}]*)\}"#, in: stylesheet) {
+120: let key = classRange.location == NSNotFound ? tag : tag + "." + text.substring(with: classRange)
+125: for match in matches(#"(?is)<([a-z][a-z0-9]*)(\s[^<>]*?)?\s*/?>"#, in: fragment).reversed() {
+127: if tag == "br" || tag == "hr" { continue }
+128: var attributes = match.range(at: 2).location == NSNotFound ? "" : original.substring(with: match.range(at: 2))
+129: var styles = [rules[tag] ?? ""]
+130: if let classes = firstMatch(#"(?is)\bclass\s*=\s*["']([^"']*)["']"#, in: attributes) {
+131: for name in classes.split(whereSeparator: { $0.isWhitespace }) { styles.append(rules[tag + "." + name] ?? "") }
+133: if let existing = firstMatch(#"(?is)\bstyle\s*=\s*"([^"]*)""#, in: attributes) { styles.append(existing) }
+134: attributes = replacing(#"(?is)\s+(?:class|style)\s*=\s*"[^"]*""#, in: attributes, with: "")
+135: attributes = replacing(#"(?is)\s+(?:class|style)\s*=\s*'[^']*'"#, in: attributes, with: "")
+137: let css = styles.filter { !$0.isEmpty }.joined(separator: "; ")
+138: .replacingOccurrences(of: "\n", with: " ").replacingOccurrences(of: "\r", with: " ")
+139: let replacement = "<\(tag)\(attributes) style=\"\(escapeHTML(css))\">"
 143: return "<!DOCTYPE html><html><head><meta charset=\"utf-8\"></head><body>" +
+144: "<div style=\"\(inlineFont)\">\(fragment)</div></body></html>"
+148: value.replacingOccurrences(of: "&", with: "&amp;").replacingOccurrences(of: "<", with: "&lt;")
+149: .replacingOccurrences(of: ">", with: "&gt;").replacingOccurrences(of: "\"", with: "&quot;")

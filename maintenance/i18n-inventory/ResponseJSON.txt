@@ -1,0 +1,4 @@
+8: if cleaned.hasPrefix("```") {
+9: let lines = cleaned.split(separator: "\n", omittingEmptySubsequences: false)
+11: cleaned = lines.dropFirst().dropLast().joined(separator: "\n")
+12: if cleaned.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("json") {

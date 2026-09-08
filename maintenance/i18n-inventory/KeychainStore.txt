@@ -1,0 +1,3 @@
+5: private let service = "com.lstoever.replyzen"
+6: private let legacyService = "com.lennard.outlookai"
+7: private let account = "openai-api-key"

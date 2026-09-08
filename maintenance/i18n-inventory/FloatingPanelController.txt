@@ -1,0 +1,3 @@
+49: fatalError("init(coder:) has not been implemented")
+128: let bundleID = app.bundleIdentifier ?? ""
+129: if bundleID == "com.microsoft.Outlook" {

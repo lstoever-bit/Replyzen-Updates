@@ -1,0 +1,1 @@
+26: guard let url = URL(string: "x-apple.systempreferences:com.apple.LoginItems-Settings.extension") else { return }
