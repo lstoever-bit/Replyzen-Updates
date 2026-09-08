@@ -5,8 +5,6 @@ on:
     paths:
       - 'source-current/**'
       - 'tests/**'
-      - 'maintenance/localization/**'
-      - 'maintenance/localize_1_47.py'
       - '.github/workflows/build-update.yml'
   workflow_dispatch:
 permissions:
@@ -20,43 +18,30 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Prepare checked localization migration
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('maintenance/localize_1_47.py')
-          s=p.read_text().replace('                        + selectedPDFs', '                    + selectedPDFs')
-          s=s.replace('Text("ReplyZen").font(.headline)', 'Text(ReplyZenBrand.displayName).font(.headline)')
-          p.write_text(s)
-          PY
-          python3 maintenance/localize_1_47.py source-current
       - name: Existing regression and typography tests
         run: bash tests/run-tests.sh source-current
       - name: Three-language coverage, persistence, native layouts and live-switch tests
         run: bash tests/run-localization-tests.sh source-current
-      - name: Build and verify native app
+      - name: Build and verify native app from canonical source
         run: bash source-current/Build-CI.sh
       - name: Verify exact updater archive and manifest
         run: python3 tests/verify_update.py source-current
-      - name: Preserve tested sources and publish main update
-        env:
-          BRANCH: ${{ github.ref_name }}
+      - name: Publish verified main update
+        if: github.ref_name == 'main'
+        shell: bash
         run: |
           set -euo pipefail
+          PACKAGE="$(python3 -c 'import json; print(json.load(open("source-current/update.json"))["download_url"])')"
+          VERSION="$(python3 -c 'import json; print(json.load(open("source-current/update.json"))["version"])')"
+          cp "source-current/$PACKAGE" "$PACKAGE"
+          cp source-current/update.json update.json
+          cp source-current/update.json "update-${VERSION%.0}.json"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f source-current/app source-current/Build-CI.sh tests maintenance/localize_1_47.py
-          if [ "$BRANCH" = main ]; then
-            PACKAGE="$(python3 -c 'import json; print(json.load(open("source-current/update.json"))["download_url"])')"
-            VERSION="$(python3 -c 'import json; print(json.load(open("source-current/update.json"))["version"])')"
-            cp "source-current/$PACKAGE" "$PACKAGE"
-            cp source-current/update.json update.json
-            cp source-current/update.json "update-${VERSION%.0}.json"
-            git add -f "$PACKAGE" update.json "update-${VERSION%.0}.json"
-          fi
+          git add -f "$PACKAGE" update.json "update-${VERSION%.0}.json"
           if ! git diff --cached --quiet; then
-            git commit -m "Build ReplyZen 1.47 localization and preserve tested sources"
-            git push origin "HEAD:$BRANCH"
+            git commit -m "Publish ReplyZen $VERSION multilingual update"
+            git push origin HEAD:main
           fi
       - uses: actions/upload-artifact@v4
         if: always()
@@ -66,5 +51,6 @@ jobs:
             source-current/Replyzen-update-*.zip
             source-current/update.json
             source-current/.ui-previews/*.png
+          include-hidden-files: true
           if-no-files-found: warn
           retention-days: 7
