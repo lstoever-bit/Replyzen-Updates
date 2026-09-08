@@ -1,37 +1,145 @@
 import SwiftUI
 import AppKit
+import Combine
+import RichEditorSwiftUI
 
-final class RichTextEditorController: ObservableObject {
-    weak var textView: NSTextView?
-    private weak var scrollView: NSScrollView?
-    private var zoomObservation: NSKeyValueObservation?
-    @Published private(set) var zoomPercent = 130
+/// Small ReplyZen adapter around the open-source RichEditorSwiftUI editor.
+/// The library owns selection/style behavior; ReplyZen only bridges the editor
+/// to its existing plain-text/HTML mail pipeline and adds the two list helpers.
+final class ReplyZenRichEditorAdapter: ObservableObject {
+    let context: RichEditorState
+    weak var textView: RichTextView?
 
-    func attachZoom(to scrollView: NSScrollView) {
-        self.scrollView = scrollView
-        zoomObservation = scrollView.observe(\.magnification, options: [.new]) { [weak self, weak scrollView] _, _ in
-            // Avoid publishing from inside a SwiftUI/AppKit update.
-            DispatchQueue.main.async { [weak self, weak scrollView] in
-                guard let self, let scrollView, self.scrollView === scrollView else { return }
-                let percent = Int((scrollView.magnification * 100).rounded())
-                if percent != self.zoomPercent { self.zoomPercent = percent }
-            }
+    private var storageObserver: NSObjectProtocol?
+    private var pendingExternal: (plain: String, html: String)?
+    private var pendingExternalWorkItem: DispatchWorkItem?
+    private var publishWorkItem: DispatchWorkItem?
+    private var isApplyingExternalValue = false
+    private var lastPublishedPlain = ""
+    private var lastPublishedHTML = ""
+    private var publishBindings: ((String, String) -> Void)?
+
+    init(initialText: String) {
+        context = RichEditorState(input: initialText)
+    }
+
+    deinit {
+        if let storageObserver {
+            NotificationCenter.default.removeObserver(storageObserver)
         }
     }
 
-    func setZoom(percent: Int) {
-        guard let scrollView else { return }
-        let scale = min(scrollView.maxMagnification, max(scrollView.minMagnification, CGFloat(percent) / 100))
-        scrollView.magnification = scale
-        // Visual zoom never changes NSTextStorage fonts, plain text or HTML.
+    func bind(plainText: Binding<String>, html: Binding<String>) {
+        publishBindings = { plain, richHTML in
+            if plainText.wrappedValue != plain { plainText.wrappedValue = plain }
+            if html.wrappedValue != richHTML { html.wrappedValue = richHTML }
+        }
     }
 
-    func toggleBold() {
-        toggleFontTrait(.boldFontMask)
+    func attach(_ component: RichTextViewComponent) {
+        guard let view = component as? RichTextView else { return }
+        if textView === view { return }
+
+        if let storageObserver {
+            NotificationCenter.default.removeObserver(storageObserver)
+        }
+        textView = view
+        configure(view)
+
+        if let storage = view.textStorage {
+            storageObserver = NotificationCenter.default.addObserver(
+                forName: NSTextStorage.didProcessEditingNotification,
+                object: storage,
+                queue: .main
+            ) { [weak self] _ in
+                self?.schedulePublish()
+            }
+        }
+
+        applyPendingExternal(force: true)
     }
 
-    func toggleItalic() {
-        toggleFontTrait(.italicFontMask)
+    private func configure(_ view: RichTextView) {
+        view.isRichText = true
+        view.allowsUndo = true
+        view.drawsBackground = false
+        view.font = MailTypography.baseFont
+        view.typingAttributes[.font] = MailTypography.baseFont
+        view.textContainerInset = NSSize(width: 10, height: 10)
+        view.isVerticallyResizable = true
+        view.isHorizontallyResizable = false
+        view.textContainer?.widthTracksTextView = true
+
+        // Fixed visual magnification keeps 10.5 pt mail text comfortable to edit,
+        // without adding another control or changing what Outlook receives.
+        DispatchQueue.main.async { [weak view] in
+            guard let scrollView = view?.enclosingScrollView else { return }
+            scrollView.identifier = NSUserInterfaceItemIdentifier("replyzen.mailEditor")
+            scrollView.hasVerticalScroller = true
+            scrollView.drawsBackground = false
+            scrollView.allowsMagnification = true
+            scrollView.minMagnification = 1.0
+            scrollView.maxMagnification = 1.8
+            scrollView.magnification = 1.30
+        }
+    }
+
+    func updateExternal(plainText: String, html: String) {
+        pendingExternal = (plainText, html)
+        pendingExternalWorkItem?.cancel()
+        let item = DispatchWorkItem { [weak self] in
+            self?.applyPendingExternal(force: false)
+        }
+        pendingExternalWorkItem = item
+        // Coalesce SwiftUI updates to plainText + html into one editor update.
+        DispatchQueue.main.async(execute: item)
+    }
+
+    private func applyPendingExternal(force: Bool) {
+        guard let pendingExternal, let textView else { return }
+        if !force,
+           pendingExternal.plain == lastPublishedPlain,
+           pendingExternal.html == lastPublishedHTML {
+            return
+        }
+
+        let attributed = MailTypography.attributedString(
+            plainText: pendingExternal.plain,
+            html: pendingExternal.html
+        )
+        isApplyingExternalValue = true
+        context.setAttributedString(to: attributed)
+        textView.setRichText(attributed)
+        textView.typingAttributes[.font] = MailTypography.baseFont
+        lastPublishedPlain = pendingExternal.plain
+        lastPublishedHTML = pendingExternal.html
+
+        // The package and NSTextStorage can emit one more attribute notification
+        // after setRichText. Keep that out of the parent bindings.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) { [weak self] in
+            self?.isApplyingExternalValue = false
+        }
+    }
+
+    private func schedulePublish() {
+        guard !isApplyingExternalValue else { return }
+        publishWorkItem?.cancel()
+        let item = DispatchWorkItem { [weak self] in self?.publishCurrentValue() }
+        publishWorkItem = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.02, execute: item)
+    }
+
+    private func publishCurrentValue() {
+        guard !isApplyingExternalValue, let textView else { return }
+        let normalized = NSMutableAttributedString(attributedString: textView.attributedString())
+        // Normalize a copy. The WYSIWYG editor keeps its own live attributes,
+        // while Outlook still receives ReplyZen's Calibri Light 10.5 pt contract.
+        MailTypography.normalizeFonts(in: normalized)
+        let plain = normalized.string
+        let richHTML = MailTypography.htmlDocument(from: normalized)
+        lastPublishedPlain = plain
+        lastPublishedHTML = richHTML
+        publishBindings?(plain, richHTML)
     }
 
     func toggleBullets() {
@@ -44,53 +152,20 @@ final class RichTextEditorController: ObservableObject {
 
     func clearFormatting() {
         guard let textView, let storage = textView.textStorage else { return }
-        let range = effectiveSelection(in: textView)
-        guard range.length > 0 else {
+        let selected = textView.selectedRange()
+        if selected.length == 0 {
             textView.typingAttributes = [.font: MailTypography.baseFont]
             return
         }
-        storage.beginEditing()
-        storage.removeAttribute(.font, range: range)
-        storage.removeAttribute(.foregroundColor, range: range)
-        storage.removeAttribute(.backgroundColor, range: range)
-        storage.removeAttribute(.underlineStyle, range: range)
-        storage.removeAttribute(.strikethroughStyle, range: range)
-        storage.addAttribute(.font, value: MailTypography.baseFont, range: range)
-        storage.endEditing()
-        textView.didChangeText()
-    }
-
-    private func toggleFontTrait(_ trait: NSFontTraitMask) {
-        guard let textView, let storage = textView.textStorage else { return }
-        let selected = textView.selectedRange()
-        let manager = NSFontManager.shared
-
-        if selected.length == 0 {
-            let current = (textView.typingAttributes[.font] as? NSFont) ?? MailTypography.baseFont
-            let hasTrait = manager.traits(of: current).contains(trait)
-            let converted = hasTrait
-                ? manager.convert(current, toNotHaveTrait: trait)
-                : manager.convert(current, toHaveTrait: trait)
-            textView.typingAttributes[.font] = converted
-            return
-        }
-
-        var firstTraitState: Bool?
-        storage.enumerateAttribute(.font, in: selected) { value, _, stop in
-            let font = (value as? NSFont) ?? MailTypography.baseFont
-            firstTraitState = manager.traits(of: font).contains(trait)
-            stop.pointee = true
-        }
-        let removeTrait = firstTraitState ?? false
 
         storage.beginEditing()
-        storage.enumerateAttribute(.font, in: selected) { value, range, _ in
-            let font = (value as? NSFont) ?? MailTypography.baseFont
-            let converted = removeTrait
-                ? manager.convert(font, toNotHaveTrait: trait)
-                : manager.convert(font, toHaveTrait: trait)
-            storage.addAttribute(.font, value: converted, range: range)
+        for key: NSAttributedString.Key in [
+            .font, .foregroundColor, .backgroundColor,
+            .underlineStyle, .strikethroughStyle
+        ] {
+            storage.removeAttribute(key, range: selected)
         }
+        storage.addAttribute(.font, value: MailTypography.baseFont, range: selected)
         storage.endEditing()
         textView.didChangeText()
     }
@@ -100,9 +175,21 @@ final class RichTextEditorController: ObservableObject {
     private func toggleList(style: ListStyle) {
         guard let textView, let storage = textView.textStorage else { return }
         let ns = textView.string as NSString
-        let selected = effectiveSelection(in: textView)
-        let paragraphRange = ns.paragraphRange(for: selected)
-        guard paragraphRange.length > 0 else { return }
+        let selection = textView.selectedRange()
+
+        if ns.length == 0 {
+            let prefix = style == .bullets ? "• " : "1. "
+            storage.append(NSAttributedString(string: prefix, attributes: [.font: MailTypography.baseFont]))
+            textView.setSelectedRange(NSRange(location: prefix.utf16.count, length: 0))
+            textView.didChangeText()
+            return
+        }
+
+        let safeLocation = min(selection.location, max(0, ns.length - 1))
+        let effective = selection.length > 0
+            ? selection
+            : NSRange(location: safeLocation, length: 0)
+        let paragraphRange = ns.paragraphRange(for: effective)
 
         var starts: [Int] = []
         var cursor = paragraphRange.location
@@ -114,16 +201,14 @@ final class RichTextEditorController: ObservableObject {
             if next <= cursor { break }
             cursor = next
         }
+        guard !starts.isEmpty else { return }
 
-        func existingPrefixLength(at start: Int, in string: NSString) -> Int {
+        func prefixLength(at start: Int, in string: NSString) -> Int {
             let remaining = string.substring(from: start)
-            if remaining.hasPrefix("• ") { return 2 }
-            if remaining.hasPrefix("- ") { return 2 }
-            let prefix = String(remaining.prefix(8))
-            if let match = prefix.range(of: #"^\d+\.\s"#, options: .regularExpression) {
-                return prefix.distance(from: prefix.startIndex, to: match.upperBound)
-            }
-            return 0
+            if remaining.hasPrefix("• ") || remaining.hasPrefix("- ") { return 2 }
+            let prefix = String(remaining.prefix(12))
+            guard let match = prefix.range(of: #"^\d+\.\s"#, options: .regularExpression) else { return 0 }
+            return prefix.distance(from: prefix.startIndex, to: match.upperBound)
         }
 
         let shouldRemove: Bool = {
@@ -132,47 +217,32 @@ final class RichTextEditorController: ObservableObject {
                 return starts.allSatisfy { (textView.string as NSString).substring(from: $0).hasPrefix("• ") }
             case .numbered:
                 return starts.allSatisfy {
-                    let prefix = String((textView.string as NSString).substring(from: $0).prefix(8))
+                    let prefix = String((textView.string as NSString).substring(from: $0).prefix(12))
                     return prefix.range(of: #"^\d+\.\s"#, options: .regularExpression) != nil
                 }
             }
         }()
 
         storage.beginEditing()
-        for (reverseIndex, start) in starts.enumerated().reversed() {
-            let currentString = storage.string as NSString
-            let oldPrefixLength = existingPrefixLength(at: start, in: currentString)
-            if oldPrefixLength > 0 {
-                storage.deleteCharacters(in: NSRange(location: start, length: oldPrefixLength))
+        for (index, start) in starts.enumerated().reversed() {
+            let current = storage.string as NSString
+            let oldLength = prefixLength(at: start, in: current)
+            if oldLength > 0 {
+                storage.deleteCharacters(in: NSRange(location: start, length: oldLength))
             }
             if !shouldRemove {
-                let prefix: String
-                switch style {
-                case .bullets:
-                    prefix = "• "
-                case .numbered:
-                    prefix = "\(reverseIndex + 1). "
-                }
-                let attrs: [NSAttributedString.Key: Any]
+                let prefix = style == .bullets ? "• " : "\(index + 1). "
+                let attributes: [NSAttributedString.Key: Any]
                 if start < storage.length {
-                    attrs = storage.attributes(at: start, effectiveRange: nil)
+                    attributes = storage.attributes(at: start, effectiveRange: nil)
                 } else {
-                    attrs = [.font: MailTypography.baseFont]
+                    attributes = [.font: MailTypography.baseFont]
                 }
-                storage.insert(NSAttributedString(string: prefix, attributes: attrs), at: start)
+                storage.insert(NSAttributedString(string: prefix, attributes: attributes), at: start)
             }
         }
         storage.endEditing()
         textView.didChangeText()
-    }
-
-    private func effectiveSelection(in textView: NSTextView) -> NSRange {
-        let selection = textView.selectedRange()
-        if selection.length > 0 { return selection }
-        let length = (textView.string as NSString).length
-        if length == 0 { return NSRange(location: 0, length: 0) }
-        let safeLocation = min(selection.location, max(0, length - 1))
-        return (textView.string as NSString).paragraphRange(for: NSRange(location: safeLocation, length: 0))
     }
 }
 
@@ -181,131 +251,56 @@ struct RichTextMailEditor: View {
     @Binding var html: String
     var height: CGFloat? = 176
     var showsHTMLBadge: Bool = true
-    @StateObject private var controller = RichTextEditorController()
+    @StateObject private var adapter: ReplyZenRichEditorAdapter
+
+    init(
+        plainText: Binding<String>,
+        html: Binding<String>,
+        height: CGFloat? = 176,
+        showsHTMLBadge: Bool = true
+    ) {
+        _plainText = plainText
+        _html = html
+        self.height = height
+        self.showsHTMLBadge = showsHTMLBadge
+        _adapter = StateObject(
+            wrappedValue: ReplyZenRichEditorAdapter(initialText: plainText.wrappedValue)
+        )
+    }
 
     var body: some View {
         VStack(spacing: 0) {
-            EditorToolbar(controller: controller)
+            EditorToolbar(context: adapter.context, adapter: adapter)
             Divider()
-            RichTextEditorBridge(plainText: $plainText, html: $html, controller: controller)
+            ReplyZenRichEditorSurface(context: adapter.context, adapter: adapter)
                 .frame(minHeight: height == nil ? 80 : nil, maxHeight: .infinity)
         }
         .frame(height: height)
         .frame(maxHeight: height == nil ? .infinity : nil)
         .modifier(WorkspaceCard())
+        .onAppear {
+            adapter.bind(plainText: $plainText, html: $html)
+            adapter.updateExternal(plainText: plainText, html: html)
+        }
+        .onChange(of: plainText) { newValue in
+            adapter.updateExternal(plainText: newValue, html: html)
+        }
+        .onChange(of: html) { newValue in
+            adapter.updateExternal(plainText: plainText, html: newValue)
+        }
     }
 }
 
-private final class RichTextEditorTextView: NSTextView {
-    override func performKeyEquivalent(with event: NSEvent) -> Bool {
-        let relevant = event.modifierFlags.intersection([.command, .option, .control, .shift])
-        if relevant == .command,
-           event.charactersIgnoringModifiers?.lowercased() == "a" {
-            selectAll(nil)
-            return true
-        }
-        return super.performKeyEquivalent(with: event)
-    }
-}
+private struct ReplyZenRichEditorSurface: View {
+    @ObservedObject var context: RichEditorState
+    let adapter: ReplyZenRichEditorAdapter
 
-private struct RichTextEditorBridge: NSViewRepresentable {
-    private static let editorMagnification: CGFloat = 1.30
-
-    @Binding var plainText: String
-    @Binding var html: String
-    let controller: RichTextEditorController
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(parent: self)
-    }
-
-    func makeNSView(context: Context) -> NSScrollView {
-        let scrollView = NSScrollView()
-        scrollView.hasVerticalScroller = true
-        scrollView.borderType = .noBorder
-        scrollView.drawsBackground = false
-        // Visual editor zoom only. The attributed text itself remains Calibri Light 10.5 pt,
-        // so Outlook receives exactly the same mail formatting as before.
-        scrollView.allowsMagnification = true
-        scrollView.minMagnification = 1.0
-        scrollView.maxMagnification = 1.8
-        scrollView.magnification = Self.editorMagnification
-        scrollView.identifier = NSUserInterfaceItemIdentifier("replyzen.mailEditor")
-        controller.attachZoom(to: scrollView)
-
-        let textView = RichTextEditorTextView()
-        textView.isRichText = true
-        textView.allowsUndo = true
-        textView.drawsBackground = false
-        textView.font = MailTypography.baseFont
-        textView.textContainerInset = NSSize(width: 8, height: 8)
-        textView.isVerticallyResizable = true
-        textView.isHorizontallyResizable = false
-        textView.autoresizingMask = [.width]
-        textView.textContainer?.widthTracksTextView = true
-        textView.delegate = context.coordinator
-
-        scrollView.documentView = textView
-        controller.textView = textView
-        context.coordinator.loadExternalValue(into: textView, force: true)
-        return scrollView
-    }
-
-    func updateNSView(_ scrollView: NSScrollView, context: Context) {
-        context.coordinator.parent = self
-        guard let textView = scrollView.documentView as? NSTextView else { return }
-        controller.textView = textView
-        context.coordinator.loadExternalValue(into: textView, force: false)
-    }
-
-    final class Coordinator: NSObject, NSTextViewDelegate {
-        var parent: RichTextEditorBridge
-        private var isApplyingExternalValue = false
-
-        init(parent: RichTextEditorBridge) {
-            self.parent = parent
-        }
-
-        func loadExternalValue(into textView: NSTextView, force: Bool) {
-            guard force || textView.string != parent.plainText else { return }
-            isApplyingExternalValue = true
-            defer { isApplyingExternalValue = false }
-
-            textView.textStorage?.setAttributedString(
-                MailTypography.attributedString(plainText: parent.plainText, html: parent.html)
-            )
-            textView.typingAttributes = [.font: MailTypography.baseFont]
-        }
-
-        func textDidChange(_ notification: Notification) {
-            guard !isApplyingExternalValue,
-                  let textView = notification.object as? NSTextView else { return }
-            isApplyingExternalValue = true
-            defer { isApplyingExternalValue = false }
-            if let storage = textView.textStorage {
-                MailTypography.normalizeFonts(in: storage)
+    var body: some View {
+        RichTextEditor(
+            context: _context,
+            viewConfiguration: { component in
+                adapter.attach(component)
             }
-            textView.typingAttributes[.font] = MailTypography.font(
-                preserving: textView.typingAttributes[.font] as? NSFont
-            )
-            parent.plainText = textView.string
-            parent.html = Self.html(from: textView.attributedString())
-        }
-
-        private static func html(from attributed: NSAttributedString) -> String {
-            guard attributed.length > 0 else { return "" }
-            do {
-                let data = try attributed.data(
-                    from: NSRange(location: 0, length: attributed.length),
-                    documentAttributes: [
-                        .documentType: NSAttributedString.DocumentType.html,
-                        .characterEncoding: String.Encoding.utf8.rawValue
-                    ]
-                )
-                return String(data: data, encoding: .utf8) ?? ""
-            } catch {
-                return ""
-            }
-        }
+        )
     }
 }

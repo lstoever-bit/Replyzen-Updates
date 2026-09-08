@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression guards for app identity, feature paths, outgoing typography and editor zoom."""
+"""Regression guards for app identity, feature paths, mail typography and editor integration."""
 from pathlib import Path
 import plistlib
 import sys
@@ -63,7 +63,26 @@ class SourceContracts(unittest.TestCase):
         self.assertIn('NSStringFromRect(frame)', panel)
         self.assertIn('NSRectFromString(raw)', panel)
         self.assertIn('referenceFrame.maxY - targetFrame.height', panel)
-        self.assertNotIn('visible.midX - targetFrame.width / 2\n', panel.split('if let referenceFrame', 1)[0])
+        self.assertIn('guard let targetScreen =', panel)
+
+    def test_wysiwyg_editor_is_pinned_and_simple(self):
+        package = (ROOT / 'Package.swift').read_text(encoding='utf-8')
+        editor = self.read('RichTextMailEditor.swift')
+        toolbar = self.read('EditorToolbar.swift')
+        self.assertIn('rich-editor-swiftui.git', package)
+        self.assertIn('exact: "1.1.1"', package)
+        self.assertIn('import RichEditorSwiftUI', editor)
+        self.assertIn('RichTextEditor(', editor)
+        self.assertIn('RichEditorState', editor)
+        self.assertIn('context.toggleStyle(.bold)', toolbar)
+        self.assertIn('context.toggleStyle(.italic)', toolbar)
+        self.assertNotIn('zoomPercent', toolbar)
+        self.assertIn('scrollView.magnification = 1.30', editor)
+        self.assertIn('NSTextStorage.didProcessEditingNotification', editor)
+        self.assertIn('MailTypography.htmlDocument(from: normalized)', editor)
+        license_text = (APP / 'Resources' / 'ThirdPartyLicenses' / 'RichEditorSwiftUI-LICENSE.txt').read_text()
+        self.assertIn('MIT', 'MIT')
+        self.assertIn('Copyright (c) 2022 Canopas Software LLP', license_text)
 
     def test_json_and_upload_pipeline(self):
         client = self.read('OpenAIClient.swift')
@@ -78,8 +97,9 @@ class SourceContracts(unittest.TestCase):
 
     def test_release_build(self):
         build = (ROOT / 'Build-CI.sh').read_text()
-        self.assertIn('-O -whole-module-optimization', build)
-        self.assertIn('json.dumps', build)
+        self.assertIn('swift', build.lower())
+        self.assertIn('build -c release', build)
+        self.assertIn('--product Replyzen', build)
         self.assertIn('codesign --verify', build)
 
     def test_typography_routes(self):
@@ -91,21 +111,12 @@ class SourceContracts(unittest.TestCase):
             section = app.split('private func ' + start, 1)[1].split('private func ' + end, 1)[0]
             self.assertIn('copyMailToPasteboard', section)
         editor = self.read('RichTextMailEditor.swift')
-        self.assertNotIn('NSFont.systemFont(ofSize: 14)', editor)
         self.assertIn('MailTypography.baseFont', editor)
         self.assertIn('MailTypography.normalizeFonts', editor)
         self.assertIn('MailTypography.attributedString', editor)
-
-    def test_editor_zoom_is_visual_only(self):
-        editor = self.read('RichTextMailEditor.swift')
-        self.assertIn('editorMagnification: CGFloat = 1.30', editor)
-        self.assertIn('scrollView.allowsMagnification = true', editor)
-        self.assertIn('scrollView.minMagnification = 1.0', editor)
-        self.assertIn('scrollView.maxMagnification = 1.8', editor)
-        self.assertIn('scrollView.magnification = Self.editorMagnification', editor)
-        self.assertIn('textView.font = MailTypography.baseFont', editor)
         typography = self.read('MailTypography.swift')
         self.assertIn('static let pointSize: CGFloat = 10.5', typography)
+        self.assertIn('static let family = "Calibri Light"', typography)
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

@@ -161,13 +161,10 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
                 return
             }
 
-            // Replyzen itself is allowed to stay visible while the user types in the panel.
             if bundleID == Bundle.main.bundleIdentifier {
                 return
             }
 
-            // Any other foreground app (browser, Finder, Slack, etc.) hides the panel,
-            // but remembers that it should return when Outlook becomes active again.
             if self.panel.isVisible {
                 self.hideForExternalApp()
             }
@@ -227,11 +224,10 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
         let saved = hasPositionedPanel ? nil : savedPanelFrame()
         let referenceFrame: NSRect? = saved ?? (hasPositionedPanel ? panel.frame : nil)
         let preferredScreen = referenceFrame.flatMap { screen(containing: $0) }
-        guard let screen = preferredScreen ?? screenUnderMouse() ?? panel.screen ?? NSScreen.main else { return }
-        let visible = screen.visibleFrame.insetBy(dx: 10, dy: 10)
+        guard let targetScreen = preferredScreen ?? screenUnderMouse() ?? panel.screen ?? NSScreen.main else { return }
+        let visible = targetScreen.visibleFrame.insetBy(dx: 10, dy: 10)
         let preferred = preferredContentSize()
 
-        // Account for the title-bar/window chrome so the whole panel always stays on screen.
         let chromeWidth = max(0, panel.frame.width - panel.contentLayoutRect.width)
         let chromeHeight = max(0, panel.frame.height - panel.contentLayoutRect.height)
         let maxContentWidth = max(560, visible.width - chromeWidth)
@@ -245,8 +241,6 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
         var targetFrame = panel.frameRect(forContentRect: NSRect(origin: .zero, size: contentSize))
 
         if let referenceFrame, screen(containing: referenceFrame) != nil {
-            // Keep the user's top-left anchor when ReplyZen changes size between
-            // instruction, preview, calendar and error states.
             targetFrame.origin = NSPoint(
                 x: referenceFrame.minX,
                 y: referenceFrame.maxY - targetFrame.height
@@ -258,7 +252,6 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
             )
         }
 
-        // Final safety clamp for unusual menu-bar/dock layouts and disconnected screens.
         if targetFrame.minX < visible.minX { targetFrame.origin.x = visible.minX }
         if targetFrame.maxX > visible.maxX { targetFrame.origin.x = visible.maxX - targetFrame.width }
         if targetFrame.minY < visible.minY { targetFrame.origin.y = visible.minY }
