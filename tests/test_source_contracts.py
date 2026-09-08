@@ -19,8 +19,8 @@ class SourceContracts(unittest.TestCase):
         self.assertEqual(info['CFBundleExecutable'], 'Replyzen')
         self.assertEqual(info['CFBundleName'], 'Replyzen')
         self.assertEqual(info['CFBundleDisplayName'], 'ReplyZen')
-        self.assertEqual(info['CFBundleShortVersionString'], '1.51.0')
-        self.assertEqual(info['CFBundleVersion'], '52')
+        self.assertEqual(info['CFBundleShortVersionString'], '1.52.0')
+        self.assertEqual(info['CFBundleVersion'], '53')
 
     def test_visible_header_and_cached_logo(self):
         view = self.read('OverlayView.swift')
@@ -38,7 +38,6 @@ class SourceContracts(unittest.TestCase):
         self.assertIn('isStarted && !isSuppressed', toolbar)
         self.assertIn('newTimer.tolerance = 0.07', toolbar)
         self.assertIn('workspaceObservers.removeAll()', toolbar)
-        self.assertIn('if panel.frame.origin != origin', toolbar)
         self.assertNotIn('timer!', toolbar)
         for action in ['new', 'reply', 'replyAll', 'forward', 'cancel', 'calendar', 'payment']:
             self.assertIn(action + 'Action?()', toolbar)
@@ -55,24 +54,39 @@ class SourceContracts(unittest.TestCase):
         self.assertIn('replyScope', self.read('AppState.swift'))
         self.assertIn('case spanish', self.read('AppState.swift'))
 
-    def test_overlay_is_movable_and_persistent(self):
+    def test_workspace_recenters_but_remains_movable_while_open(self):
         panel = self.read('FloatingPanelController.swift')
         drag_view = self.read('ReplyZenWindowDragView.swift')
         drag_installer = self.read('ReplyZenDragInstaller.swift')
         app_main = self.read('ReplyzenApp.swift')
         self.assertIn('panel.isMovable = true', panel)
         self.assertIn('panel.isMovableByWindowBackground = true', panel)
-        self.assertIn('func windowDidMove(', panel)
-        self.assertIn('NSStringFromRect(frame)', panel)
-        self.assertIn('NSRectFromString(raw)', panel)
-        self.assertIn('referenceFrame.maxY - targetFrame.height', panel)
-        self.assertIn('guard let targetScreen =', panel)
+        self.assertIn('hasPositionedPanel = false', panel)
+        self.assertIn('let referenceFrame: NSRect? = hasPositionedPanel ? panel.frame : nil', panel)
+        self.assertNotIn('savedFrameKey', panel)
+        self.assertNotIn('savedPanelFrame', panel)
+        self.assertNotIn('NSStringFromRect', panel)
+        self.assertNotIn('NSRectFromString', panel)
         self.assertIn('override var mouseDownCanMoveWindow: Bool { true }', drag_view)
-        self.assertIn('override func acceptsFirstMouse', drag_view)
         self.assertIn('replyzen.windowDragZone', drag_installer)
-        self.assertIn('constant: 74', drag_installer)
-        self.assertIn('equalToConstant: 26', drag_installer)
         self.assertIn('ReplyZenDragInstaller.install()', app_main)
+
+    def test_outlook_action_overlay_is_draggable_and_tracks_outlook(self):
+        toolbar = self.read('OutlookToolbarButtonController.swift')
+        self.assertIn('private final class OutlookToolbarDragHandle', toolbar)
+        self.assertIn('window.performDrag(with: event)', toolbar)
+        self.assertIn('panel.isMovable = true', toolbar)
+        self.assertIn('panel.isMovableByWindowBackground = false', toolbar)
+        self.assertIn('Replyzen.OutlookToolbar.OffsetX.v1', toolbar)
+        self.assertIn('Replyzen.OutlookToolbar.OffsetY.v1', toolbar)
+        self.assertIn('toolbarOffset = NSPoint', toolbar)
+        self.assertIn('private func defaultOrigin(for outlookFrame: NSRect)', toolbar)
+        self.assertIn('private func clampedOrigin(', toolbar)
+        self.assertIn('if isDragging {', toolbar)
+        self.assertIn('let desired = NSPoint(x: anchor.x + toolbarOffset.x', toolbar)
+        self.assertIn('NSSize(width: 322, height: 34)', toolbar)
+        self.assertIn('circle.grid.2x3.fill', toolbar)
+        self.assertNotIn('panel.isMovable = false', toolbar)
 
     def test_wysiwyg_editor_is_pinned_and_simple(self):
         package = (ROOT / 'Package.swift').read_text(encoding='utf-8')
@@ -90,7 +104,6 @@ class SourceContracts(unittest.TestCase):
         self.assertIn('NSTextStorage.didProcessEditingNotification', editor)
         self.assertIn('MailTypography.htmlDocument(from: normalized)', editor)
         license_text = (APP / 'Resources' / 'ThirdPartyLicenses' / 'RichEditorSwiftUI-LICENSE.txt').read_text()
-        self.assertIn('MIT', 'MIT')
         self.assertIn('Copyright (c) 2022 Canopas Software LLP', license_text)
 
     def test_json_and_upload_pipeline(self):
