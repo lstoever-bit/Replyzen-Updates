@@ -19,8 +19,8 @@ class SourceContracts(unittest.TestCase):
         self.assertEqual(info['CFBundleExecutable'], 'Replyzen')
         self.assertEqual(info['CFBundleName'], 'Replyzen')
         self.assertEqual(info['CFBundleDisplayName'], 'ReplyZen')
-        self.assertEqual(info['CFBundleShortVersionString'], '1.45.0')
-        self.assertEqual(info['CFBundleVersion'], '46')
+        self.assertEqual(info['CFBundleShortVersionString'], '1.46.0')
+        self.assertEqual(info['CFBundleVersion'], '47')
 
     def test_visible_header_and_cached_logo(self):
         view = self.read('OverlayView.swift')

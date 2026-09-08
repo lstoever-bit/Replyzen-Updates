@@ -5,14 +5,23 @@ struct OverlayView: View {
     @ObservedObject var state: AppState
 
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(.regularMaterial)
-
-            content
-                .padding(28)
+        VStack(spacing: 0) {
+            if isWorkspace {
+                WorkspaceHeader(state: state)
+                Divider()
+                content
+            } else {
+                content.padding(28)
+            }
         }
         .frame(minWidth: 590, minHeight: 390)
+        .background(Color(nsColor: .windowBackgroundColor))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    private var isWorkspace: Bool {
+        state.stage == .instruction || state.stage == .preview ||
+        state.stage == .calendarPreview || state.stage == .paymentPreview
     }
 
     @ViewBuilder
@@ -23,28 +32,27 @@ struct OverlayView: View {
         case .startup:
             startupView
         case .instruction:
-            instructionView
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            MailWorkspaceView(state: state)
         case .generating:
             loadingView(title: "Einen Moment", subtitle: generatingSubtitle)
         case .updating:
             loadingView(title: "Update wird installiert", subtitle: "Neue Version wird geladen und eingerichtet …")
         case .preview:
-            ScrollView {
-                previewView
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.bottom, 6)
-            }
+            MailDraftPreviewView(state: state)
         case .calendarPreview:
             ScrollView {
                 calendarPreviewView
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(24)
             }
+            .safeAreaInset(edge: .bottom, spacing: 0) { calendarFooter }
         case .paymentPreview:
             ScrollView {
                 paymentPreviewView
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(24)
             }
+            .safeAreaInset(edge: .bottom, spacing: 0) { paymentFooter }
         case .inserting:
             loadingView(title: "Fast fertig", subtitle: insertingSubtitle)
         case .success:
@@ -174,432 +182,6 @@ struct OverlayView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var instructionView: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
-                replyzenLogo(size: 34)
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(ReplyZenBrand.displayName)
-                        .font(.headline)
-                    Text("Mail AI")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-            }
-
-            if state.outputMode == .reply || state.outputMode == .newMail || state.outputMode == .forward {
-                mailTypeSelector
-            } else {
-                mailContextBanner
-            }
-
-            if state.outputMode == .calendar {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "calendar.badge.plus")
-                            .font(.title2)
-                        Text("Termin aus Mail erstellen")
-                            .font(.title3.bold())
-                    }
-                    Text("ReplyZen erstellt aus dem Mailverlauf einen möglichst kurzen Titel, einen extrem kompakten Termintext und übernimmt einen eindeutig erkennbaren Terminzeitpunkt. Den Zielkalender wählst du vor dem Anlegen aus.")
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)
-                .padding(14)
-                .background(.background.opacity(0.55), in: RoundedRectangle(cornerRadius: 12))
-            } else if state.outputMode == .payment {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "banknote")
-                            .font(.title2)
-                        Text("Überweisung aus Mail + PDF")
-                            .font(.title3.bold())
-                    }
-                    Text("ReplyZen liest den PDF-Anhang standardmäßig direkt mit OpenAI und extrahiert daraus Empfänger, IBAN, BIC, Betrag, Währung und Verwendungszweck. Der Mailtext dient nur als zusätzlicher Kontext.")
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)
-                .padding(14)
-                .background(.background.opacity(0.55), in: RoundedRectangle(cornerRadius: 12))
-            } else {
-                RichTextMailEditor(
-                    plainText: $state.instruction,
-                    html: $state.instructionHTML,
-                    height: 390,
-                    showsHTMLBadge: false
-                )
-            }
-
-            HStack(spacing: 10) {
-                if state.outputMode == .reply || state.outputMode == .newMail || state.outputMode == .forward {
-                    HStack(spacing: 7) {
-                        Text("Mood")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Picker("Mood", selection: $state.replyTone) {
-                            ForEach(ReplyTone.allCases) { tone in
-                                Text(tone.displayName).tag(tone)
-                            }
-                        }
-                        .labelsHidden()
-                        .pickerStyle(.menu)
-                        .frame(minWidth: 130)
-
-                        Toggle("Compact", isOn: $state.newMailCompact)
-                            .toggleStyle(.checkbox)
-                            .help("Erstellt eine möglichst kurze Mail")
-                    }
-                }
-
-                Spacer()
-
-                if state.outputMode != .payment {
-                    languageButton("🇩🇪", language: .german, help: "Ausgabe auf Deutsch")
-                    languageButton("🇺🇸", language: .usEnglish, help: "Ausgabe in US English")
-                }
-            }
-
-            if state.outputMode == .reply || state.outputMode == .newMail || state.outputMode == .forward {
-                reminderRow
-            }
-
-            if state.outputMode == .calendar {
-                Text("Sprache: \(state.replyLanguage.displayName)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else if state.outputMode == .payment {
-                HStack(spacing: 6) {
-                    Image(systemName: "doc.richtext")
-                    Text("PDF wird direkt von OpenAI gelesen")
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
-
-            Divider()
-                .padding(.top, 2)
-
-            HStack(spacing: 12) {
-                Button("Schließen") { state.closeAction?() }
-                    .controlSize(.large)
-
-                Spacer()
-
-                Button(primaryActionTitle) { state.generateAction?() }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                    .frame(minWidth: 170)
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(primaryActionDisabled)
-            }
-            .padding(.top, 2)
-        }
-    }
-
-    private var reminderRow: some View {
-        VStack(alignment: .leading, spacing: 9) {
-            HStack(spacing: 8) {
-                Button {
-                    withAnimation(.easeInOut(duration: 0.15)) {
-                        state.reminderEnabled.toggle()
-                    }
-                } label: {
-                    Label("Reminder", systemImage: state.reminderEnabled ? "bell.fill" : "bell")
-                        .font(.system(size: 12.5, weight: .semibold))
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-
-                if state.reminderEnabled {
-                    Text("BCC")
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                    Text(reminderAddress)
-                        .font(.caption.monospaced())
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-            }
-
-            if state.reminderEnabled {
-                HStack(spacing: 9) {
-                    ForEach(reminderDays, id: \.code) { day in
-                        Button { state.reminderDay = day.code } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: state.reminderDay == day.code ? "largecircle.fill.circle" : "circle")
-                                    .font(.system(size: 11))
-                                Text(day.label)
-                                    .font(.system(size: 12, weight: .medium))
-                            }
-                        }
-                        .buttonStyle(.plain)
-                        .contentShape(Rectangle())
-                    }
-
-                    Divider()
-                        .frame(height: 20)
-                        .padding(.horizontal, 2)
-
-                    Picker("Zeit", selection: $state.reminderTime) {
-                        ForEach(reminderTimes, id: \.self) { time in
-                            Text(time).tag(time)
-                        }
-                    }
-                    .labelsHidden()
-                    .pickerStyle(.menu)
-                    .frame(width: 90)
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 8)
-                .background(.background.opacity(0.42), in: RoundedRectangle(cornerRadius: 9))
-            }
-        }
-    }
-
-    private var reminderDays: [(label: String, code: String)] {
-        [("Mo", "mon"), ("Di", "tues"), ("Mi", "wed"), ("Do", "thurs"), ("Fr", "fri"), ("Sa", "sat"), ("So", "sun")]
-    }
-
-    private var reminderTimes: [String] {
-        (0...48).map { slot in
-            if slot == 48 { return "24:00" }
-            let hour = slot / 2
-            let minute = slot % 2 == 0 ? 0 : 30
-            return String(format: "%02d:%02d", hour, minute)
-        }
-    }
-
-    private var reminderAddress: String {
-        let compactTime = state.reminderTime.replacingOccurrences(of: ":", with: "")
-        if compactTime == "0600" {
-            return "\(state.reminderDay)@fut.io"
-        }
-        return "\(state.reminderDay)\(compactTime)@fut.io"
-    }
-
-    private var modeSelector: some View {
-        HStack(spacing: 8) {
-            modeButton(.reply, title: "Mail", systemImage: "envelope.fill")
-            modeButton(.payment, title: "Überweisung", systemImage: "banknote")
-        }
-    }
-
-    private var mailTypeSelector: some View {
-        HStack(spacing: 8) {
-            if mailAvailable {
-                mailTypeButton(.reply, title: "Reply", systemImage: "arrowshape.turn.up.left.fill")
-            }
-            mailTypeButton(.newMail, title: "New Mail", systemImage: "square.and.pencil")
-            if mailAvailable {
-                mailTypeButton(.forward, title: "Forward", systemImage: "arrowshape.turn.up.right")
-            }
-
-            if !mailAvailable {
-                HStack(spacing: 5) {
-                    if case .loading = state.mailStatus {
-                        ProgressView().controlSize(.mini)
-                        Text("Prüfe Outlook-Mail …")
-                    } else {
-                        Image(systemName: "info.circle")
-                        Text("Keine Mail erkannt. Reply und Forward sind ausgeblendet.")
-                    }
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .padding(.leading, 4)
-            }
-
-            Spacer(minLength: 0)
-        }
-    }
-
-    private func mailTypeButton(_ mode: AppState.OutputMode, title: String, systemImage: String) -> some View {
-        Button {
-            guard state.outputMode != mode else { return }
-            state.outputMode = mode
-            handleModeChange(mode)
-        } label: {
-            Label(title, systemImage: systemImage)
-                .font(.system(size: 13, weight: .semibold))
-        }
-        .buttonStyle(.borderedProminent)
-        .tint(state.outputMode == mode ? .accentColor : .gray.opacity(0.32))
-        .controlSize(.small)
-    }
-
-    private func modeButton(_ mode: AppState.OutputMode, title: String, systemImage: String) -> some View {
-        Button {
-            guard state.outputMode != mode else { return }
-            state.outputMode = mode
-            handleModeChange(mode)
-        } label: {
-            HStack(spacing: 7) {
-                Image(systemName: systemImage)
-                    .font(.system(size: 14, weight: .semibold))
-                Text(title)
-                    .font(.system(size: 14, weight: .semibold))
-                    .lineLimit(1)
-            }
-            .frame(maxWidth: .infinity, minHeight: 34)
-        }
-        .buttonStyle(.borderedProminent)
-        .tint(isTopLevelModeSelected(mode) ? .accentColor : .gray.opacity(0.32))
-        .controlSize(.regular)
-    }
-
-    private func isTopLevelModeSelected(_ mode: AppState.OutputMode) -> Bool {
-        if mode == .reply {
-            return state.outputMode == .reply || state.outputMode == .newMail || state.outputMode == .forward
-        }
-        return state.outputMode == mode
-    }
-
-    @ViewBuilder
-    private var mailContextBanner: some View {
-        switch state.mailStatus {
-        case .notChecked:
-            EmptyView()
-        case .loading:
-            HStack(spacing: 8) {
-                ProgressView()
-                    .controlSize(.small)
-                Text("Aktuelle Outlook-Mail wird im Hintergrund geladen …")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(10)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.background.opacity(0.45), in: RoundedRectangle(cornerRadius: 10))
-        case .available:
-            HStack(spacing: 7) {
-                Image(systemName: "checkmark.circle.fill")
-                Text("Outlook-Mail erkannt")
-                    .font(.callout)
-            }
-            .foregroundStyle(.secondary)
-            .padding(10)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.background.opacity(0.45), in: RoundedRectangle(cornerRadius: 10))
-        case .unavailable(let message):
-            HStack(alignment: .center, spacing: 10) {
-                Image(systemName: "info.circle")
-                Text(message)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Button("Erneut versuchen") { state.refreshMailAction?() }
-                    .controlSize(.small)
-            }
-            .padding(10)
-            .background(.background.opacity(0.45), in: RoundedRectangle(cornerRadius: 10))
-        }
-    }
-
-    private var primaryActionTitle: String {
-        switch state.outputMode {
-        case .reply: return "Antwort erstellen"
-        case .newMail: return "Mail erstellen"
-        case .forward: return "Forward erstellen"
-        case .calendar: return "Termin erstellen"
-        case .payment: return "Überweisung extrahieren"
-        }
-    }
-
-    private var primaryActionDisabled: Bool {
-        switch state.outputMode {
-        case .reply:
-            return !mailAvailable || state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        case .newMail:
-            return state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        case .forward:
-            return !mailAvailable || state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        case .calendar, .payment:
-            return !mailAvailable
-        }
-    }
-
-    private var mailAvailable: Bool {
-        if case .available = state.mailStatus { return true }
-        return false
-    }
-
-    private func handleModeChange(_ mode: AppState.OutputMode) {
-        switch mode {
-        case .newMail:
-            // Same form, same user input. Only remove Replyzen's own built-in
-            // reply suggestion if it is still untouched.
-            let trimmed = state.instruction.trimmingCharacters(in: .whitespacesAndNewlines)
-            if trimmed == "Kurz, freundlich und direkt antworten." ||
-               trimmed == "Reply briefly, friendly and directly." {
-                state.instruction = ""
-                state.instructionHTML = ""
-            }
-            state.newMailSubject = ""
-        case .reply:
-            if state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                state.instruction = state.replyLanguage == .german
-                    ? "Kurz, freundlich und direkt antworten."
-                    : "Reply briefly, friendly and directly."
-                state.instructionHTML = ""
-            }
-        case .forward:
-            let trimmed = state.instruction.trimmingCharacters(in: .whitespacesAndNewlines)
-            if trimmed == "Kurz, freundlich und direkt antworten." ||
-               trimmed == "Reply briefly, friendly and directly." {
-                state.instruction = ""
-                state.instructionHTML = ""
-            }
-        case .calendar, .payment:
-            break
-        }
-    }
-
-    private func languageButton(_ label: String, language: AppState.ReplyLanguage, help: String) -> some View {
-        Button {
-            state.replyLanguage = language
-        } label: {
-            Text(label)
-                .font(.system(size: 20))
-                .frame(width: 34, height: 24)
-        }
-        .buttonStyle(.borderedProminent)
-        .tint(state.replyLanguage == language ? .accentColor : .gray.opacity(0.35))
-        .controlSize(.small)
-        .help(help)
-        .accessibilityLabel(help)
-    }
-
-    private var previewView: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text(previewTitle)
-                .font(.title2.bold())
-
-            if state.outputMode == .newMail {
-                TextField("Betreff", text: $state.newMailSubject)
-                    .textFieldStyle(.roundedBorder)
-            }
-
-            RichTextMailEditor(
-                plainText: $state.reply,
-                html: $state.replyHTML
-            )
-
-            HStack {
-                Button("Zurück") {
-                    state.stage = .instruction
-                }
-                Spacer()
-
-                Button(state.outputMode == .newMail ? "Neue Mail in Outlook" : "In Outlook einsetzen") {
-                    state.insertAction?()
-                }
-                .keyboardShortcut(.defaultAction)
-            }
-        }
-    }
-
-
     private var paymentPreviewView: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
@@ -666,13 +248,6 @@ struct OverlayView: View {
                     .foregroundStyle(.secondary)
             }
 
-            HStack {
-                Button("Zurück") { state.stage = .instruction }
-                Spacer()
-                Button("Überweisungsdaten kopieren") { state.copyPaymentAction?() }
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(state.paymentRecipient.isEmpty && state.paymentIBAN.isEmpty && state.paymentAmount.isEmpty)
-            }
         }
     }
 
@@ -807,14 +382,27 @@ struct OverlayView: View {
 
             Spacer()
 
-            HStack {
-                Button("Zurück") { state.stage = .instruction }
-                Spacer()
-                Button("Im Kalender anlegen") { state.createCalendarAction?() }
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(state.calendarTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || state.calendarEnd <= state.calendarStart || state.selectedCalendarID.isEmpty || state.googleConnectedEmail.isEmpty)
-            }
         }
+    }
+
+    private var paymentFooter: some View {
+        WorkspaceActionBar(
+            secondaryTitle: "Zurück", primaryTitle: "Überweisungsdaten kopieren",
+            hint: "Es wird keine Zahlung ausgelöst.",
+            disabled: state.paymentRecipient.isEmpty && state.paymentIBAN.isEmpty && state.paymentAmount.isEmpty,
+            secondaryAction: { state.stage = .instruction },
+            primaryAction: { state.copyPaymentAction?() }
+        )
+    }
+
+    private var calendarFooter: some View {
+        WorkspaceActionBar(
+            secondaryTitle: "Zurück", primaryTitle: "Im Kalender anlegen",
+            hint: "Zeit und Zielkalender prüfen.",
+            disabled: state.calendarTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || state.calendarEnd <= state.calendarStart || state.selectedCalendarID.isEmpty || state.googleConnectedEmail.isEmpty,
+            secondaryAction: { state.stage = .instruction },
+            primaryAction: { state.createCalendarAction?() }
+        )
     }
 
     private var previewTitle: String {
@@ -888,9 +476,12 @@ struct OverlayView: View {
                 .font(.system(size: 34))
             Text("Das hat nicht geklappt")
                 .font(.title2.bold())
-            Text(state.errorMessage)
-                .foregroundStyle(.secondary)
-                .textSelection(.enabled)
+            ScrollView {
+                Text(state.errorMessage)
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
             HStack {
                 Button("Schließen") { state.closeAction?() }
                 Spacer()

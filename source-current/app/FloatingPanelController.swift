@@ -23,7 +23,7 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
         let host = NSHostingController(rootView: OverlayView(state: state))
         panel.contentViewController = host
 
-        panel.title = "Replyzen"
+        panel.title = ReplyZenBrand.displayName
         panel.titleVisibility = .hidden
         panel.titlebarAppearsTransparent = true
         panel.isReleasedWhenClosed = false
@@ -231,7 +231,7 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
         case .instruction:
             switch state.outputMode {
             case .reply, .newMail, .forward:
-                return NSSize(width: 900, height: 710)
+                return NSSize(width: 900, height: 740)
             case .calendar, .payment:
                 return NSSize(width: 840, height: 640)
             }
@@ -242,7 +242,7 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
         case .paymentPreview:
             return NSSize(width: 840, height: 690)
         case .preview:
-            return NSSize(width: 780, height: 560)
+            return NSSize(width: 900, height: 740)
         case .apiKey, .needsAccessibility, .error:
             return NSSize(width: 720, height: 520)
         case .generating, .updating, .inserting:

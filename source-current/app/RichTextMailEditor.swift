@@ -3,6 +3,28 @@ import AppKit
 
 final class RichTextEditorController: ObservableObject {
     weak var textView: NSTextView?
+    private weak var scrollView: NSScrollView?
+    private var zoomObservation: NSKeyValueObservation?
+    @Published private(set) var zoomPercent = 130
+
+    func attachZoom(to scrollView: NSScrollView) {
+        self.scrollView = scrollView
+        zoomObservation = scrollView.observe(\.magnification, options: [.new]) { [weak self, weak scrollView] _, _ in
+            // Avoid publishing from inside a SwiftUI/AppKit update.
+            DispatchQueue.main.async { [weak self, weak scrollView] in
+                guard let self, let scrollView, self.scrollView === scrollView else { return }
+                let percent = Int((scrollView.magnification * 100).rounded())
+                if percent != self.zoomPercent { self.zoomPercent = percent }
+            }
+        }
+    }
+
+    func setZoom(percent: Int) {
+        guard let scrollView else { return }
+        let scale = min(scrollView.maxMagnification, max(scrollView.minMagnification, CGFloat(percent) / 100))
+        scrollView.magnification = scale
+        // Visual zoom never changes NSTextStorage fonts, plain text or HTML.
+    }
 
     func toggleBold() {
         toggleFontTrait(.boldFontMask)
@@ -157,78 +179,20 @@ final class RichTextEditorController: ObservableObject {
 struct RichTextMailEditor: View {
     @Binding var plainText: String
     @Binding var html: String
-    var height: CGFloat = 176
+    var height: CGFloat? = 176
     var showsHTMLBadge: Bool = true
     @StateObject private var controller = RichTextEditorController()
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 5) {
-                formatButton(title: "B", help: "Fett", action: controller.toggleBold)
-                    .font(.system(size: 12, weight: .bold))
-                formatButton(title: "I", help: "Kursiv", action: controller.toggleItalic)
-                    .font(.system(size: 12).italic())
-
-                Divider().frame(height: 18).padding(.horizontal, 2)
-
-                Button(action: controller.toggleBullets) {
-                    Image(systemName: "list.bullet")
-                        .frame(width: 22, height: 20)
-                }
-                .buttonStyle(.borderless)
-                .help("Aufzählung")
-
-                Button(action: controller.toggleNumbering) {
-                    Image(systemName: "list.number")
-                        .frame(width: 22, height: 20)
-                }
-                .buttonStyle(.borderless)
-                .help("Nummerierte Liste")
-
-                Divider().frame(height: 18).padding(.horizontal, 2)
-
-                Button(action: controller.clearFormatting) {
-                    Image(systemName: "textformat")
-                        .frame(width: 22, height: 20)
-                }
-                .buttonStyle(.borderless)
-                .help("Formatierung entfernen")
-
-                Spacer()
-                if showsHTMLBadge {
-                    Text("HTML")
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundStyle(.tertiary)
-                }
-            }
-            .padding(.horizontal, 8)
-            .frame(height: 30)
-            .background(.background.opacity(0.45))
-
+            EditorToolbar(controller: controller)
             Divider()
-
-            RichTextEditorBridge(
-                plainText: $plainText,
-                html: $html,
-                controller: controller
-            )
+            RichTextEditorBridge(plainText: $plainText, html: $html, controller: controller)
+                .frame(minHeight: height == nil ? 80 : nil, maxHeight: .infinity)
         }
         .frame(height: height)
-        .background(.background.opacity(0.72))
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .stroke(.quaternary, lineWidth: 1)
-        )
-    }
-
-    private func formatButton(title: String, help: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .frame(width: 22, height: 20)
-        }
-        .buttonStyle(.borderless)
-        .help(help)
+        .frame(maxHeight: height == nil ? .infinity : nil)
+        .modifier(WorkspaceCard())
     }
 }
 
@@ -266,6 +230,8 @@ private struct RichTextEditorBridge: NSViewRepresentable {
         scrollView.minMagnification = 1.0
         scrollView.maxMagnification = 1.8
         scrollView.magnification = Self.editorMagnification
+        scrollView.identifier = NSUserInterfaceItemIdentifier("replyzen.mailEditor")
+        controller.attachZoom(to: scrollView)
 
         let textView = RichTextEditorTextView()
         textView.isRichText = true
