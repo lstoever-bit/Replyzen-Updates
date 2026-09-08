@@ -18,8 +18,8 @@ class SourceContracts(unittest.TestCase):
         self.assertEqual(info['CFBundleExecutable'], 'Replyzen')
         self.assertEqual(info['CFBundleName'], 'Replyzen')
         self.assertEqual(info['CFBundleDisplayName'], 'ReplyZen')
-        self.assertEqual(info['CFBundleShortVersionString'], '1.53.0')
-        self.assertEqual(info['CFBundleVersion'], '54')
+        self.assertEqual(info['CFBundleShortVersionString'], '1.54.0')
+        self.assertEqual(info['CFBundleVersion'], '55')
 
     def test_visible_header_and_cached_logo(self):
         view = self.read('OverlayView.swift')
@@ -60,6 +60,8 @@ class SourceContracts(unittest.TestCase):
         self.assertIn('panel.setFrameAutosaveName("")', panel)
         self.assertIn('defaults.removeObject(forKey: "Replyzen.FloatingPanel.Frame.v1")', panel)
         self.assertIn('resizeForCurrentState(animated: false, centered: true)', panel)
+        self.assertIn('panel.makeKeyAndOrderFront(nil)', panel)
+        self.assertIn('private func stabilizeVisibleContent()', panel)
         self.assertIn('self.layoutRevision == revision, self.panel.isVisible', panel)
         for obsolete in ['hasPositionedPanel', 'savedPanelFrame', 'NSStringFromRect', 'NSRectFromString', 'defaults.set(']:
             self.assertNotIn(obsolete, panel)
@@ -95,6 +97,9 @@ class SourceContracts(unittest.TestCase):
         self.assertNotIn('zoomPercent', toolbar)
         self.assertIn('scrollView.magnification = 1.30', editor)
         self.assertIn('NSTextStorage.didProcessEditingNotification', editor)
+        self.assertIn('.clipped()', editor)
+        self.assertIn('layer?.masksToBounds = true', editor)
+        self.assertIn('idealHeight: height == nil ? 340', editor)
         self.assertIn('MailTypography.htmlDocument(from: normalized)', editor)
         license_text = (APP / 'Resources' / 'ThirdPartyLicenses' / 'RichEditorSwiftUI-LICENSE.txt').read_text()
         self.assertIn('Copyright (c) 2022 Canopas Software LLP', license_text)

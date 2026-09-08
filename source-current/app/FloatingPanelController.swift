@@ -59,10 +59,32 @@ final class FloatingPanelController: NSWindowController, NSWindowDelegate {
         wantsVisibleInOutlookContext = true
         // Every explicit opening starts centered, independent of any old frame.
         resizeForCurrentState(animated: false, centered: true)
-        panel.orderFrontRegardless()
         if activate {
-            panel.makeKey()
             NSApp.activate(ignoringOtherApps: true)
+            panel.makeKeyAndOrderFront(nil)
+        } else {
+            panel.orderFrontRegardless()
+        }
+        stabilizeVisibleContent()
+    }
+
+    /// SwiftUI contains an AppKit-backed rich-text editor. On a freshly shown
+    /// accessory panel AppKit can finish the native subview layout one run-loop
+    /// later than SwiftUI. Run a few cheap, bounded layout/display passes while
+    /// the window is visible so the complete workspace is correct immediately.
+    private func stabilizeVisibleContent() {
+        for delay: TimeInterval in [0.0, 0.035, 0.11] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                guard let self, self.panel.isVisible else { return }
+                let roots = [self.panel.contentViewController?.view, self.panel.contentView].compactMap { $0 }
+                for root in roots {
+                    root.needsLayout = true
+                    root.layoutSubtreeIfNeeded()
+                    root.needsDisplay = true
+                    root.displayIfNeeded()
+                }
+                self.panel.invalidateShadow()
+            }
         }
     }
 

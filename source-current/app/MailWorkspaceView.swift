@@ -65,6 +65,7 @@ struct MailWorkspaceView: View {
             VStack(alignment: .leading, spacing: 12) {
                 if isMail {
                     modeRow
+                        .fixedSize(horizontal: false, vertical: true)
                     VStack(alignment: .leading, spacing: 8) {
                         Text(L10n.tr("Deine Anweisung")).font(.system(size: 12, weight: .medium))
                             .foregroundStyle(.secondary)
@@ -74,7 +75,9 @@ struct MailWorkspaceView: View {
                     }
                     .frame(maxHeight: .infinity)
                     optionsRow
+                        .fixedSize(horizontal: false, vertical: true)
                     reminderControl
+                        .fixedSize(horizontal: false, vertical: true)
                 } else {
                     contextLabel
                     extractionCard

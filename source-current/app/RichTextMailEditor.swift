@@ -77,10 +77,16 @@ final class ReplyZenRichEditorAdapter: ObservableObject {
             scrollView.identifier = NSUserInterfaceItemIdentifier("replyzen.mailEditor")
             scrollView.hasVerticalScroller = true
             scrollView.drawsBackground = false
+            scrollView.wantsLayer = true
+            scrollView.layer?.masksToBounds = true
+            scrollView.contentView.wantsLayer = true
+            scrollView.contentView.layer?.masksToBounds = true
             scrollView.allowsMagnification = true
             scrollView.minMagnification = 1.0
             scrollView.maxMagnification = 1.8
             scrollView.magnification = 1.30
+            scrollView.needsLayout = true
+            scrollView.layoutSubtreeIfNeeded()
         }
     }
 
@@ -273,10 +279,12 @@ struct RichTextMailEditor: View {
             EditorToolbar(context: adapter.context, adapter: adapter)
             Divider()
             ReplyZenRichEditorSurface(context: adapter.context, adapter: adapter)
-                .frame(minHeight: height == nil ? 80 : nil, maxHeight: .infinity)
+                .frame(minHeight: height == nil ? 180 : nil, idealHeight: height == nil ? 340 : nil, maxHeight: .infinity)
+                .clipped()
         }
         .frame(height: height)
         .frame(maxHeight: height == nil ? .infinity : nil)
+        .layoutPriority(height == nil ? 1 : 0)
         .modifier(WorkspaceCard())
         .onAppear {
             adapter.bind(plainText: $plainText, html: $html)

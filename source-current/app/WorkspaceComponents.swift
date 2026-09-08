@@ -91,6 +91,7 @@ struct WorkspaceHeader: View {
         }
         // Reserve space for native window controls in full-size content.
         .padding(.horizontal, 24).padding(.top, 28).padding(.bottom, 14)
+        .fixedSize(horizontal: false, vertical: true)
         .accessibilityElement(children: .contain)
     }
 
