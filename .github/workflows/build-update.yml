@@ -5,6 +5,7 @@ on:
     paths:
       - 'source-current/**'
       - 'maintenance/overlay_toolbar_1_52.py'
+      - 'maintenance/overlay_toolbar_1_52_v2.py'
       - 'tests/**'
       - '.github/workflows/build-update.yml'
   workflow_dispatch:
@@ -20,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Apply checked 1.52 window positioning migration
-        run: python3 maintenance/overlay_toolbar_1_52.py source-current
+        run: python3 maintenance/overlay_toolbar_1_52_v2.py source-current
       - name: Existing regression and typography tests
         run: bash tests/run-tests.sh source-current
       - name: Localization, language detection and native workspace tests
