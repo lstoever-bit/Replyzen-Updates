@@ -107,7 +107,30 @@ private final class DelayedTooltipButton: NSButton {
     }
 }
 
+
+private final class OutlookToolbarDragHandle: NSView {
+    var onDragBegan: (() -> Void)?
+    var onDragEnded: (() -> Void)?
+
+    override func mouseDown(with event: NSEvent) {
+        guard let window else { return }
+        onDragBegan?()
+        window.performDrag(with: event)
+        onDragEnded?()
+    }
+
+    override func resetCursorRects() {
+        discardCursorRects()
+        addCursorRect(bounds, cursor: .openHand)
+    }
+
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+}
+
 final class OutlookToolbarButtonController: NSObject {
+    private static let offsetXKey = "Replyzen.OutlookToolbar.OffsetX.v1"
+    private static let offsetYKey = "Replyzen.OutlookToolbar.OffsetY.v1"
+
     private let outlook: OutlookAccessibility
     private let panel: NSPanel
     private let newButton: DelayedTooltipButton
@@ -117,10 +140,14 @@ final class OutlookToolbarButtonController: NSObject {
     private let cancelButton: DelayedTooltipButton
     private let calendarButton: DelayedTooltipButton
     private let paymentButton: DelayedTooltipButton
+    private let dragHandle: OutlookToolbarDragHandle
     private var timer: Timer?
     private var isSuppressed = false
     private var isStarted = false
     private var workspaceObservers: [NSObjectProtocol] = []
+    private var isDragging = false
+    private var toolbarOffset = NSPoint.zero
+    private var lastOutlookFrame: NSRect?
 
     var newAction: (() -> Void)?
     var replyAction: (() -> Void)?
@@ -132,8 +159,9 @@ final class OutlookToolbarButtonController: NSObject {
 
     init(outlook: OutlookAccessibility) {
         self.outlook = outlook
+        dragHandle = OutlookToolbarDragHandle(frame: NSRect(x: 0, y: 0, width: 20, height: 34))
 
-        let size = NSSize(width: 302, height: 34)
+        let size = NSSize(width: 322, height: 34)
         panel = NSPanel(
             contentRect: NSRect(origin: .zero, size: size),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -157,6 +185,13 @@ final class OutlookToolbarButtonController: NSObject {
         effect.layer?.backgroundColor = overlayTint.cgColor
         effect.layer?.borderWidth = 0.6
         effect.layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.55).cgColor
+
+        let grip = NSImageView(frame: NSRect(x: 4, y: 9, width: 12, height: 16))
+        grip.image = NSImage(systemSymbolName: "circle.grid.2x3.fill", accessibilityDescription: nil)
+        grip.imageScaling = .scaleProportionallyDown
+        grip.contentTintColor = .tertiaryLabelColor
+        dragHandle.addSubview(grip)
+        effect.addSubview(dragHandle)
 
         func makeButton(symbol: String, x: CGFloat, tooltip: String) -> DelayedTooltipButton {
             let button = DelayedTooltipButton(
@@ -183,19 +218,19 @@ final class OutlookToolbarButtonController: NSObject {
             return pipe
         }
 
-        newButton = makeButton(symbol: "square.and.pencil", x: 6, tooltip: L10n.source("New"))
-        replyButton = makeButton(symbol: "arrowshape.turn.up.left", x: 46, tooltip: L10n.source("Reply"))
-        replyAllButton = makeButton(symbol: "arrowshape.turn.up.left.2", x: 86, tooltip: L10n.source("Reply All"))
-        forwardButton = makeButton(symbol: "arrowshape.turn.up.right", x: 126, tooltip: L10n.source("Forward"))
-        cancelButton = makeButton(symbol: "xmark.circle", x: 178, tooltip: L10n.source("Cancel"))
-        calendarButton = makeButton(symbol: "calendar.badge.plus", x: 218, tooltip: L10n.source("Calendar"))
-        paymentButton = makeButton(symbol: "banknote", x: 258, tooltip: L10n.source("Payment"))
+        newButton = makeButton(symbol: "square.and.pencil", x: 26, tooltip: L10n.source("New"))
+        replyButton = makeButton(symbol: "arrowshape.turn.up.left", x: 66, tooltip: L10n.source("Reply"))
+        replyAllButton = makeButton(symbol: "arrowshape.turn.up.left.2", x: 106, tooltip: L10n.source("Reply All"))
+        forwardButton = makeButton(symbol: "arrowshape.turn.up.right", x: 146, tooltip: L10n.source("Forward"))
+        cancelButton = makeButton(symbol: "xmark.circle", x: 198, tooltip: L10n.source("Cancel"))
+        calendarButton = makeButton(symbol: "calendar.badge.plus", x: 238, tooltip: L10n.source("Calendar"))
+        paymentButton = makeButton(symbol: "banknote", x: 278, tooltip: L10n.source("Payment"))
 
         effect.addSubview(newButton)
         effect.addSubview(replyButton)
         effect.addSubview(replyAllButton)
         effect.addSubview(forwardButton)
-        effect.addSubview(makePipe(x: 166))
+        effect.addSubview(makePipe(x: 186))
         effect.addSubview(cancelButton)
         effect.addSubview(calendarButton)
         effect.addSubview(paymentButton)
@@ -206,11 +241,20 @@ final class OutlookToolbarButtonController: NSObject {
         panel.hasShadow = true
         panel.hidesOnDeactivate = false
         panel.level = .floating
-        panel.isMovable = false
+        panel.isMovable = true
+        panel.isMovableByWindowBackground = false
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
         panel.becomesKeyOnlyIfNeeded = true
 
         super.init()
+
+        let defaults = UserDefaults.standard
+        toolbarOffset = NSPoint(
+            x: defaults.double(forKey: Self.offsetXKey),
+            y: defaults.double(forKey: Self.offsetYKey)
+        )
+        dragHandle.onDragBegan = { [weak self] in self?.beginToolbarDrag() }
+        dragHandle.onDragEnded = { [weak self] in self?.endToolbarDrag() }
 
         newButton.target = self
         newButton.action = #selector(newClicked)
@@ -316,6 +360,45 @@ final class OutlookToolbarButtonController: NSObject {
     @objc private func calendarClicked() { calendarAction?() }
     @objc private func paymentClicked() { paymentAction?() }
 
+    private func beginToolbarDrag() {
+        hideAllTooltips()
+        isDragging = true
+    }
+
+    private func endToolbarDrag() {
+        isDragging = false
+        guard let outlookFrame = lastOutlookFrame ?? outlook.focusedWindowFrameInAppKitCoordinates() else { return }
+        let origin = clampedOrigin(panel.frame.origin, relativeTo: outlookFrame)
+        if panel.frame.origin != origin { panel.setFrameOrigin(origin) }
+        let anchor = defaultOrigin(for: outlookFrame)
+        toolbarOffset = NSPoint(x: origin.x - anchor.x, y: origin.y - anchor.y)
+        let defaults = UserDefaults.standard
+        defaults.set(Double(toolbarOffset.x), forKey: Self.offsetXKey)
+        defaults.set(Double(toolbarOffset.y), forKey: Self.offsetYKey)
+    }
+
+    private func defaultOrigin(for outlookFrame: NSRect) -> NSPoint {
+        let size = panel.frame.size
+        return NSPoint(
+            x: outlookFrame.maxX - size.width - 122,
+            y: outlookFrame.maxY - size.height - 38
+        )
+    }
+
+    private func clampedOrigin(_ origin: NSPoint, relativeTo outlookFrame: NSRect) -> NSPoint {
+        let center = NSPoint(x: outlookFrame.midX, y: outlookFrame.midY)
+        guard let screen = NSScreen.screens.first(where: { NSMouseInRect(center, $0.frame, false) }) ?? NSScreen.main else {
+            return origin
+        }
+        let visible = screen.visibleFrame.insetBy(dx: 6, dy: 6)
+        var result = origin
+        if result.x < visible.minX { result.x = visible.minX }
+        if result.x + panel.frame.width > visible.maxX { result.x = visible.maxX - panel.frame.width }
+        if result.y < visible.minY { result.y = visible.minY }
+        if result.y + panel.frame.height > visible.maxY { result.y = visible.maxY - panel.frame.height }
+        return result
+    }
+
     func refreshLocalization() {
         [newButton, replyButton, replyAllButton, forwardButton, cancelButton, calendarButton, paymentButton]
             .forEach { $0.refreshLocalization() }
@@ -338,9 +421,15 @@ final class OutlookToolbarButtonController: NSObject {
             return
         }
 
-        let size = panel.frame.size
-        let origin = NSPoint(x: frame.maxX - size.width - 122,
-                             y: frame.maxY - size.height - 38)
+        lastOutlookFrame = frame
+        if isDragging {
+            if !panel.isVisible { panel.orderFrontRegardless() }
+            return
+        }
+
+        let anchor = defaultOrigin(for: frame)
+        let desired = NSPoint(x: anchor.x + toolbarOffset.x, y: anchor.y + toolbarOffset.y)
+        let origin = clampedOrigin(desired, relativeTo: frame)
         if panel.frame.origin != origin { panel.setFrameOrigin(origin) }
         if !panel.isVisible { panel.orderFrontRegardless() }
     }
