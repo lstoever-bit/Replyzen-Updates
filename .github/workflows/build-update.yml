@@ -1,9 +1,10 @@
 name: Build ReplyZen Update
 on:
   push:
-    branches: [main, codex/replyzen-drag-zone-1.51]
+    branches: [main, codex/replyzen-overlay-toolbar-1.52]
     paths:
       - 'source-current/**'
+      - 'maintenance/overlay_toolbar_1_52.py'
       - 'tests/**'
       - '.github/workflows/build-update.yml'
   workflow_dispatch:
@@ -18,6 +19,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Apply checked 1.52 window positioning migration
+        run: python3 maintenance/overlay_toolbar_1_52.py source-current
       - name: Existing regression and typography tests
         run: bash tests/run-tests.sh source-current
       - name: Localization, language detection and native workspace tests
@@ -26,7 +29,7 @@ jobs:
         run: bash source-current/Build-CI.sh
       - name: Verify exact updater archive and manifest
         run: python3 tests/verify_update.py source-current
-      - name: Preserve tested canonical 1.51 sources
+      - name: Preserve tested canonical 1.52 sources
         shell: bash
         run: |
           set -euo pipefail
@@ -35,7 +38,7 @@ jobs:
           git add -f source-current/app source-current/Release-notes.txt source-current/Release-notes.localized.json \
             tests/test_source_contracts.py tests/verify_update.py
           if ! git diff --cached --quiet; then
-            git commit -m "Build ReplyZen 1.51 dedicated drag zone"
+            git commit -m "Build ReplyZen 1.52 movable Outlook toolbar"
             git push origin "HEAD:${{ github.ref_name }}"
           fi
       - name: Publish verified main update
@@ -52,13 +55,13 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f "$PACKAGE" update.json "update-${VERSION%.0}.json"
           if ! git diff --cached --quiet; then
-            git commit -m "Publish ReplyZen $VERSION drag-zone fix"
+            git commit -m "Publish ReplyZen $VERSION Outlook toolbar positioning"
             git push origin HEAD:main
           fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ReplyZen-1.51-build
+          name: ReplyZen-1.52-build
           path: |
             source-current/Replyzen-update-*.zip
             source-current/update.json
