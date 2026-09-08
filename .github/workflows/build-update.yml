@@ -5,6 +5,7 @@ on:
     paths:
       - 'source-current/**'
       - 'maintenance/remove_payment_window_1_55.py'
+      - 'maintenance/pre_1_55_overlay.py'
       - 'tests/**'
       - '.github/workflows/build-update.yml'
   workflow_dispatch:
@@ -19,6 +20,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Remove final legacy Payment title
+        run: python3 maintenance/pre_1_55_overlay.py source-current
       - name: Apply checked 1.55 migration
         run: python3 maintenance/remove_payment_window_1_55.py source-current
       - name: Existing regression and typography tests
