@@ -523,6 +523,20 @@ final class OutlookAccessibility {
         NSRunningApplication(processIdentifier: pid)?.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
     }
 
+    func hasOpenedReplyComposer(since snapshot: Snapshot) -> Bool {
+        guard let focused = focusedOutlookWindow() else { return false }
+
+        // Detached compose windows are the normal Legacy Outlook behavior.
+        if !containsSameElement(snapshot.windows, focused) {
+            return true
+        }
+
+        // Some Outlook builds compose inline. Reuse the existing language-aware
+        // compose-window detector (Send/Senden/Enviar) rather than treating a
+        // read-only message web area as an editor.
+        return looksLikeComposeWindow(focused)
+    }
+
     func openReplyComposer(replyAll: Bool, from snapshot: Snapshot) -> Bool {
         guard let sourceWindow = snapshot.windows.first else { return false }
         activateOutlook(pid: snapshot.pid)

@@ -1451,12 +1451,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.20) { [weak self] in
             guard let self else { return }
-            let openedThroughAccessibility = self.outlook.openReplyComposer(replyAll: replyAll, from: snapshot)
-            if !openedThroughAccessibility {
-                if replyAll { self.keyboard.sendCommandShiftR() }
-                else { self.keyboard.sendCommandR() }
+            _ = self.outlook.openReplyComposer(replyAll: replyAll, from: snapshot)
+
+            // Legacy Outlook can report a failed AXPress even though it already
+            // opened the reply window. Verify the actual UI state before using the
+            // keyboard fallback so one action never creates duplicate reply windows.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+                guard let self else { return }
+                if !self.outlook.hasOpenedReplyComposer(since: snapshot) {
+                    if replyAll { self.keyboard.sendCommandShiftR() }
+                    else { self.keyboard.sendCommandR() }
+                }
+                self.populateReplyDraft(reply: reply, html: self.state.replyHTML, attempt: 0)
             }
-            self.populateReplyDraft(reply: reply, html: self.state.replyHTML, attempt: 0)
         }
     }
 
@@ -1476,7 +1483,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 return
             }
 
-            if attempt < 10 {
+            // Classic Outlook can show a perfectly usable reply body without
+            // exposing it as a focusable AX body element. The editable Subject field
+            // is reliable; one Tab from Subject enters the body. Give normal body
+            // detection two attempts first, then use this deterministic fallback.
+            if attempt >= 2, self.outlook.focusComposeSubjectField() {
+                self.keyboard.sendTab()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) { [weak self] in
+                    guard let self else { return }
+                    self.keyboard.sendCommandUp()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
+                        guard let self else { return }
+                        self.copyMailToPasteboard(plainText: reply, html: html)
+                        self.keyboard.sendCommandV()
+                        self.finishNewMailInsertion()
+                    }
+                }
+                return
+            }
+
+            if attempt < 12 {
                 self.populateReplyDraft(reply: reply, html: html, attempt: attempt + 1)
                 return
             }
