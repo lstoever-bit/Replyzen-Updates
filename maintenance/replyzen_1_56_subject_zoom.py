@@ -225,14 +225,7 @@ notes_es = (
     "el asunto visible y debería evitar el aviso erróneo de envío sin asunto. El arreglo de ventana de 1.55 se mantiene sin cambios."
 )
 (root / "Release-notes.txt").write_text(notes_de + "\n", encoding="utf-8")
-(root / "Release-notes.localized.json").write_text(
-    '{\n  "de": ' + repr(notes_de).replace("'", '"') + ',\n'
-    '  "en-US": ' + repr(notes_en).replace("'", '"') + ',\n'
-    '  "es": ' + repr(notes_es).replace("'", '"') + '\n}\n',
-    encoding="utf-8"
-)
 
-# Use json to rewrite localized notes safely (the temporary text above is immediately replaced).
 import json
 (root / "Release-notes.localized.json").write_text(
     json.dumps({"de": notes_de, "en-US": notes_en, "es": notes_es}, ensure_ascii=False, indent=2) + "\n",
@@ -246,11 +239,11 @@ text = text.replace('self.assertEqual(info["CFBundleShortVersionString"], "1.55.
                     'self.assertEqual(info["CFBundleShortVersionString"], "1.56.0")')
 text = text.replace('self.assertEqual(info["CFBundleVersion"], "56")',
                     'self.assertEqual(info["CFBundleVersion"], "57")')
-if 'self.assertIn("scroll.allowsMagnification = true", editor)' not in text:
+if 'self.assertIn("scrollView.allowsMagnification = true", editor)' not in text:
     text = text.replace(
         '        self.assertIn("MailTypography.normalizeFonts", editor)\n',
         '        self.assertIn("MailTypography.normalizeFonts", editor)\n'
-        '        self.assertIn("scroll.allowsMagnification = true", editor)\n'
+        '        self.assertIn("scrollView.allowsMagnification = true", editor)\n'
         '        self.assertIn("adapter.attachZoom(to: scroll)", editor)\n'
         '        self.assertIn("adapter.zoomPercent", toolbar)\n'
         '        self.assertIn("Editor-Zoom", toolbar)\n'
