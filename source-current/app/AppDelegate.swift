@@ -1356,51 +1356,44 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func populateNewMailDraft(subject: String, body: String, html: String, attempt: Int) {
-        let delay = attempt == 0 ? 0.8 : 0.22
+        let delay = attempt == 0 ? 0.8 : 0.24
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             guard let self else { return }
 
-            let subjectDone = subject.isEmpty || self.outlook.setComposeSubjectValue(subject)
-            let reminderDone: Bool
             if let reminder = self.reminderBCCAddress() {
-                reminderDone = self.outlook.setComposeBCCValue(reminder)
-            } else {
-                reminderDone = true
-            }
-            // Accessibility can set plain text directly, but rich formatting must be
-            // pasted from the HTML/RTF clipboard. Keep the direct path only when
-            // no rich HTML has been produced.
-            if html.isEmpty, reminderDone, self.outlook.setComposeBodyValue(body) {
-                self.finishNewMailInsertion()
-                return
-            }
-
-            // Give Outlook a short moment to finish constructing the compose window, but do not wait for many retries.
-            if attempt < 2 {
-                self.populateNewMailDraft(subject: subject, body: body, html: html, attempt: attempt + 1)
-                return
-            }
-
-            if !reminderDone, let reminder = self.reminderBCCAddress() {
                 _ = self.outlook.setComposeBCCValue(reminder)
             }
 
-            var subjectReady = subjectDone
-            if !subjectReady, self.outlook.focusComposeSubjectField() {
-                self.copyToPasteboard(subject)
-                self.keyboard.sendCommandV()
-                subjectReady = true
-            }
+            if !subject.isEmpty {
+                guard self.outlook.focusComposeSubjectField() else {
+                    if attempt < 8 {
+                        self.populateNewMailDraft(subject: subject, body: body, html: html, attempt: attempt + 1)
+                    } else {
+                        self.copyMailToPasteboard(plainText: body, html: html)
+                        self.isRunningFlow = false
+                        self.showError(L10n.source("Der Betreff konnte nicht zuverlässig in Outlook eingesetzt werden. Der Mailtext liegt in der Zwischenablage."))
+                    }
+                    return
+                }
 
-            // Classic Outlook exposes the subject reliably but often does not expose the HTML body as a settable AXTextArea.
-            // From the subject field, one Tab moves the caret into the message body much more reliably.
-            if subjectReady, self.outlook.focusComposeSubjectField() {
-                self.keyboard.sendTab()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) { [weak self] in
+                // AXValue alone can paint the subject text without committing it to
+                // Outlook's native compose model. Real keyboard editing + leaving
+                // the field makes Outlook register the subject before Send is used.
+                self.copyToPasteboard(subject)
+                self.keyboard.sendCommandA()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
                     guard let self else { return }
-                    self.copyMailToPasteboard(plainText: body, html: html)
                     self.keyboard.sendCommandV()
-                    self.finishNewMailInsertion()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) { [weak self] in
+                        guard let self else { return }
+                        self.keyboard.sendTab()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) { [weak self] in
+                            guard let self else { return }
+                            self.copyMailToPasteboard(plainText: body, html: html)
+                            self.keyboard.sendCommandV()
+                            self.finishNewMailInsertion()
+                        }
+                    }
                 }
                 return
             }
@@ -1409,11 +1402,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.copyMailToPasteboard(plainText: body, html: html)
                 self.keyboard.sendCommandV()
                 self.finishNewMailInsertion()
-            } else {
-                self.copyMailToPasteboard(plainText: body, html: html)
-                self.isRunningFlow = false
-                self.showError(L10n.source("Der Mailtext konnte nicht automatisch eingesetzt werden. Er liegt in der Zwischenablage."))
+                return
             }
+
+            // Classic Outlook can hide the body from Accessibility. Subject is the
+            // stable landmark; one Tab from it moves into the native message body.
+            if self.outlook.focusComposeSubjectField() {
+                self.keyboard.sendTab()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) { [weak self] in
+                    guard let self else { return }
+                    self.copyMailToPasteboard(plainText: body, html: html)
+                    self.keyboard.sendCommandV()
+                    self.finishNewMailInsertion()
+                }
+                return
+            }
+
+            if attempt < 8 {
+                self.populateNewMailDraft(subject: subject, body: body, html: html, attempt: attempt + 1)
+                return
+            }
+
+            self.copyMailToPasteboard(plainText: body, html: html)
+            self.isRunningFlow = false
+            self.showError(L10n.source("Der Mailtext konnte nicht automatisch eingesetzt werden. Er liegt in der Zwischenablage."))
         }
     }
 

@@ -11,8 +11,8 @@ class SourceContracts(unittest.TestCase):
         info = plistlib.loads((APP / "Info.plist").read_bytes())
         self.assertEqual(info["CFBundleIdentifier"], "com.lstoever.replyzen")
         self.assertEqual(info["CFBundleDisplayName"], "ReplyZen")
-        self.assertEqual(info["CFBundleShortVersionString"], "1.55.0")
-        self.assertEqual(info["CFBundleVersion"], "56")
+        self.assertEqual(info["CFBundleShortVersionString"], "1.56.0")
+        self.assertEqual(info["CFBundleVersion"], "57")
     def test_payment_is_removed_from_active_code(self):
         self.assertFalse((APP / "AttachmentTextExtractor.swift").exists())
         swift = "\n".join(p.read_text(encoding="utf-8") for p in APP.glob("*.swift"))
@@ -46,6 +46,10 @@ class SourceContracts(unittest.TestCase):
         self.assertIn("adapter.toggleBold", toolbar)
         self.assertIn("adapter.toggleItalic", toolbar)
         self.assertIn("MailTypography.normalizeFonts", editor)
+        self.assertIn("scrollView.allowsMagnification = true", editor)
+        self.assertIn("adapter.attachZoom(to: scroll)", editor)
+        self.assertIn("adapter.zoomPercent", toolbar)
+        self.assertIn("Editor-Zoom", toolbar)
     def test_existing_mail_calendar_paths(self):
         delegate = self.read("AppDelegate.swift")
         for flow in ["openNewMailWorkspace", "openReplyWorkspace", "openForwardWorkspace", "quickDecline", "createCalendarFromOverlay"]:
@@ -65,6 +69,15 @@ class SourceContracts(unittest.TestCase):
         self.assertIn("static let pointSize: CGFloat = 10.5", typography)
         self.assertIn('static let family = "Calibri Light"', typography)
         self.assertIn("MailTypography.baseFont", self.read("RichTextMailEditor.swift"))
+    def test_new_mail_subject_uses_native_keyboard_commit(self):
+        delegate = self.read("AppDelegate.swift")
+        keyboard = self.read("KeyboardController.swift")
+        self.assertIn("func sendCommandA()", keyboard)
+        self.assertIn("self.keyboard.sendCommandA()", delegate)
+        self.assertIn("self.keyboard.sendCommandV()", delegate)
+        self.assertIn("self.keyboard.sendTab()", delegate)
+        self.assertNotIn("setComposeSubjectValue(subject)", delegate)
+
     def test_window_position_contract(self):
         panel = self.read("FloatingPanelController.swift")
         self.assertIn("panel.isMovable = true", panel)

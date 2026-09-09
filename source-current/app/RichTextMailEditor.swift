@@ -5,6 +5,12 @@ import RichEditorSwiftUI
 
 final class ReplyZenRichEditorAdapter: ObservableObject {
     weak var textView: RichTextView?
+    private weak var scrollView: NSScrollView?
+    private var zoomObservation: NSKeyValueObservation?
+    @Published private(set) var zoomPercent: Int = {
+        let saved = UserDefaults.standard.integer(forKey: "ReplyZen.EditorZoomPercent")
+        return [100, 115, 130, 150, 180].contains(saved) ? saved : 130
+    }()
     private var storageObserver: NSObjectProtocol?
     private var pendingExternal: (plain: String, html: String)?
     private var pendingExternalWorkItem: DispatchWorkItem?
@@ -23,6 +29,30 @@ final class ReplyZenRichEditorAdapter: ObservableObject {
             if plainText.wrappedValue != plain { plainText.wrappedValue = plain }
             if html.wrappedValue != richHTML { html.wrappedValue = richHTML }
         }
+    }
+
+    func attachZoom(to scrollView: NSScrollView) {
+        if self.scrollView === scrollView { return }
+        self.scrollView = scrollView
+        scrollView.allowsMagnification = true
+        scrollView.minMagnification = 1.0
+        scrollView.maxMagnification = 1.8
+        scrollView.magnification = CGFloat(zoomPercent) / 100.0
+        zoomObservation = scrollView.observe(\.magnification, options: [.new]) { [weak self, weak scrollView] _, _ in
+            DispatchQueue.main.async {
+                guard let self, let scrollView, self.scrollView === scrollView else { return }
+                let percent = Int((scrollView.magnification * 100).rounded())
+                if percent != self.zoomPercent { self.zoomPercent = percent }
+            }
+        }
+    }
+
+    func setZoom(percent: Int) {
+        guard let scrollView else { return }
+        let clamped = min(180, max(100, percent))
+        scrollView.magnification = CGFloat(clamped) / 100.0
+        zoomPercent = clamped
+        UserDefaults.standard.set(clamped, forKey: "ReplyZen.EditorZoomPercent")
     }
 
     func attach(_ view: RichTextView) {
@@ -244,11 +274,13 @@ private struct ReplyZenRichEditorSurface: NSViewRepresentable {
         scroll.borderType = .noBorder
         scroll.setContentHuggingPriority(.defaultLow, for: .vertical)
         scroll.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+        adapter.attachZoom(to: scroll)
         if let view = scroll.documentView as? RichTextView { adapter.attach(view) }
         return scroll
     }
 
     func updateNSView(_ scroll: NSScrollView, context: Context) {
+        adapter.attachZoom(to: scroll)
         if let view = scroll.documentView as? RichTextView { adapter.attach(view) }
     }
 }

@@ -17,6 +17,10 @@ final class KeyboardController {
         sendKey(code: 38, flags: .maskCommand)
     }
 
+    func sendCommandA() {
+        sendKey(code: 0, flags: .maskCommand)
+    }
+
     func sendCommandV() {
         sendKey(code: 9, flags: .maskCommand)
     }

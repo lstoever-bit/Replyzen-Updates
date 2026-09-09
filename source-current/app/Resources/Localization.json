@@ -1638,5 +1638,10 @@
     "de": "Mail und Termin, direkt aus Outlook.",
     "en-US": "Mail and calendar, directly from Outlook.",
     "es": "Correo y calendario, directamente desde Outlook."
+  },
+  "Der Betreff konnte nicht zuverlässig in Outlook eingesetzt werden. Der Mailtext liegt in der Zwischenablage.": {
+    "en-US": "The subject could not be inserted reliably in Outlook. The email body is in the clipboard.",
+    "de": "Der Betreff konnte nicht zuverlässig in Outlook eingesetzt werden. Der Mailtext liegt in der Zwischenablage.",
+    "es": "El asunto no se pudo insertar de forma fiable en Outlook. El texto del correo está en el portapapeles."
   }
 }
