@@ -1,12 +1,10 @@
 name: Build ReplyZen Update
 on:
   push:
-    branches: [main, codex/replyzen-remove-payment-windowfix-1.55]
+    branches: [main, codex/replyzen-1.56-subject-zoom]
     paths:
       - 'source-current/**'
-      - 'maintenance/remove_payment_window_1_55.py'
-      - 'maintenance/pre_1_55_overlay.py'
-      - 'maintenance/post_1_55_tests.py'
+      - 'maintenance/replyzen_1_56_subject_zoom.py'
       - 'tests/**'
       - '.github/workflows/build-update.yml'
   workflow_dispatch:
@@ -21,12 +19,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Remove final legacy Payment title
-        run: python3 maintenance/pre_1_55_overlay.py source-current
-      - name: Apply checked 1.55 migration
-        run: python3 maintenance/remove_payment_window_1_55.py source-current
-      - name: Fix post-migration regression fixture
-        run: python3 maintenance/post_1_55_tests.py source-current
+      - name: Apply ReplyZen 1.56 subject and zoom fix
+        run: python3 maintenance/replyzen_1_56_subject_zoom.py source-current
       - name: Existing regression and typography tests
         run: bash tests/run-tests.sh source-current
       - name: Localization and mail language tests
@@ -37,7 +31,7 @@ jobs:
         run: bash source-current/Build-CI.sh
       - name: Verify exact updater archive and manifest
         run: python3 tests/verify_update.py source-current
-      - name: Preserve tested canonical 1.55 source
+      - name: Preserve tested canonical 1.56 source
         shell: bash
         run: |
           set -euo pipefail
@@ -45,7 +39,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A source-current/app source-current/Release-notes.txt source-current/Release-notes.localized.json tests
           if ! git diff --cached --quiet; then
-            git commit -m "Build ReplyZen 1.55 without Payment and stabilize window"
+            git commit -m "Build ReplyZen 1.56 subject commit and editor zoom fix"
             git push origin "HEAD:${{ github.ref_name }}"
           fi
       - name: Publish verified main update
@@ -62,13 +56,13 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f "$PACKAGE" update.json "update-${VERSION%.0}.json"
           if ! git diff --cached --quiet; then
-            git commit -m "Publish ReplyZen $VERSION payment removal and window fix"
+            git commit -m "Publish ReplyZen $VERSION subject and zoom fix"
             git push origin HEAD:main
           fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ReplyZen-1.55-build
+          name: ReplyZen-1.56-build
           path: |
             source-current/Replyzen-update-*.zip
             source-current/update.json
