@@ -11,8 +11,8 @@ class SourceContracts(unittest.TestCase):
         info = plistlib.loads((APP / "Info.plist").read_bytes())
         self.assertEqual(info["CFBundleIdentifier"], "com.lstoever.replyzen")
         self.assertEqual(info["CFBundleDisplayName"], "ReplyZen")
-        self.assertEqual(info["CFBundleShortVersionString"], "1.56.0")
-        self.assertEqual(info["CFBundleVersion"], "57")
+        self.assertEqual(info["CFBundleShortVersionString"], "1.57.0")
+        self.assertEqual(info["CFBundleVersion"], "58")
     def test_payment_is_removed_from_active_code(self):
         self.assertFalse((APP / "AttachmentTextExtractor.swift").exists())
         swift = "\n".join(p.read_text(encoding="utf-8") for p in APP.glob("*.swift"))
@@ -57,6 +57,25 @@ class SourceContracts(unittest.TestCase):
         state = self.read("AppState.swift")
         for mode in ["case reply", "case newMail", "case forward", "case calendar"]:
             self.assertIn(mode, state)
+    def test_calendar_invite_reader(self):
+        outlook = self.read("OutlookAccessibility.swift")
+        delegate = self.read("AppDelegate.swift")
+        helper = self.read("OutlookCalendarItemContext.swift")
+        self.assertIn("func readCalendarContext(from snapshot: Snapshot)", outlook)
+        self.assertIn("readVisibleMeetingInvite", outlook)
+        self.assertIn("collectCalendarNativeText", outlook)
+        self.assertIn("OutlookCalendarItemContext.looksLikeMeetingInvite", outlook)
+        self.assertIn("OUTLOOK ITEM TYPE: MEETING INVITATION", helper)
+        self.assertIn('"annehmen"', helper)
+        self.assertIn('"mit vorbehalt"', helper)
+        self.assertIn('"aceptar"', helper)
+        calendar_start = delegate.index("private func createCalendarFromOverlay()")
+        calendar_end = delegate.index("private func quickDecline()", calendar_start)
+        calendar_block = delegate[calendar_start:calendar_end]
+        self.assertEqual(calendar_block.count("readCalendarContext(from: snapshot)"), 2)
+        self.assertNotIn("readMail(from: snapshot)", calendar_block)
+        decline_block = delegate[calendar_end:]
+        self.assertIn("readMail(from: snapshot)", decline_block)
     def test_json_pipeline(self):
         client = self.read("OpenAIClient.swift")
         self.assertEqual(client.count("ResponseJSON.cleanedText(text)"), 3)
@@ -64,6 +83,8 @@ class SourceContracts(unittest.TestCase):
         self.assertNotIn("uploadFile(", client)
         self.assertNotIn("fileIOQueue", client)
         self.assertIn('"store": false', client)
+        self.assertIn("Outlook meeting invitation", client)
+        self.assertIn("OUTLOOK ITEM CONTEXT", client)
     def test_typography_contract(self):
         typography = self.read("MailTypography.swift")
         self.assertIn("static let pointSize: CGFloat = 10.5", typography)
