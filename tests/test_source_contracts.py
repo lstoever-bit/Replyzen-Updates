@@ -113,9 +113,10 @@ class SourceContracts(unittest.TestCase):
         end = delegate.index("private func showError", start)
         block = delegate[start:end]
         self.assertIn("restoreOutlookOverlayAfterPanelClose()", block)
-        self.assertIn("outlook.activateOutlook(pid: pid)", block)
-        self.assertIn("DispatchQueue.main.asyncAfter(deadline: .now() + 0.08)", block)
-        self.assertIn("toolbarButton.setSuppressed(false)", block)
-        self.assertLess(block.index("outlook.activateOutlook(pid: pid)"), block.index("toolbarButton.setSuppressed(false)"))
+        helper = block[block.index("private func restoreOutlookOverlayAfterPanelClose()") :]
+        self.assertIn("guard isOutlookRunning else", helper)
+        normal = helper[helper.index("if let pid = outlook.runningPID()") :]
+        self.assertLess(normal.index("outlook.activateOutlook(pid: pid)"), normal.index("DispatchQueue.main.asyncAfter(deadline: .now() + 0.08)"))
+        self.assertLess(normal.index("DispatchQueue.main.asyncAfter(deadline: .now() + 0.08)"), normal.index("self?.toolbarButton.setSuppressed(false)"))
 
 if __name__ == "__main__": unittest.main(verbosity=2)
