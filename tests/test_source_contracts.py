@@ -11,8 +11,8 @@ class SourceContracts(unittest.TestCase):
         info = plistlib.loads((APP / "Info.plist").read_bytes())
         self.assertEqual(info["CFBundleIdentifier"], "com.lstoever.replyzen")
         self.assertEqual(info["CFBundleDisplayName"], "ReplyZen")
-        self.assertEqual(info["CFBundleShortVersionString"], "1.57.0")
-        self.assertEqual(info["CFBundleVersion"], "58")
+        self.assertEqual(info["CFBundleShortVersionString"], "1.58.0")
+        self.assertEqual(info["CFBundleVersion"], "59")
     def test_payment_is_removed_from_active_code(self):
         self.assertFalse((APP / "AttachmentTextExtractor.swift").exists())
         swift = "\n".join(p.read_text(encoding="utf-8") for p in APP.glob("*.swift"))
@@ -98,7 +98,6 @@ class SourceContracts(unittest.TestCase):
         self.assertIn("self.keyboard.sendCommandV()", delegate)
         self.assertIn("self.keyboard.sendTab()", delegate)
         self.assertNotIn("setComposeSubjectValue(subject)", delegate)
-
     def test_window_position_contract(self):
         panel = self.read("FloatingPanelController.swift")
         self.assertIn("panel.isMovable = true", panel)
@@ -108,5 +107,16 @@ class SourceContracts(unittest.TestCase):
         toolbar = self.read("OutlookToolbarButtonController.swift")
         self.assertIn("defaults.set(Double(toolbarOffset.x)", toolbar)
         self.assertIn("defaults.set(Double(toolbarOffset.y)", toolbar)
+    def test_overlay_restores_after_workspace_close(self):
+        delegate = self.read("AppDelegate.swift")
+        start = delegate.index("private func closePanel()")
+        end = delegate.index("private func showError", start)
+        block = delegate[start:end]
+        self.assertIn("restoreOutlookOverlayAfterPanelClose()", block)
+        helper = block[block.index("private func restoreOutlookOverlayAfterPanelClose()") :]
+        self.assertIn("guard isOutlookRunning else", helper)
+        normal = helper[helper.index("if let pid = outlook.runningPID()") :]
+        self.assertLess(normal.index("outlook.activateOutlook(pid: pid)"), normal.index("DispatchQueue.main.asyncAfter(deadline: .now() + 0.08)"))
+        self.assertLess(normal.index("DispatchQueue.main.asyncAfter(deadline: .now() + 0.08)"), normal.index("self?.toolbarButton.setSuppressed(false)"))
 
 if __name__ == "__main__": unittest.main(verbosity=2)
