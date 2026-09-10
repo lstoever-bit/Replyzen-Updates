@@ -1463,7 +1463,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         isRunningFlow = false
         state.stage = .idle
         panel.hide()
-        toolbarButton.setSuppressed(false)
+        restoreOutlookOverlayAfterPanelClose()
+    }
+
+    private func restoreOutlookOverlayAfterPanelClose() {
+        // The ReplyZen workspace is an accessory app panel. While it is open,
+        // ReplyZen itself becomes macOS' frontmost app and the Outlook action
+        // palette is intentionally suppressed. If we simply unsuppress here,
+        // the palette still sees Outlook as inactive and remains hidden until the
+        // user clicks Outlook manually. Reactivate Outlook first, then unsuppress
+        // on the next run-loop turn so the palette refreshes immediately.
+        guard isOutlookRunning else {
+            toolbarButton.setSuppressed(false)
+            return
+        }
+
+        if let pid = outlook.runningPID() {
+            outlook.activateOutlook(pid: pid)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
+            self?.toolbarButton.setSuppressed(false)
+        }
     }
 
     private func showError(_ message: String) {
