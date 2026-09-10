@@ -298,7 +298,7 @@ final class OpenAIClient {
         }
 
         let systemInstructions = [
-            "Create a calendar event suggestion from the email thread.",
+            "Create a calendar event suggestion from the selected Outlook item. The item may be a normal email thread or an Outlook meeting invitation.",
             "Return ONLY valid JSON with exactly these keys: title, description, start, end, confidence.",
             "title: the shortest useful calendar title possible, ideally 1-4 words, maximum 6 words. No filler such as Meeting, Call, Appointment, Termin unless it is necessary to understand the event.",
             "description: an extremely compact description of what the appointment is about. Prefer one short sentence or a few compact phrases, maximum 180 characters. No greeting, no sign-off, no generic filler, no repeated title. Include only information useful when opening the calendar event later.",
@@ -306,7 +306,7 @@ final class OpenAIClient {
             restrainedDashInstruction,
             "Write title and description in \(titleLanguage). Preserve important project or person names, but never copy the source language merely because the thread uses it.",
             "start and end: ISO-8601 timestamps with timezone offset, or null.",
-            "Use a date/time only if one future appointment time is clearly agreed or clearly proposed in the thread. If several dates/times are possible or the timing is ambiguous, set start and end to null.",
+            "Use a date/time if one future appointment time is clearly agreed, clearly proposed, or explicitly scheduled in an Outlook meeting invitation. If several dates/times are possible or the timing is ambiguous, set start and end to null.",
             "If a start time is clear but no end time or duration is given, set end to 30 minutes after start.",
             "confidence must be one of explicit, ambiguous, missing.",
             "Do not invent a date, time, attendee, location, or commitment.",
@@ -317,7 +317,7 @@ final class OpenAIClient {
         performRequest(
             apiKey: apiKey,
             instructions: systemInstructions,
-            input: "SELECTED OUTPUT LANGUAGE: \(titleLanguage)\n\nEMAIL THREAD:\n\(String(mailText.prefix(30_000)))",
+            input: "SELECTED OUTPUT LANGUAGE: \(titleLanguage)\n\nOUTLOOK ITEM CONTEXT:\n\(String(mailText.prefix(30_000)))",
             model: "gpt-5.6-luna",
             reasoningEffort: "none",
             maxOutputTokens: 320,

@@ -1643,5 +1643,10 @@
     "en-US": "The subject could not be inserted reliably in Outlook. The email body is in the clipboard.",
     "de": "Der Betreff konnte nicht zuverlässig in Outlook eingesetzt werden. Der Mailtext liegt in der Zwischenablage.",
     "es": "El asunto no se pudo insertar de forma fiable en Outlook. El texto del correo está en el portapapeles."
+  },
+  "Die geöffnete Outlook-Nachricht oder Termineinladung konnte nicht gelesen werden.": {
+    "de": "Die geöffnete Outlook-Nachricht oder Termineinladung konnte nicht gelesen werden.",
+    "en-US": "The selected Outlook message or meeting invitation could not be read.",
+    "es": "No se ha podido leer el mensaje o la invitación de reunión seleccionados en Outlook."
   }
 }

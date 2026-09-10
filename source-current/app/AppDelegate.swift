@@ -293,10 +293,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 var snapshot = try self.outlook.captureSnapshot(includeAllWindows: false)
                 var mail: String
                 do {
-                    mail = try self.outlook.readMail(from: snapshot)
+                    mail = try self.outlook.readCalendarContext(from: snapshot)
                 } catch OutlookAccessibility.OutlookError.noMailText {
                     snapshot = try self.outlook.captureSnapshot(includeAllWindows: true)
-                    mail = try self.outlook.readMail(from: snapshot)
+                    mail = try self.outlook.readCalendarContext(from: snapshot)
                 }
 
                 DispatchQueue.main.async {
@@ -317,7 +317,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self.toolbarButton.setSuppressed(false)
                     self.showSimpleAlert(
                         title: L10n.source("Termin nicht erstellt"),
-                        message: L10n.source("Die geöffnete Outlook-Mail konnte nicht gelesen werden.")
+                        message: L10n.source("Die geöffnete Outlook-Nachricht oder Termineinladung konnte nicht gelesen werden.")
                     )
                 }
             }

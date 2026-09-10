@@ -76,6 +76,60 @@ final class OutlookAccessibility {
     }
 
 
+    /// Reads either a normal Outlook email body or a native Outlook meeting card.
+    /// Calendar creation must use this instead of readMail(from:) because meeting
+    /// invitations in Legacy Outlook frequently have no readable AXWebArea at all.
+    func readCalendarContext(from snapshot: Snapshot) throws -> String {
+        if let invite = readVisibleMeetingInvite(from: snapshot) {
+            return invite
+        }
+        return try readMail(from: snapshot)
+    }
+
+    private func readVisibleMeetingInvite(from snapshot: Snapshot) -> String? {
+        for window in snapshot.windows {
+            let lines = collectCalendarNativeText(root: window, maxNodes: 20_000)
+            guard OutlookCalendarItemContext.looksLikeMeetingInvite(lines: lines) else { continue }
+            let text = OutlookCalendarItemContext.contextText(lines: lines)
+            if text.count > 20 { return text }
+        }
+        return nil
+    }
+
+    private func collectCalendarNativeText(root: AXUIElement, maxNodes: Int) -> [String] {
+        let readableRoles: Set<String> = [
+            "AXStaticText", "AXTextArea", "AXTextField", "AXButton",
+            "AXMenuButton", "AXLink", "AXCheckBox", "AXRadioButton"
+        ]
+        let attributes: [CFString] = [
+            kAXValueAttribute as CFString,
+            kAXTitleAttribute as CFString,
+            kAXDescriptionAttribute as CFString,
+            kAXHelpAttribute as CFString,
+            "AXPlaceholderValue" as CFString,
+            "AXRoleDescription" as CFString
+        ]
+        var lines: [String] = []
+        var stack: [AXUIElement] = [root]
+        var visited = 0
+
+        while let element = stack.popLast(), visited < maxNodes {
+            visited += 1
+            let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
+            if readableRoles.contains(role) {
+                for attribute in attributes {
+                    if let value = stringLikeAttribute(attribute, from: element),
+                       !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        lines.append(value)
+                    }
+                }
+            }
+            for child in children(of: element).reversed() { stack.append(child) }
+        }
+        return OutlookCalendarItemContext.normalizedLines(lines)
+    }
+
+
     func attachmentFilenames(from snapshot: Snapshot) -> [String] {
         let pattern = #"(?i)([^/\\\n\r\t<>:\"|?*]{1,180}\.(?:pdf|png|jpe?g|tiff?))"#
         guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
