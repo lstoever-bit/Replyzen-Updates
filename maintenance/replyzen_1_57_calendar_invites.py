@@ -10,7 +10,7 @@ app = root / "app"
 info_path = app / "Info.plist"
 info = plistlib.loads(info_path.read_bytes())
 
-if info.get("CFBundleShortVersionString") == "1.57.0":
+if info.get("CFBundleShortVersionString") in {"1.57.0", "1.58.0"}:
     outlook = (app / "OutlookAccessibility.swift").read_text(encoding="utf-8")
     delegate = (app / "AppDelegate.swift").read_text(encoding="utf-8")
     assert "func readCalendarContext(from snapshot: Snapshot)" in outlook
