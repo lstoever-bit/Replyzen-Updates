@@ -1,12 +1,10 @@
 name: Build ReplyZen Update
 on:
   push:
-    branches: [main, codex/replyzen-1.57-calendar-invite]
+    branches: [main, codex/replyzen-1.58-overlay-restore-clean]
     paths:
       - 'source-current/**'
-      - 'maintenance/replyzen_1_56_subject_zoom.py'
-      - 'maintenance/replyzen_1_56_localization_fix.py'
-      - 'maintenance/replyzen_1_57_calendar_invites.py'
+      - 'maintenance/replyzen_1_58_overlay_restore.py'
       - 'tests/**'
       - '.github/workflows/build-update.yml'
   workflow_dispatch:
@@ -21,12 +19,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Keep ReplyZen 1.56 migrations idempotent
-        run: |
-          python3 maintenance/replyzen_1_56_subject_zoom.py source-current
-          python3 maintenance/replyzen_1_56_localization_fix.py source-current
-      - name: Apply ReplyZen 1.57 Outlook meeting invite support
-        run: python3 maintenance/replyzen_1_57_calendar_invites.py source-current
+      - name: Apply ReplyZen 1.58 Outlook overlay restore
+        run: python3 maintenance/replyzen_1_58_overlay_restore.py source-current
       - name: Existing regression and typography tests
         run: bash tests/run-tests.sh source-current
       - name: Localization and mail language tests
@@ -35,11 +29,13 @@ jobs:
         run: bash tests/run-calendar-invite-tests.sh source-current
       - name: Window lifecycle and Outlook overlay drag tests
         run: bash tests/run-window-position-tests.sh source-current
+      - name: Overlay restore lifecycle contract
+        run: python3 tests/overlay_restore_contract.py source-current
       - name: Build and verify native app from canonical source
         run: bash source-current/Build-CI.sh
       - name: Verify exact updater archive and manifest
         run: python3 tests/verify_update.py source-current
-      - name: Preserve tested canonical 1.57 source
+      - name: Preserve tested canonical 1.58 source
         shell: bash
         run: |
           set -euo pipefail
@@ -47,7 +43,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A source-current/app source-current/Release-notes.txt source-current/Release-notes.localized.json tests
           if ! git diff --cached --quiet; then
-            git commit -m "Build ReplyZen 1.57 native Outlook meeting invite support"
+            git commit -m "Build ReplyZen 1.58 restore Outlook overlay after close"
             git push origin "HEAD:${{ github.ref_name }}"
           fi
       - name: Publish verified main update
@@ -64,13 +60,13 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f "$PACKAGE" update.json "update-${VERSION%.0}.json"
           if ! git diff --cached --quiet; then
-            git commit -m "Publish ReplyZen $VERSION Outlook meeting invite support"
+            git commit -m "Publish ReplyZen $VERSION overlay restore fix"
             git push origin HEAD:main
           fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ReplyZen-1.57-build
+          name: ReplyZen-1.58-build
           path: |
             source-current/Replyzen-update-*.zip
             source-current/update.json
