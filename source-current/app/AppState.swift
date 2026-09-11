@@ -82,6 +82,9 @@ final class AppState: ObservableObject {
     @Published var replyScope: ReplyScope = .all
     @Published var replyTone: ReplyTone = .friendly
     @Published var newMailCompact: Bool = false
+    @Published var previewBeforeChatGPT: Bool = UserDefaults.standard.bool(forKey: "ReplyZen.PreviewBeforeChatGPT") {
+        didSet { UserDefaults.standard.set(previewBeforeChatGPT, forKey: "ReplyZen.PreviewBeforeChatGPT") }
+    }
     @Published var reminderEnabled: Bool = false
     @Published var reminderDay: String = "wed"
     @Published var reminderTime: String = "06:00"

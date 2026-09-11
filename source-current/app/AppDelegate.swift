@@ -14,6 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let loginItem = LoginItemManager()
     private let updateManager = UpdateManager()
     private let calendarManager = CalendarManager()
+    private let transferPreviewWindow = TransferPreviewWindowController()
     private lazy var toolbarButton = OutlookToolbarButtonController(outlook: outlook)
 
     private var languageObserver: NSObjectProtocol?
@@ -602,7 +603,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         if requestedMailMode == .reply {
             state.outputMode = .reply
-            state.instruction = defaultReplyInstruction(for: state.replyLanguage)
+            state.instruction = ""
         } else if requestedMailMode == .forward {
             state.outputMode = .forward
             state.instruction = ""
@@ -629,9 +630,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         state.stage = .instruction
         panel.show(activate: true)
 
-        if state.outputMode == .reply {
-            panel.selectInstructionTextSoon(expectedText: state.instruction)
-        }
         refreshMailContext()
     }
 
@@ -663,8 +661,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         isLoadingMail = true
         state.mailStatus = .loading
-        let instructionAtLoadStart = state.instruction
-
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
 
@@ -704,17 +700,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         self.state.replyLanguage = language
                     }
 
-                    if self.state.outputMode == .reply {
-                        let initialWasDefault = instructionAtLoadStart.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-                            self.isDefaultReplyInstruction(instructionAtLoadStart)
-                        let userHasNotEdited = self.state.instruction == instructionAtLoadStart
-                        if initialWasDefault && userHasNotEdited {
-                            self.state.instruction = self.defaultReplyInstruction(for: self.state.replyLanguage)
-                            self.state.instructionHTML = ""
-                        }
-                        // Never select text when asynchronous mail loading finishes.
-                        // The user may already be typing in the instruction editor.
-                    }
                     self.requestedMailMode = nil
                 }
             } catch {
@@ -762,37 +747,64 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    private func chatGPTLanguageCode() -> String {
+        switch state.replyLanguage {
+        case .german: return "de"
+        case .usEnglish: return "en-US"
+        case .spanish: return "es"
+        }
+    }
+
+    private func makeTransferPayload(action: String, mailThread: String?) -> ChatGPTTransferPayload? {
+        let userText = state.instruction.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !userText.isEmpty else { return nil }
+        let html = state.instructionHTML.trimmingCharacters(in: .whitespacesAndNewlines)
+        return ChatGPTTransferPayload(
+            action: action,
+            mailThread: mailThread.map { String($0.prefix(30_000)) },
+            userText: userText,
+            userHTML: html.isEmpty ? nil : html,
+            tone: state.replyTone.rawValue,
+            language: chatGPTLanguageCode(),
+            compact: state.newMailCompact
+        )
+    }
+
+    private func sendWithOptionalPreview(_ payload: ChatGPTTransferPayload, send: @escaping () -> Void) {
+        guard state.previewBeforeChatGPT else {
+            send()
+            return
+        }
+        transferPreviewWindow.show(payload: payload) { accepted in
+            if accepted { send() }
+        }
+    }
+
     private func generateReply() {
         guard let apiKey = keychain.loadAPIKey() else {
             state.stage = .apiKey
             return
         }
-
-        let instruction = state.instruction.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !instruction.isEmpty else { return }
         guard !state.mailText.isEmpty else {
             state.mailStatus = .unavailable(L10n.source("Keine lesbare Outlook-Mail erkannt. Nutze New Mail oder versuche es erneut."))
             return
         }
+        let action = state.replyScope == .all ? "reply_all" : "reply"
+        guard let payload = makeTransferPayload(action: action, mailThread: state.mailText) else { return }
+        sendWithOptionalPreview(payload) { [weak self] in
+            self?.performReply(payload, apiKey: apiKey)
+        }
+    }
 
+    private func performReply(_ payload: ChatGPTTransferPayload, apiKey: String) {
         isRunningFlow = true
         toolbarButton.setSuppressed(true)
         state.stage = .generating
         state.statusText = L10n.source("OpenAI verarbeitet die Mail")
-
-        openAI.generateReply(
-            apiKey: apiKey,
-            mailText: state.mailText,
-            instruction: instruction,
-            instructionHTML: state.instructionHTML,
-            tone: state.replyTone,
-            language: state.replyLanguage,
-            compact: state.newMailCompact
-        ) { [weak self] result in
+        openAI.generateReply(apiKey: apiKey, payload: payload) { [weak self] result in
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.isRunningFlow = false
-
                 switch result {
                 case .success(let draft):
                     self.state.reply = draft.body.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -810,27 +822,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             state.stage = .apiKey
             return
         }
+        guard let payload = makeTransferPayload(action: "new_mail", mailThread: nil) else { return }
+        sendWithOptionalPreview(payload) { [weak self] in
+            self?.performNewMail(payload, apiKey: apiKey)
+        }
+    }
 
-        let instruction = state.instruction.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !instruction.isEmpty else { return }
-
+    private func performNewMail(_ payload: ChatGPTTransferPayload, apiKey: String) {
         isRunningFlow = true
         toolbarButton.setSuppressed(true)
         state.stage = .generating
         state.statusText = L10n.source("OpenAI formuliert eine neue Mail")
-
-        openAI.generateNewMail(
-            apiKey: apiKey,
-            instruction: instruction,
-            instructionHTML: state.instructionHTML,
-            tone: state.replyTone,
-            language: state.replyLanguage,
-            compact: state.newMailCompact
-        ) { [weak self] result in
+        openAI.generateNewMail(apiKey: apiKey, payload: payload) { [weak self] result in
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.isRunningFlow = false
-
                 switch result {
                 case .success(let draft):
                     self.state.newMailSubject = draft.subject.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -849,32 +855,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             state.stage = .apiKey
             return
         }
-
-        let instruction = state.instruction.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !instruction.isEmpty else { return }
         guard !state.mailText.isEmpty, activeSnapshot != nil else {
             state.mailStatus = .unavailable(L10n.source("Keine lesbare Outlook-Mail erkannt. Für Forward bitte eine Mail öffnen und erneut versuchen."))
             return
         }
+        guard let payload = makeTransferPayload(action: "forward", mailThread: state.mailText) else { return }
+        sendWithOptionalPreview(payload) { [weak self] in
+            self?.performForward(payload, apiKey: apiKey)
+        }
+    }
 
+    private func performForward(_ payload: ChatGPTTransferPayload, apiKey: String) {
         isRunningFlow = true
         toolbarButton.setSuppressed(true)
         state.stage = .generating
         state.statusText = L10n.source("OpenAI formuliert den Forward Text")
-
-        openAI.generateForwardNote(
-            apiKey: apiKey,
-            mailText: state.mailText,
-            instruction: instruction,
-            instructionHTML: state.instructionHTML,
-            tone: state.replyTone,
-            language: state.replyLanguage,
-            compact: state.newMailCompact
-        ) { [weak self] result in
+        openAI.generateForwardNote(apiKey: apiKey, payload: payload) { [weak self] result in
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.isRunningFlow = false
-
                 switch result {
                 case .success(let draft):
                     self.state.reply = draft.body.trimmingCharacters(in: .whitespacesAndNewlines)

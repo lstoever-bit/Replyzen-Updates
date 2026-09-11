@@ -11,6 +11,7 @@ final class ReplyZenRichEditorAdapter: ObservableObject {
     weak var textView: RichTextView?
     private weak var scrollView: NSScrollView?
     private var zoomObservation: NSKeyValueObservation?
+    private var keyMonitor: Any?
     @Published private(set) var zoomPercent: Int = {
         let saved = UserDefaults.standard.integer(forKey: "ReplyZen.EditorZoomPercent")
         return [100, 115, 130, 150, 180].contains(saved) ? saved : 130
@@ -26,6 +27,7 @@ final class ReplyZenRichEditorAdapter: ObservableObject {
 
     deinit {
         if let storageObserver { NotificationCenter.default.removeObserver(storageObserver) }
+        if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
     }
 
     func bind(plainText: Binding<String>, html: Binding<String>) {
@@ -47,6 +49,7 @@ final class ReplyZenRichEditorAdapter: ObservableObject {
                 guard let self, let scrollView, self.scrollView === scrollView else { return }
                 let percent = Int((scrollView.magnification * 100).rounded())
                 if percent != self.zoomPercent { self.zoomPercent = percent }
+                self.updateWrapWidth()
             }
         }
     }
@@ -57,6 +60,7 @@ final class ReplyZenRichEditorAdapter: ObservableObject {
         scrollView.magnification = CGFloat(clamped) / 100.0
         zoomPercent = clamped
         UserDefaults.standard.set(clamped, forKey: "ReplyZen.EditorZoomPercent")
+        updateWrapWidth()
     }
 
     func attach(_ view: RichTextView) {
@@ -64,6 +68,8 @@ final class ReplyZenRichEditorAdapter: ObservableObject {
         if let storageObserver { NotificationCenter.default.removeObserver(storageObserver) }
         textView = view
         configure(view)
+        installShortcutMonitor(for: view)
+        updateWrapWidth()
         if let storage = view.textStorage {
             storageObserver = NotificationCenter.default.addObserver(
                 forName: NSTextStorage.didProcessEditingNotification,
@@ -134,6 +140,58 @@ final class ReplyZenRichEditorAdapter: ObservableObject {
         lastPublishedPlain = plain
         lastPublishedHTML = richHTML
         publishBindings?(plain, richHTML)
+    }
+
+    func refreshWrapping() {
+        updateWrapWidth()
+    }
+
+    private func updateWrapWidth() {
+        guard let scrollView, let textView else { return }
+        let scale = max(CGFloat(1.0), scrollView.magnification)
+        let width = max(CGFloat(120), scrollView.contentSize.width / scale)
+        textView.isHorizontallyResizable = false
+        textView.autoresizingMask = [.width]
+        textView.textContainer?.widthTracksTextView = true
+        textView.textContainer?.containerSize = NSSize(width: width, height: CGFloat.greatestFiniteMagnitude)
+        var frame = textView.frame
+        frame.size.width = width
+        frame.size.height = max(frame.size.height, scrollView.contentSize.height / scale)
+        textView.frame = frame
+        var origin = scrollView.contentView.bounds.origin
+        origin.x = 0
+        scrollView.contentView.scroll(to: origin)
+        scrollView.reflectScrolledClipView(scrollView.contentView)
+    }
+
+    private func installShortcutMonitor(for view: RichTextView) {
+        if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self, weak view] event in
+            guard let self, let view, self.textView === view,
+                  view.window?.firstResponder === view else { return event }
+            let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+            guard flags.contains(.command) || flags.contains(.control),
+                  let key = event.charactersIgnoringModifiers?.lowercased() else { return event }
+            switch key {
+            case "a":
+                view.selectAll(nil)
+                return nil
+            case "c":
+                view.copy(nil)
+                return nil
+            case "v":
+                view.paste(nil)
+                return nil
+            case "x":
+                view.cut(nil)
+                return nil
+            case "z":
+                if flags.contains(.shift) { view.undoManager?.redo() } else { view.undoManager?.undo() }
+                return nil
+            default:
+                return event
+            }
+        }
     }
 
     func toggleBold() { toggleFontTrait(.boldFontMask) }
@@ -284,6 +342,8 @@ private struct ReplyZenRichEditorSurface: NSViewRepresentable {
         let scroll = RichTextView.scrollableTextView()
         scroll.identifier = NSUserInterfaceItemIdentifier("replyzen.mailEditor")
         scroll.hasVerticalScroller = true
+        scroll.hasHorizontalScroller = false
+        scroll.horizontalScrollElasticity = .none
         scroll.autohidesScrollers = true
         scroll.drawsBackground = false
         scroll.borderType = .noBorder
@@ -297,5 +357,6 @@ private struct ReplyZenRichEditorSurface: NSViewRepresentable {
     func updateNSView(_ scroll: NSScrollView, context: Context) {
         adapter.attachZoom(to: scroll)
         if let view = scroll.documentView as? RichTextView { adapter.attach(view) }
+        adapter.refreshWrapping()
     }
 }

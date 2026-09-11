@@ -1,1652 +1,1682 @@
 {
-  "Google OAuth ist noch nicht eingerichtet. Bitte einmalig Client-ID und Client Secret eines Google-OAuth-Clients vom Typ Desktop-App hinterlegen.": {
-    "en-US": "Google OAuth is not set up yet. Enter the client ID and client secret for a Desktop app OAuth client.",
-    "de": "Google OAuth ist noch nicht eingerichtet. Bitte einmalig Client-ID und Client Secret eines Google-OAuth-Clients vom Typ Desktop-App hinterlegen.",
-    "es": "Google OAuth aún no está configurado. Introduce el ID y el secreto de un cliente OAuth de tipo Aplicación de escritorio."
-  },
-  "Replyzen ist noch nicht mit Google Calendar verbunden. Bitte zuerst mit lennard@minubo.com anmelden.": {
-    "en-US": "ReplyZen is not connected to Google Calendar yet. First sign in with lennard@minubo.com.",
-    "de": "ReplyZen ist noch nicht mit Google Calendar verbunden. Bitte zuerst mit lennard@minubo.com anmelden.",
-    "es": "ReplyZen aún no está conectado con Google Calendar. Inicia sesión primero con lennard@minubo.com."
-  },
-  "Die Google-Anmeldung wurde abgebrochen.": {
-    "en-US": "Google sign-in was canceled.",
-    "de": "Die Google-Anmeldung wurde abgebrochen.",
-    "es": "Se ha cancelado el inicio de sesión de Google."
-  },
-  "Google-Anmeldung fehlgeschlagen: {0}": {
-    "en-US": "Google sign-in failed: {0}",
-    "de": "Google-Anmeldung fehlgeschlagen: {0}",
-    "es": "Ha fallado el inicio de sesión de Google: {0}"
-  },
-  "Bitte mit lennard@minubo.com anmelden. Angemeldet wurde {0}.": {
-    "en-US": "Please sign in with lennard@minubo.com. You signed in as {0}.",
-    "de": "Bitte mit lennard@minubo.com anmelden. Angemeldet wurde {0}.",
-    "es": "Inicia sesión con lennard@minubo.com. Has iniciado sesión como {0}."
-  },
-  "Google hat eine unerwartete Antwort geliefert.": {
-    "en-US": "Google returned an unexpected response.",
-    "de": "Google hat eine unerwartete Antwort geliefert.",
-    "es": "Google ha devuelto una respuesta inesperada."
-  },
-  "Der ausgewählte Google-Kalender ist nicht mehr verfügbar. Bitte einen anderen Kalender wählen.": {
-    "en-US": "The selected Google calendar is no longer available. Please choose another calendar.",
-    "de": "Der ausgewählte Google-Kalender ist nicht mehr verfügbar. Bitte einen anderen Kalender wählen.",
-    "es": "El calendario de Google seleccionado ya no está disponible. Elige otro calendario."
-  },
-  "Start- und Endzeit des Termins sind ungültig.": {
-    "en-US": "The event's start and end times are invalid.",
-    "de": "Start- und Endzeit des Termins sind ungültig.",
-    "es": "Las horas de inicio y fin del evento no son válidas."
-  },
-  "Google Calendar: {0}": {
-    "en-US": "Google Calendar: {0}",
-    "de": "Google Calendar: {0}",
-    "es": "Google Calendar: {0}"
-  },
-  "Google-Zugangsdaten konnten nicht im Schlüsselbund gespeichert werden ({0}).": {
-    "en-US": "Google credentials could not be saved to the Keychain ({0}).",
-    "de": "Google-Zugangsdaten konnten nicht im Schlüsselbund gespeichert werden ({0}).",
-    "es": "No se han podido guardar las credenciales de Google en el llavero ({0})."
-  },
-  "Lokaler Callback-Port konnte nicht geöffnet werden.": {
-    "en-US": "The local callback port could not be opened.",
-    "de": "Lokaler Callback-Port konnte nicht geöffnet werden.",
-    "es": "No se ha podido abrir el puerto de respuesta local."
-  },
-  "OAuth-URL konnte nicht erstellt werden.": {
-    "en-US": "The OAuth URL could not be created.",
-    "de": "OAuth-URL konnte nicht erstellt werden.",
-    "es": "No se ha podido crear la URL de OAuth."
-  },
-  "Ungültige OAuth-Antwort.": {
-    "en-US": "Invalid OAuth response.",
-    "de": "Ungültige OAuth-Antwort.",
-    "es": "Respuesta de OAuth no válida."
-  },
-  "Replyzen wartet auf die Google-Anmeldung.": {
-    "en-US": "ReplyZen is waiting for Google sign-in.",
-    "de": "ReplyZen wartet auf die Google-Anmeldung.",
-    "es": "ReplyZen está esperando el inicio de sesión de Google."
-  },
-  "Google-Anmeldung wurde abgebrochen.": {
-    "en-US": "Google sign-in was canceled.",
-    "de": "Google-Anmeldung wurde abgebrochen.",
-    "es": "Se ha cancelado el inicio de sesión de Google."
-  },
-  "OAuth-Prüfung fehlgeschlagen.": {
-    "en-US": "OAuth verification failed.",
-    "de": "OAuth-Prüfung fehlgeschlagen.",
-    "es": "Ha fallado la verificación de OAuth."
-  },
-  "State oder Autorisierungscode fehlt.": {
-    "en-US": "The state or authorization code is missing.",
-    "de": "State oder Autorisierungscode fehlt.",
-    "es": "Falta el estado o el código de autorización."
-  },
-  "Replyzen ist mit Google Calendar verbunden. Dieses Fenster kann geschlossen werden.": {
-    "en-US": "ReplyZen is connected to Google Calendar. You can close this window.",
-    "de": "ReplyZen ist mit Google Calendar verbunden. Dieses Fenster kann geschlossen werden.",
-    "es": "ReplyZen está conectado con Google Calendar. Puedes cerrar esta ventana."
-  },
-  "Token-URL fehlt.": {
-    "en-US": "The token URL is missing.",
-    "de": "Token-URL fehlt.",
-    "es": "Falta la URL del token."
-  },
-  "Token konnte nicht abgerufen werden.": {
-    "en-US": "The token could not be retrieved.",
-    "de": "Token konnte nicht abgerufen werden.",
-    "es": "No se ha podido obtener el token."
-  },
-  "Token-Antwort konnte nicht gelesen werden.": {
-    "en-US": "The token response could not be read.",
-    "de": "Token-Antwort konnte nicht gelesen werden.",
-    "es": "No se ha podido leer la respuesta del token."
-  },
-  "Google-Zugriff muss erneut autorisiert werden.": {
-    "en-US": "Google access must be authorized again.",
-    "de": "Google-Zugriff muss erneut autorisiert werden.",
-    "es": "Es necesario autorizar de nuevo el acceso a Google."
-  },
-  "Kalender konnten nicht geladen werden.": {
-    "en-US": "Calendars could not be loaded.",
-    "de": "Kalender konnten nicht geladen werden.",
-    "es": "No se han podido cargar los calendarios."
-  },
-  "Es ist noch keine Update-Quelle eingerichtet.": {
-    "en-US": "No update source has been configured.",
-    "de": "Es ist noch keine Update-Quelle eingerichtet.",
-    "es": "No se ha configurado ningún origen de actualizaciones."
-  },
-  "Die Update-URL ist ungültig. Bitte eine HTTPS-Adresse verwenden.": {
-    "en-US": "The update URL is invalid. Please use an HTTPS address.",
-    "de": "Die Update-URL ist ungültig. Bitte eine HTTPS-Adresse verwenden.",
-    "es": "La URL de actualización no es válida. Utiliza una dirección HTTPS."
-  },
-  "Die Update-Quelle hat keine gültige Antwort geliefert.": {
-    "en-US": "The update source did not return a valid response.",
-    "de": "Die Update-Quelle hat keine gültige Antwort geliefert.",
-    "es": "El origen de actualizaciones no ha devuelto una respuesta válida."
-  },
-  "Die Update-Datei update.json ist ungültig.": {
-    "en-US": "The update.json manifest is invalid.",
-    "de": "Die Update-Datei update.json ist ungültig.",
-    "es": "El archivo update.json no es válido."
-  },
-  "Die Download-Adresse des Updates ist ungültig.": {
-    "en-US": "The update download address is invalid.",
-    "de": "Die Download-Adresse des Updates ist ungültig.",
-    "es": "La dirección de descarga de la actualización no es válida."
-  },
-  "Die Prüfsumme des Updates stimmt nicht. Das Update wurde aus Sicherheitsgründen abgebrochen.": {
-    "en-US": "The update checksum does not match. The update was canceled for security reasons.",
-    "de": "Die Prüfsumme des Updates stimmt nicht. Das Update wurde aus Sicherheitsgründen abgebrochen.",
-    "es": "La suma de comprobación no coincide. Se ha cancelado la actualización por seguridad."
-  },
-  "Das heruntergeladene Update enthält keine gültige Replyzen.app.": {
-    "en-US": "The downloaded update does not contain a valid Replyzen.app.",
-    "de": "Das heruntergeladene Update enthält keine gültige ReplyZen.app.",
-    "es": "La actualización descargada no contiene una Replyzen.app válida."
-  },
-  "Das Update gehört nicht zu Replyzen.": {
-    "en-US": "This update is not for ReplyZen.",
-    "de": "Das Update gehört nicht zu ReplyZen.",
-    "es": "Esta actualización no corresponde a ReplyZen."
-  },
-  "Die installierte App kann nicht ersetzt werden. Bitte Replyzen in den Programme-Ordner verschieben und erneut versuchen.": {
-    "en-US": "The installed app cannot be replaced. Move ReplyZen to the Applications folder and try again.",
-    "de": "Die installierte App kann nicht ersetzt werden. Bitte ReplyZen in den Programme-Ordner verschieben und erneut versuchen.",
-    "es": "No se puede sustituir la aplicación instalada. Mueve ReplyZen a la carpeta Aplicaciones y vuelve a intentarlo."
-  },
-  "Das Update konnte nicht vorbereitet werden: {0}": {
-    "en-US": "The update could not be prepared: {0}",
-    "de": "Das Update konnte nicht vorbereitet werden: {0}",
-    "es": "No se ha podido preparar la actualización: {0}"
-  },
-  "SHA-256 konnte nicht berechnet werden.": {
-    "en-US": "SHA-256 could not be calculated.",
-    "de": "SHA-256 konnte nicht berechnet werden.",
-    "es": "No se ha podido calcular la suma SHA-256."
-  },
-  "OpenAI hat keinen gültigen Antwortentwurf geliefert.": {
-    "en-US": "OpenAI did not return a valid reply draft.",
-    "de": "OpenAI hat keinen gültigen Antwortentwurf geliefert.",
-    "es": "OpenAI no ha devuelto un borrador de respuesta válido."
-  },
-  "OpenAI hat keinen Antworttext geliefert.": {
-    "en-US": "OpenAI did not return any reply text.",
-    "de": "OpenAI hat keinen Antworttext geliefert.",
-    "es": "OpenAI no ha devuelto texto de respuesta."
-  },
-  "OpenAI hat den Antwortentwurf nicht im erwarteten Format geliefert.": {
-    "en-US": "OpenAI returned the reply draft in an unexpected format.",
-    "de": "OpenAI hat den Antwortentwurf nicht im erwarteten Format geliefert.",
-    "es": "OpenAI ha devuelto el borrador de respuesta en un formato inesperado."
-  },
-  "OpenAI hat keinen gültigen Mailentwurf geliefert.": {
-    "en-US": "OpenAI did not return a valid email draft.",
-    "de": "OpenAI hat keinen gültigen Mailentwurf geliefert.",
-    "es": "OpenAI no ha devuelto un borrador de correo válido."
-  },
-  "OpenAI hat keinen Mailtext geliefert.": {
-    "en-US": "OpenAI did not return any email text.",
-    "de": "OpenAI hat keinen Mailtext geliefert.",
-    "es": "OpenAI no ha devuelto texto de correo."
-  },
-  "OpenAI hat den Mailentwurf nicht im erwarteten Format geliefert.": {
-    "en-US": "OpenAI returned the email draft in an unexpected format.",
-    "de": "OpenAI hat den Mailentwurf nicht im erwarteten Format geliefert.",
-    "es": "OpenAI ha devuelto el borrador de correo en un formato inesperado."
-  },
-  "OpenAI hat keinen gültigen Terminvorschlag geliefert.": {
-    "en-US": "OpenAI did not return a valid event suggestion.",
-    "de": "OpenAI hat keinen gültigen Terminvorschlag geliefert.",
-    "es": "OpenAI no ha devuelto una propuesta de evento válida."
-  },
-  "OpenAI hat den Terminvorschlag nicht im erwarteten Format geliefert.": {
-    "en-US": "OpenAI returned the event suggestion in an unexpected format.",
-    "de": "OpenAI hat den Terminvorschlag nicht im erwarteten Format geliefert.",
-    "es": "OpenAI ha devuelto la propuesta de evento en un formato inesperado."
-  },
-  "Ungültige OpenAI-Datei-URL.": {
-    "en-US": "Invalid OpenAI file URL.",
-    "de": "Ungültige OpenAI-Datei-URL.",
-    "es": "URL de archivo de OpenAI no válida."
-  },
-  "Der PDF-Anhang konnte nicht gelesen werden: {0}": {
-    "en-US": "The PDF attachment could not be read: {0}",
-    "de": "Der PDF-Anhang konnte nicht gelesen werden: {0}",
-    "es": "No se ha podido leer el PDF adjunto: {0}"
-  },
-  "Keine Antwort beim PDF-Upload von OpenAI erhalten.": {
-    "en-US": "No response received from OpenAI while uploading the PDF.",
-    "de": "Keine Antwort beim PDF-Upload von OpenAI erhalten.",
-    "es": "No se ha recibido respuesta de OpenAI al subir el PDF."
-  },
-  "OpenAI-PDF-Upload fehlgeschlagen (HTTP {0}).": {
-    "en-US": "OpenAI PDF upload failed (HTTP {0}).",
-    "de": "OpenAI-PDF-Upload fehlgeschlagen (HTTP {0}).",
-    "es": "Ha fallado la subida del PDF a OpenAI (HTTP {0})."
-  },
-  "OpenAI hat keine Datei-ID für den PDF-Anhang geliefert.": {
-    "en-US": "OpenAI did not return a file ID for the PDF attachment.",
-    "de": "OpenAI hat keine Datei-ID für den PDF-Anhang geliefert.",
-    "es": "OpenAI no ha devuelto un ID de archivo para el PDF adjunto."
-  },
-  "Die OpenAI-Antwort auf den PDF-Upload war ungültig.": {
-    "en-US": "The OpenAI response to the PDF upload was invalid.",
-    "de": "Die OpenAI-Antwort auf den PDF-Upload war ungültig.",
-    "es": "La respuesta de OpenAI a la subida del PDF no era válida."
-  },
-  "OpenAI hat keine gültigen Überweisungsdaten geliefert.": {
-    "en-US": "OpenAI did not return valid transfer details.",
-    "de": "OpenAI hat keine gültigen Überweisungsdaten geliefert.",
-    "es": "OpenAI no ha devuelto datos de transferencia válidos."
-  },
-  "OpenAI hat die Überweisungsdaten nicht im erwarteten Format geliefert.": {
-    "en-US": "OpenAI returned transfer details in an unexpected format.",
-    "de": "OpenAI hat die Überweisungsdaten nicht im erwarteten Format geliefert.",
-    "es": "OpenAI ha devuelto los datos de transferencia en un formato inesperado."
-  },
-  "Ungültige OpenAI-URL.": {
-    "en-US": "Invalid OpenAI URL.",
-    "de": "Ungültige OpenAI-URL.",
-    "es": "URL de OpenAI no válida."
-  },
-  "Keine Antwort von OpenAI erhalten.": {
-    "en-US": "No response received from OpenAI.",
-    "de": "Keine Antwort von OpenAI erhalten.",
-    "es": "No se ha recibido respuesta de OpenAI."
-  },
-  "OpenAI-Fehler HTTP {0}.": {
-    "en-US": "OpenAI error, HTTP {0}.",
-    "de": "OpenAI-Fehler HTTP {0}.",
-    "es": "Error de OpenAI, HTTP {0}."
-  },
-  "OpenAI hat ein unerwartetes Antwortformat geliefert.": {
-    "en-US": "OpenAI returned an unexpected response format.",
-    "de": "OpenAI hat ein unerwartetes Antwortformat geliefert.",
-    "es": "OpenAI ha devuelto un formato de respuesta inesperado."
-  },
-  "Warum sind E-Mails schlechte Geheimnisträger? Weil am Ende doch jemand auf ‚Allen antworten‘ klickt.": {
-    "en-US": "Why are emails bad at keeping secrets? Someone always clicks Reply all.",
-    "de": "Warum sind E-Mails schlechte Geheimnisträger? Weil am Ende doch jemand auf ‚Allen antworten‘ klickt.",
-    "es": "¿Por qué los correos no guardan secretos? Porque alguien siempre pulsa Responder a todos."
-  },
-  "Mein Kalender wollte spontan sein. Ich habe ihm dafür einen Termin eingetragen.": {
-    "en-US": "My calendar wanted to be spontaneous. I scheduled a time for it.",
-    "de": "Mein Kalender wollte spontan sein. Ich habe ihm dafür einen Termin eingetragen.",
-    "es": "Mi calendario quería ser espontáneo. Le reservé una cita para ello."
-  },
-  "CC ist die höfliche Art zu sagen: Jetzt weißt du es auch.": {
-    "en-US": "CC is the polite way of saying: now you know, too.",
-    "de": "CC ist die höfliche Art zu sagen: Jetzt weißt du es auch.",
-    "es": "CC es la forma educada de decir: ahora tú también lo sabes."
-  },
-  "Warum war die Mail so entspannt? Sie hatte keinen Anhang zu tragen.": {
-    "en-US": "Why was the email so relaxed? It had no attachments to carry.",
-    "de": "Warum war die Mail so entspannt? Sie hatte keinen Anhang zu tragen.",
-    "es": "¿Por qué estaba tan tranquilo el correo? No tenía adjuntos que cargar."
-  },
-  "Der kürzeste Büro-Witz? ‚Kurze Abstimmung‘.": {
-    "en-US": "The shortest office joke? A quick meeting.",
-    "de": "Der kürzeste Büro-Witz? ‚Kurze Abstimmung‘.",
-    "es": "¿El chiste de oficina más corto? Una reunión rápida."
-  },
-  "Ich wollte meinem Posteingang Urlaub geben. Er hat die Abwesenheitsnotiz abgelehnt.": {
-    "en-US": "I tried giving my inbox a vacation. It rejected the out-of-office reply.",
-    "de": "Ich wollte meinem Posteingang Urlaub geben. Er hat die Abwesenheitsnotiz abgelehnt.",
-    "es": "Quise darle vacaciones a mi bandeja de entrada. Rechazó la respuesta de ausencia."
-  },
-  "Warum mag Replyzen Montagmorgen? Weil selbst eine kurze Antwort schon wie Fortschritt aussieht.": {
-    "en-US": "Why does ReplyZen like Monday mornings? Even a short reply feels like progress.",
-    "de": "Warum mag ReplyZen Montagmorgen? Weil selbst eine kurze Antwort schon wie Fortschritt aussieht.",
-    "es": "¿Por qué le gustan los lunes a ReplyZen? Hasta una respuesta breve parece un avance."
-  },
-  "Mein Kalender und ich haben eine gute Beziehung: Er sagt mir ständig, wo ich sein soll.": {
-    "en-US": "My calendar and I have a great relationship: it always tells me where to be.",
-    "de": "Mein Kalender und ich haben eine gute Beziehung: Er sagt mir ständig, wo ich sein soll.",
-    "es": "Mi calendario y yo nos llevamos bien: siempre me dice dónde tengo que estar."
-  },
-  "Eine E-Mail ohne Betreff ist wie ein Termin ohne Uhrzeit: spannend, aber unnötig.": {
-    "en-US": "An email without a subject is like an event without a time: exciting, but not helpful.",
-    "de": "Eine E-Mail ohne Betreff ist wie ein Termin ohne Uhrzeit: spannend, aber unnötig.",
-    "es": "Un correo sin asunto es como una cita sin hora: emocionante, pero poco útil."
-  },
-  "Warum hat der Termin nicht zurückgerufen? Er war schon vergeben.": {
-    "en-US": "Why didn't the appointment call back? It was already taken.",
-    "de": "Warum hat der Termin nicht zurückgerufen? Er war schon vergeben.",
-    "es": "¿Por qué no devolvió la llamada la cita? Porque ya estaba ocupada."
-  },
-  "Replyzen läuft. Das ist heute schon die halbe Miete.": {
-    "en-US": "ReplyZen is running. That's half the battle today.",
-    "de": "ReplyZen läuft. Das ist heute schon die halbe Miete.",
-    "es": "ReplyZen está funcionando. Eso ya es medio camino recorrido."
-  },
-  "ReplyZen öffnen   ⌃⌥R": {
-    "en-US": "Open ReplyZen   ⌃⌥R",
-    "de": "ReplyZen öffnen   ⌃⌥R",
-    "es": "Abrir ReplyZen   ⌃⌥R"
-  },
-  "Bei Anmeldung starten": {
-    "en-US": "Launch at login",
-    "de": "Bei Anmeldung starten",
-    "es": "Abrir al iniciar sesión"
-  },
-  "API-Key ändern…": {
-    "en-US": "Change API key…",
-    "de": "API-Key ändern…",
-    "es": "Cambiar clave de API…"
-  },
-  "Nach Updates suchen…": {
-    "en-US": "Check for updates…",
-    "de": "Nach Updates suchen…",
-    "es": "Buscar actualizaciones…"
-  },
-  "Update-Quelle…": {
-    "en-US": "Update source…",
-    "de": "Update-Quelle…",
-    "es": "Origen de las actualizaciones…"
-  },
-  "Beenden": {
-    "en-US": "Quit",
-    "de": "Beenden",
-    "es": "Salir"
-  },
-  "Termin nicht erstellt": {
-    "en-US": "Event not created",
-    "de": "Termin nicht erstellt",
-    "es": "No se ha creado el evento"
-  },
-  "Die geöffnete Outlook-Mail konnte nicht gelesen werden.": {
-    "en-US": "The open Outlook email could not be read.",
-    "de": "Die geöffnete Outlook-Mail konnte nicht gelesen werden.",
-    "es": "No se ha podido leer el correo abierto en Outlook."
-  },
-  "Überweisung nicht erkannt": {
-    "en-US": "Transfer details not detected",
-    "de": "Überweisung nicht erkannt",
-    "es": "No se han detectado datos de transferencia"
-  },
-  "Absage fehlgeschlagen": {
-    "en-US": "Could not create decline",
-    "de": "Absage fehlgeschlagen",
-    "es": "No se ha podido crear la respuesta de rechazo"
-  },
-  "Replyzen · Update-Quelle": {
-    "en-US": "ReplyZen · Update source",
-    "de": "ReplyZen · Update-Quelle",
-    "es": "ReplyZen · Origen de las actualizaciones"
-  },
-  "Replyzen nutzt standardmäßig den offiziellen Update-Kanal. Hier kannst du die HTTPS-Adresse zu update.json bei Bedarf ändern.": {
-    "en-US": "ReplyZen uses the official update channel by default. You can change the HTTPS address for update.json here.",
-    "de": "ReplyZen nutzt standardmäßig den offiziellen Update-Kanal. Hier kannst du die HTTPS-Adresse zu update.json bei Bedarf ändern.",
-    "es": "ReplyZen utiliza el canal oficial de actualizaciones por defecto. Aquí puedes cambiar la dirección HTTPS de update.json."
-  },
-  "Ungültige Update-URL": {
-    "en-US": "Invalid update URL",
-    "de": "Ungültige Update-URL",
-    "es": "URL de actualización no válida"
-  },
-  "Bitte eine vollständige HTTPS-Adresse zu update.json eintragen.": {
-    "en-US": "Enter a full HTTPS address for update.json.",
-    "de": "Bitte eine vollständige HTTPS-Adresse zu update.json eintragen.",
-    "es": "Introduce una dirección HTTPS completa para update.json."
-  },
-  "Update-Quelle gespeichert": {
-    "en-US": "Update source saved",
-    "de": "Update-Quelle gespeichert",
-    "es": "Origen de actualizaciones guardado"
-  },
-  "Künftig prüft die App beim Start automatisch auf neue Versionen. Installiert wird erst nach deinem Klick auf „Installieren“. ": {
-    "en-US": "The app will check for updates automatically at startup. Updates are only installed after you click Install.",
-    "de": "Künftig prüft die App beim Start automatisch auf neue Versionen. Installiert wird erst nach deinem Klick auf „Installieren“. ",
-    "es": "La aplicación buscará actualizaciones al iniciarse. Solo se instalarán cuando pulses Instalar."
-  },
-  "Update verfügbar: {0}…": {
-    "en-US": "Update available: {0}…",
-    "de": "Update verfügbar: {0}…",
-    "es": "Actualización disponible: {0}…"
-  },
-  "Du verwendest bereits die aktuelle Version {0}.": {
-    "en-US": "You are already using the latest version, {0}.",
-    "de": "Du verwendest bereits die aktuelle Version {0}.",
-    "es": "Ya estás usando la versión más reciente, {0}."
-  },
-  "Update-Prüfung fehlgeschlagen": {
-    "en-US": "Could not check for updates",
-    "de": "Update-Prüfung fehlgeschlagen",
-    "es": "No se han podido buscar actualizaciones"
-  },
-  "Replyzen {0} ist verfügbar": {
-    "en-US": "ReplyZen {0} is available",
-    "de": "ReplyZen {0} ist verfügbar",
-    "es": "ReplyZen {0} está disponible"
-  },
-  "Die neue Version kann jetzt automatisch geladen und installiert werden.": {
-    "en-US": "The new version is ready to download and install.",
-    "de": "Die neue Version kann jetzt automatisch geladen und installiert werden.",
-    "es": "La nueva versión está lista para descargar e instalar."
-  },
-  "Installieren": {
-    "en-US": "Install",
-    "de": "Installieren",
-    "es": "Instalar"
-  },
-  "Später": {
-    "en-US": "Later",
-    "de": "Später",
-    "es": "Más tarde"
-  },
-  "Version {0} wird heruntergeladen": {
-    "en-US": "Downloading version {0}",
-    "de": "Version {0} wird heruntergeladen",
-    "es": "Descargando la versión {0}"
-  },
-  "Update ist vorbereitet – App startet gleich neu": {
-    "en-US": "Update ready. The app will restart shortly.",
-    "de": "Update ist vorbereitet – App startet gleich neu",
-    "es": "Actualización preparada. La aplicación se reiniciará en breve."
-  },
-  "Keine Outlook-Mail verfügbar. Reply ist ausgeblendet.": {
-    "en-US": "No Outlook email available. Reply is hidden.",
-    "de": "Keine Outlook-Mail verfügbar. Antworten ist ausgeblendet.",
-    "es": "No hay ningún correo de Outlook disponible. La opción Responder está oculta."
-  },
-  "Outlook läuft gerade nicht. New Mail funktioniert trotzdem.": {
-    "en-US": "Outlook is not running. You can still create a new email.",
-    "de": "Outlook läuft gerade nicht. Neue Mail funktioniert trotzdem.",
-    "es": "Outlook no está abierto. Aun así, puedes crear un correo nuevo."
-  },
-  "Keine lesbare Outlook-Mail erkannt. New Mail funktioniert trotzdem.": {
-    "en-US": "No readable Outlook email detected. You can still create a new email.",
-    "de": "Keine lesbare Outlook-Mail erkannt. Neue Mail funktioniert trotzdem.",
-    "es": "No se ha detectado ningún correo legible en Outlook. Aun así, puedes crear un correo nuevo."
-  },
-  "Mail-Kontext konnte nicht geladen werden. New Mail funktioniert trotzdem.": {
-    "en-US": "Email context could not be loaded. You can still create a new email.",
-    "de": "Mail-Kontext konnte nicht geladen werden. Neue Mail funktioniert trotzdem.",
-    "es": "No se ha podido cargar el contexto del correo. Aun así, puedes crear un correo nuevo."
-  },
-  "Keine lesbare Outlook-Mail erkannt. Nutze New Mail oder versuche es erneut.": {
-    "en-US": "No readable Outlook email detected. Create a new email or try again.",
-    "de": "Keine lesbare Outlook-Mail erkannt. Nutze Neue Mail oder versuche es erneut.",
-    "es": "No se ha detectado ningún correo legible en Outlook. Crea un correo nuevo o vuelve a intentarlo."
-  },
-  "OpenAI verarbeitet die Mail": {
-    "en-US": "OpenAI is processing the email",
-    "de": "OpenAI verarbeitet die Mail",
-    "es": "OpenAI está procesando el correo"
-  },
-  "OpenAI formuliert eine neue Mail": {
-    "en-US": "OpenAI is drafting a new email",
-    "de": "OpenAI formuliert eine neue Mail",
-    "es": "OpenAI está redactando un correo nuevo"
-  },
-  "Keine lesbare Outlook-Mail erkannt. Für Forward bitte eine Mail öffnen und erneut versuchen.": {
-    "en-US": "No readable Outlook email detected. To forward, open an email and try again.",
-    "de": "Keine lesbare Outlook-Mail erkannt. Zum Weiterleiten eine Mail öffnen und erneut versuchen.",
-    "es": "No se ha detectado ningún correo legible. Para reenviar, abre un correo en Outlook y vuelve a intentarlo."
-  },
-  "OpenAI formuliert den Forward Text": {
-    "en-US": "OpenAI is drafting the forwarding note",
-    "de": "OpenAI formuliert den Weiterleitungstext",
-    "es": "OpenAI está redactando la nota de reenvío"
-  },
-  "Keine lesbare Outlook-Mail erkannt. Für einen Termin bitte eine Mail öffnen und erneut versuchen.": {
-    "en-US": "No readable Outlook email detected. To create an event, open an email and try again.",
-    "de": "Keine lesbare Outlook-Mail erkannt. Für einen Termin bitte eine Mail öffnen und erneut versuchen.",
-    "es": "No se ha detectado ningún correo legible. Para crear un evento, abre un correo y vuelve a intentarlo."
-  },
-  "Replyzen erstellt den Terminvorschlag": {
-    "en-US": "ReplyZen is preparing the event suggestion",
-    "de": "ReplyZen erstellt den Terminvorschlag",
-    "es": "ReplyZen está preparando la propuesta de evento"
-  },
-  "Im Mailverlauf wurde kein eindeutiger Terminzeitpunkt erkannt. Bitte Datum und Uhrzeit prüfen.": {
-    "en-US": "No unambiguous event time was found in the thread. Please check the date and time.",
-    "de": "Im Mailverlauf wurde kein eindeutiger Terminzeitpunkt erkannt. Bitte Datum und Uhrzeit prüfen.",
-    "es": "No se ha encontrado una fecha y hora inequívocas en el hilo. Comprueba la fecha y la hora."
-  },
-  "Keine lesbare Outlook-Mail erkannt. Für eine Überweisung bitte die Rechnungsmail öffnen und erneut versuchen.": {
-    "en-US": "No readable Outlook email detected. To extract transfer details, open the invoice email and try again.",
-    "de": "Keine lesbare Outlook-Mail erkannt. Für eine Überweisung bitte die Rechnungsmail öffnen und erneut versuchen.",
-    "es": "No se ha detectado ningún correo legible. Para extraer los datos de transferencia, abre el correo de la factura y vuelve a intentarlo."
-  },
-  "Replyzen sucht den PDF-Anhang …": {
-    "en-US": "ReplyZen is looking for the PDF attachment…",
-    "de": "ReplyZen sucht den PDF-Anhang …",
-    "es": "ReplyZen está buscando el PDF adjunto…"
-  },
-  "PDF wird aus Outlook geladen …": {
-    "en-US": "Loading the PDF from Outlook…",
-    "de": "PDF wird aus Outlook geladen …",
-    "es": "Cargando el PDF desde Outlook…"
-  },
-  "PDF wird automatisch aus Outlook gespeichert …": {
-    "en-US": "Saving the PDF from Outlook automatically…",
-    "de": "PDF wird automatisch aus Outlook gespeichert …",
-    "es": "Guardando el PDF de Outlook automáticamente…"
-  },
-  "Outlook blockiert den PDF-Zugriff – bitte Rechnung auswählen …": {
-    "en-US": "Outlook is blocking PDF access. Please choose the invoice…",
-    "de": "Outlook blockiert den PDF-Zugriff – bitte Rechnung auswählen …",
-    "es": "Outlook está bloqueando el acceso al PDF. Selecciona la factura…"
-  },
-  "PDF nicht verfügbar": {
-    "en-US": "PDF unavailable",
-    "de": "PDF nicht verfügbar",
-    "es": "PDF no disponible"
-  },
-  "Outlook gibt den PDF-Anhang nicht frei. Bitte Payment erneut klicken und im Dateidialog die Rechnung auswählen.": {
-    "en-US": "Outlook is not providing the PDF attachment. Click Payment again and choose the invoice in the file dialog.",
-    "de": "Outlook gibt den PDF-Anhang nicht frei. Bitte Überweisung erneut klicken und im Dateidialog die Rechnung auswählen.",
-    "es": "Outlook no está proporcionando el PDF adjunto. Pulsa Pago de nuevo y selecciona la factura en el diálogo de archivos."
-  },
-  "PDF automatisch aus Outlook gespeichert und direkt mit OpenAI gelesen: {0}": {
-    "en-US": "PDF saved from Outlook and read directly by OpenAI: {0}",
-    "de": "PDF automatisch aus Outlook gespeichert und direkt mit OpenAI gelesen: {0}",
-    "es": "PDF guardado desde Outlook y leído directamente por OpenAI: {0}"
-  },
-  "PDF direkt mit OpenAI gelesen: {0}": {
-    "en-US": "PDF read directly by OpenAI: {0}",
-    "de": "PDF direkt mit OpenAI gelesen: {0}",
-    "es": "PDF leído directamente por OpenAI: {0}"
-  },
-  "PDF wird direkt an OpenAI übergeben und gelesen …": {
-    "en-US": "Sending the PDF directly to OpenAI for reading…",
-    "de": "PDF wird direkt an OpenAI übergeben und gelesen …",
-    "es": "Enviando el PDF directamente a OpenAI para su lectura…"
-  },
-  "Kein direkt zugängliches PDF; lokal gelesen: {0}": {
-    "en-US": "No directly accessible PDF; read locally: {0}",
-    "de": "Kein direkt zugängliches PDF; lokal gelesen: {0}",
-    "es": "No hay un PDF accesible directamente; leído localmente: {0}"
-  },
-  "PDF-Anhang erkannt, aber Outlook konnte ihn weder lokal bereitstellen noch automatisch speichern.": {
-    "en-US": "PDF attachment detected, but Outlook could not provide a local file or save it automatically.",
-    "de": "PDF-Anhang erkannt, aber Outlook konnte ihn weder lokal bereitstellen noch automatisch speichern.",
-    "es": "Se ha detectado un PDF adjunto, pero Outlook no ha podido proporcionar un archivo local ni guardarlo automáticamente."
-  },
-  "Kein PDF-Anhang erkannt. Extraktion aus dem Mailtext.": {
-    "en-US": "No PDF attachment detected. Extracting from the email text.",
-    "de": "Kein PDF-Anhang erkannt. Extraktion aus dem Mailtext.",
-    "es": "No se ha detectado ningún PDF adjunto. Extrayendo los datos del texto del correo."
-  },
-  "Kein PDF wurde direkt von OpenAI gelesen. Bitte Empfänger, IBAN und Betrag besonders sorgfältig prüfen.": {
-    "en-US": "No PDF was read directly by OpenAI. Please check the recipient, IBAN, and amount especially carefully.",
-    "de": "Kein PDF wurde direkt von OpenAI gelesen. Bitte Empfänger, IBAN und Betrag besonders sorgfältig prüfen.",
-    "es": "OpenAI no ha leído ningún PDF directamente. Comprueba con especial cuidado el destinatario, el IBAN y el importe."
-  },
-  "Die Extraktion ist nicht eindeutig. Bitte die PDF-Rechnung mit den Feldern unten vergleichen.": {
-    "en-US": "The extraction is ambiguous. Please compare the fields below with the PDF invoice.",
-    "de": "Die Extraktion ist nicht eindeutig. Bitte die PDF-Rechnung mit den Feldern unten vergleichen.",
-    "es": "La extracción no es inequívoca. Compara los campos de abajo con la factura en PDF."
-  },
-  "Bitte IBAN, Betrag und Verwendungszweck vor einer Überweisung immer mit der PDF-Rechnung vergleichen.": {
-    "en-US": "Always compare the IBAN, amount, and payment reference with the PDF invoice before making a transfer.",
-    "de": "Bitte IBAN, Betrag und Verwendungszweck vor einer Überweisung immer mit der PDF-Rechnung vergleichen.",
-    "es": "Compara siempre el IBAN, el importe y el concepto con la factura en PDF antes de realizar una transferencia."
-  },
-  "Rechnung auswählen": {
-    "en-US": "Choose invoice",
-    "de": "Rechnung auswählen",
-    "es": "Seleccionar factura"
-  },
-  "Outlook stellt den erkannten PDF-Anhang nicht als Datei bereit. Wähle die Rechnung einmal aus; Replyzen liest sie danach direkt mit OpenAI.": {
-    "en-US": "Outlook is not providing the PDF attachment as a file. Select the invoice; ReplyZen will then read it directly with OpenAI.",
-    "de": "Outlook stellt den erkannten PDF-Anhang nicht als Datei bereit. Wähle die Rechnung einmal aus; ReplyZen liest sie danach direkt mit OpenAI.",
-    "es": "Outlook no está proporcionando el PDF adjunto como archivo. Selecciona la factura; ReplyZen la leerá directamente con OpenAI."
-  },
-  "PDF verwenden": {
-    "en-US": "Use PDF",
-    "de": "PDF verwenden",
-    "es": "Usar PDF"
-  },
-  "Empfänger: {0}": {
-    "en-US": "Recipient: {0}",
-    "de": "Empfänger: {0}",
-    "es": "Destinatario: {0}"
-  },
-  "Betrag: {0} {1}": {
-    "en-US": "Amount: {0} {1}",
-    "de": "Betrag: {0} {1}",
-    "es": "Importe: {0} {1}"
-  },
-  "Verwendungszweck: {0}": {
-    "en-US": "Payment reference: {0}",
-    "de": "Verwendungszweck: {0}",
-    "es": "Concepto: {0}"
-  },
-  "Überweisungsdaten wurden in die Zwischenablage kopiert. Bitte vor der Zahlung im Banking prüfen.": {
-    "en-US": "Transfer details were copied to the clipboard. Check them in your banking app before paying.",
-    "de": "Überweisungsdaten wurden in die Zwischenablage kopiert. Bitte vor der Zahlung im Banking prüfen.",
-    "es": "Los datos de transferencia se han copiado al portapapeles. Compruébalos en tu aplicación bancaria antes de pagar."
-  },
-  "Die Endzeit muss nach der Startzeit liegen.": {
-    "en-US": "The end time must be after the start time.",
-    "de": "Die Endzeit muss nach der Startzeit liegen.",
-    "es": "La hora de finalización debe ser posterior a la de inicio."
-  },
-  "Bitte zuerst einen Kalender auswählen.": {
-    "en-US": "Please select a calendar first.",
-    "de": "Bitte zuerst einen Kalender auswählen.",
-    "es": "Selecciona primero un calendario."
-  },
-  "Termin wird direkt in Google Calendar angelegt": {
-    "en-US": "Creating the event in Google Calendar",
-    "de": "Termin wird direkt in Google Calendar angelegt",
-    "es": "Creando el evento en Google Calendar"
-  },
-  "„{0}“ wurde am {1} direkt in Google Calendar · „{2}“ angelegt.": {
-    "en-US": "“{0}” was added for {1} to Google Calendar · “{2}”.",
-    "de": "„{0}“ wurde am {1} direkt in Google Calendar · „{2}“ angelegt.",
-    "es": "Se ha añadido «{0}» para el {1} a Google Calendar · «{2}»."
-  },
-  "Einmalig Google OAuth einrichten.": {
-    "en-US": "Set up Google OAuth once.",
-    "de": "Einmalig Google OAuth einrichten.",
-    "es": "Configura Google OAuth una vez."
-  },
-  "Google Calendar ist noch nicht verbunden.": {
-    "en-US": "Google Calendar is not connected yet.",
-    "de": "Google Calendar ist noch nicht verbunden.",
-    "es": "Google Calendar aún no está conectado."
-  },
-  "Noch nicht mit Google verbunden.": {
-    "en-US": "Not connected to Google yet.",
-    "de": "Noch nicht mit Google verbunden.",
-    "es": "Aún sin conexión con Google."
-  },
-  "Bitte mit lennard@minubo.com verbinden.": {
-    "en-US": "Please connect with lennard@minubo.com.",
-    "de": "Bitte mit lennard@minubo.com verbinden.",
-    "es": "Conecta con lennard@minubo.com."
-  },
-  "Falsches Google-Konto.": {
-    "en-US": "Wrong Google account.",
-    "de": "Falsches Google-Konto.",
-    "es": "Cuenta de Google incorrecta."
-  },
-  "Verbunden mit {0}": {
-    "en-US": "Connected as {0}",
-    "de": "Verbunden mit {0}",
-    "es": "Conectado como {0}"
-  },
-  "Google-Kalender werden geladen …": {
-    "en-US": "Loading Google calendars…",
-    "de": "Google-Kalender werden geladen …",
-    "es": "Cargando calendarios de Google…"
-  },
-  "Keine beschreibbaren Google-Kalender gefunden.": {
-    "en-US": "No writable Google calendars found.",
-    "de": "Keine beschreibbaren Google-Kalender gefunden.",
-    "es": "No se han encontrado calendarios de Google con permiso de escritura."
-  },
-  "Bitte Client-ID und Client Secret eintragen.": {
-    "en-US": "Enter the client ID and client secret.",
-    "de": "Bitte Client-ID und Client Secret eintragen.",
-    "es": "Introduce el ID y el secreto del cliente."
-  },
-  "Google-Anmeldung wird im Browser geöffnet …": {
-    "en-US": "Opening Google sign-in in your browser…",
-    "de": "Google-Anmeldung wird im Browser geöffnet …",
-    "es": "Abriendo el inicio de sesión de Google en el navegador…"
-  },
-  "Google Calendar wurde getrennt.": {
-    "en-US": "Google Calendar was disconnected.",
-    "de": "Google Calendar wurde getrennt.",
-    "es": "Google Calendar se ha desconectado."
-  },
-  "Bitte erneut mit lennard@minubo.com verbinden.": {
-    "en-US": "Please reconnect with lennard@minubo.com.",
-    "de": "Bitte erneut mit lennard@minubo.com verbinden.",
-    "es": "Vuelve a conectar con lennard@minubo.com."
-  },
-  "Die ursprüngliche Outlook-Mail ist nicht mehr verfügbar. Bitte erneut laden.": {
-    "en-US": "The original Outlook email is no longer available. Please load it again.",
-    "de": "Die ursprüngliche Outlook-Mail ist nicht mehr verfügbar. Bitte erneut laden.",
-    "es": "El correo original de Outlook ya no está disponible. Vuelve a cargarlo."
-  },
-  "Replyzen braucht Bedienungshilfen, um den Text automatisch in Outlook einzusetzen. Der Text wurde in die Zwischenablage kopiert.": {
-    "en-US": "ReplyZen needs Accessibility access to insert text into Outlook automatically. The text was copied to the clipboard.",
-    "de": "ReplyZen braucht Bedienungshilfen, um den Text automatisch in Outlook einzusetzen. Der Text wurde in die Zwischenablage kopiert.",
-    "es": "ReplyZen necesita acceso a Accesibilidad para insertar texto en Outlook automáticamente. El texto se ha copiado al portapapeles."
-  },
-  "Outlook wird aktiviert": {
-    "en-US": "Activating Outlook",
-    "de": "Outlook wird aktiviert",
-    "es": "Activando Outlook"
-  },
-  "Replyzen braucht Bedienungshilfen, um den Forward automatisch in Outlook vorzubereiten. Dein Text wurde in die Zwischenablage kopiert.": {
-    "en-US": "ReplyZen needs Accessibility access to prepare the forward in Outlook. Your text was copied to the clipboard.",
-    "de": "ReplyZen braucht Bedienungshilfen, um die Weiterleitung in Outlook vorzubereiten. Dein Text wurde in die Zwischenablage kopiert.",
-    "es": "ReplyZen necesita acceso a Accesibilidad para preparar el reenvío en Outlook. El texto se ha copiado al portapapeles."
-  },
-  "Outlook Forward wird geöffnet; Thread und Anhänge bleiben erhalten": {
-    "en-US": "Opening the Outlook forward; the thread and attachments are preserved",
-    "de": "Outlook-Weiterleitung wird geöffnet; Verlauf und Anhänge bleiben erhalten",
-    "es": "Abriendo el reenvío en Outlook; se conservan el hilo y los adjuntos"
-  },
-  "Der Forward wurde in Outlook geöffnet, aber Replyzen konnte den Text nicht automatisch über dem Thread einsetzen. Der Text liegt in der Zwischenablage.": {
-    "en-US": "The forward opened in Outlook, but ReplyZen could not insert the text above the thread. The text is on the clipboard.",
-    "de": "Die Weiterleitung wurde in Outlook geöffnet, aber ReplyZen konnte den Text nicht über dem Verlauf einsetzen. Der Text liegt in der Zwischenablage.",
-    "es": "Se ha abierto el reenvío en Outlook, pero ReplyZen no ha podido insertar el texto encima del hilo. El texto está en el portapapeles."
-  },
-  "Microsoft Outlook läuft nicht. Der Mailtext wurde in die Zwischenablage kopiert.": {
-    "en-US": "Microsoft Outlook is not running. The email text was copied to the clipboard.",
-    "de": "Microsoft Outlook läuft nicht. Der Mailtext wurde in die Zwischenablage kopiert.",
-    "es": "Microsoft Outlook no está abierto. El texto del correo se ha copiado al portapapeles."
-  },
-  "Replyzen braucht Bedienungshilfen, um automatisch eine neue Outlook-Mail zu befüllen. Der Mailtext wurde in die Zwischenablage kopiert.": {
-    "en-US": "ReplyZen needs Accessibility access to fill a new Outlook email automatically. The text was copied to the clipboard.",
-    "de": "ReplyZen braucht Bedienungshilfen, um automatisch eine neue Outlook-Mail zu befüllen. Der Mailtext wurde in die Zwischenablage kopiert.",
-    "es": "ReplyZen necesita acceso a Accesibilidad para rellenar un nuevo correo en Outlook automáticamente. El texto se ha copiado al portapapeles."
-  },
-  "Neue Outlook-Mail wird geöffnet und befüllt": {
-    "en-US": "Opening and filling a new Outlook email",
-    "de": "Neue Outlook-Mail wird geöffnet und befüllt",
-    "es": "Abriendo y rellenando un nuevo correo en Outlook"
-  },
-  "Der Mailtext konnte nicht automatisch eingesetzt werden. Er liegt in der Zwischenablage.": {
-    "en-US": "The email text could not be inserted automatically. It is on the clipboard.",
-    "de": "Der Mailtext konnte nicht automatisch eingesetzt werden. Er liegt in der Zwischenablage.",
-    "es": "No se ha podido insertar el texto automáticamente. Está en el portapapeles."
-  },
-  "Der API-Key konnte nicht im macOS-Schlüsselbund gespeichert werden.": {
-    "en-US": "The API key could not be saved to the macOS Keychain.",
-    "de": "Der API-Key konnte nicht im macOS-Schlüsselbund gespeichert werden.",
-    "es": "No se ha podido guardar la clave de API en el llavero de macOS."
-  },
-  "Microsoft Outlook läuft nicht.": {
-    "en-US": "Microsoft Outlook is not running.",
-    "de": "Microsoft Outlook läuft nicht.",
-    "es": "Microsoft Outlook no está abierto."
-  },
-  "Ich finde kein Outlook-Fenster. Öffne die Mail bitte sichtbar in Outlook.": {
-    "en-US": "No Outlook window found. Please open the email visibly in Outlook.",
-    "de": "Ich finde kein Outlook-Fenster. Öffne die Mail bitte sichtbar in Outlook.",
-    "es": "No se ha encontrado ninguna ventana de Outlook. Abre el correo de forma visible en Outlook."
-  },
-  "Ich konnte in der geöffneten Outlook-Mail keinen lesbaren Mailtext finden.": {
-    "en-US": "No readable email text was found in the open Outlook email.",
-    "de": "Ich konnte in der geöffneten Outlook-Mail keinen lesbaren Mailtext finden.",
-    "es": "No se ha encontrado texto legible en el correo abierto en Outlook."
-  },
-  "Einstellungen": {
-    "en-US": "Settings",
-    "de": "Einstellungen",
-    "es": "Configuración"
-  },
-  "App-Sprache": {
-    "en-US": "App language",
-    "de": "App-Sprache",
-    "es": "Idioma de la aplicación"
-  },
-  "Gilt für die gesamte Oberfläche. Die Sprache deiner E-Mails bleibt unabhängig davon.": {
-    "en-US": "Applies to the entire interface. Your email language is a separate setting.",
-    "de": "Gilt für die gesamte Oberfläche. Die Sprache deiner E-Mails bleibt unabhängig davon.",
-    "es": "Se aplica a toda la interfaz. El idioma de tus correos se configura por separado."
-  },
-  "Die Auswahl wird automatisch gespeichert.": {
-    "en-US": "Your choice is saved automatically.",
-    "de": "Die Auswahl wird automatisch gespeichert.",
-    "es": "Tu elección se guarda automáticamente."
-  },
-  "Einstellungen…": {
-    "en-US": "Settings…",
-    "de": "Einstellungen…",
-    "es": "Configuración…"
-  },
-  "Einstellungen und Hinweise": {
-    "en-US": "Settings and help",
-    "de": "Einstellungen und Hinweise",
-    "es": "Configuración y ayuda"
-  },
-  "Öffnen in Outlook: ⌃⌥R": {
-    "en-US": "Open in Outlook: ⌃⌥R",
-    "de": "Öffnen in Outlook: ⌃⌥R",
-    "es": "Abrir en Outlook: ⌃⌥R"
-  },
-  "Der Editor-Zoom verändert nur die Anzeige. Mailtext wird weiterhin in Calibri Light, 10,5 pt eingesetzt.": {
-    "en-US": "Editor zoom only changes the display. Email text is still inserted in Calibri Light, 10.5 pt.",
-    "de": "Der Editor-Zoom verändert nur die Anzeige. Mailtext wird weiterhin in Calibri Light, 10,5 pt eingesetzt.",
-    "es": "El zoom solo cambia la visualización. El texto del correo se sigue insertando en Calibri Light de 10,5 pt."
-  },
-  "API-Key ändern …": {
-    "en-US": "Change API key…",
-    "de": "API-Key ändern …",
-    "es": "Cambiar clave de API…"
-  },
-  "Bedienungshilfen öffnen …": {
-    "en-US": "Open Accessibility settings…",
-    "de": "Bedienungshilfen öffnen …",
-    "es": "Abrir ajustes de accesibilidad…"
-  },
-  "Updates und weitere Optionen findest du im ReplyZen-Menü in der macOS-Menüleiste.": {
-    "en-US": "Find updates and more options in the ReplyZen menu in the macOS menu bar.",
-    "de": "Updates und weitere Optionen findest du im ReplyZen-Menü in der macOS-Menüleiste.",
-    "es": "Encontrarás las actualizaciones y otras opciones en el menú de ReplyZen de la barra de menús de macOS."
-  },
-  "Entwurf prüfen": {
-    "en-US": "Review draft",
-    "de": "Entwurf prüfen",
-    "es": "Revisar borrador"
-  },
-  "Termin prüfen": {
-    "en-US": "Review event",
-    "de": "Termin prüfen",
-    "es": "Revisar evento"
-  },
-  "Daten prüfen": {
-    "en-US": "Review details",
-    "de": "Daten prüfen",
-    "es": "Revisar datos"
-  },
-  "Bereit": {
-    "en-US": "Ready",
-    "de": "Bereit",
-    "es": "Listo"
-  },
-  "Mail AI": {
-    "en-US": "AI email assistant",
-    "de": "KI-Mailassistent",
-    "es": "Asistente de correo con IA"
-  },
-  "Schließen": {
-    "en-US": "Close",
-    "de": "Schließen",
-    "es": "Cerrar"
-  },
-  "Zurück": {
-    "en-US": "Back",
-    "de": "Zurück",
-    "es": "Volver"
-  },
-  "Abbrechen": {
-    "en-US": "Cancel",
-    "de": "Abbrechen",
-    "es": "Cancelar"
-  },
-  "Speichern": {
-    "en-US": "Save",
-    "de": "Speichern",
-    "es": "Guardar"
-  },
-  "Fertig": {
-    "en-US": "Done",
-    "de": "Fertig",
-    "es": "Listo"
-  },
-  "OK": {
-    "en-US": "OK",
-    "de": "OK",
-    "es": "Aceptar"
-  },
-  "Name": {
-    "en-US": "Name",
-    "de": "Name",
-    "es": "Nombre"
-  },
-  "Titel": {
-    "en-US": "Title",
-    "de": "Titel",
-    "es": "Título"
-  },
-  "Start": {
-    "en-US": "Start",
-    "de": "Start",
-    "es": "Inicio"
-  },
-  "Ende": {
-    "en-US": "End",
-    "de": "Ende",
-    "es": "Fin"
-  },
-  "Kalender": {
-    "en-US": "Calendar",
-    "de": "Kalender",
-    "es": "Calendario"
-  },
-  "Empfänger": {
-    "en-US": "Recipient",
-    "de": "Empfänger",
-    "es": "Destinatario"
-  },
-  "Betrag": {
-    "en-US": "Amount",
-    "de": "Betrag",
-    "es": "Importe"
-  },
-  "Währung": {
-    "en-US": "Currency",
-    "de": "Währung",
-    "es": "Moneda"
-  },
-  "Verwendungszweck": {
-    "en-US": "Payment reference",
-    "de": "Verwendungszweck",
-    "es": "Concepto de pago"
-  },
-  "BIC (optional)": {
-    "en-US": "BIC (optional)",
-    "de": "BIC (optional)",
-    "es": "BIC (opcional)"
-  },
-  "0,00": {
-    "en-US": "0.00",
-    "de": "0,00",
-    "es": "0,00"
-  },
-  "Antwortvorschlag": {
-    "en-US": "Suggested reply",
-    "de": "Antwortvorschlag",
-    "es": "Respuesta sugerida"
-  },
-  "Neue Mail": {
-    "en-US": "New email",
-    "de": "Neue Mail",
-    "es": "Nuevo correo"
-  },
-  "Weiterleitung": {
-    "en-US": "Forward",
-    "de": "Weiterleitung",
-    "es": "Reenvío"
-  },
-  "Termin": {
-    "en-US": "Event",
-    "de": "Termin",
-    "es": "Evento"
-  },
-  "Überweisung": {
-    "en-US": "Bank transfer",
-    "de": "Überweisung",
-    "es": "Transferencia"
-  },
-  "Antwort erstellen": {
-    "en-US": "Create reply",
-    "de": "Antwort erstellen",
-    "es": "Crear respuesta"
-  },
-  "Mail erstellen": {
-    "en-US": "Create email",
-    "de": "Mail erstellen",
-    "es": "Crear correo"
-  },
-  "Forward erstellen": {
-    "en-US": "Create forward",
-    "de": "Weiterleitung erstellen",
-    "es": "Preparar reenvío"
-  },
-  "Termin erstellen": {
-    "en-US": "Create event",
-    "de": "Termin erstellen",
-    "es": "Crear evento"
-  },
-  "Überweisung extrahieren": {
-    "en-US": "Extract transfer details",
-    "de": "Überweisung extrahieren",
-    "es": "Extraer datos de transferencia"
-  },
-  "Neue Mail in Outlook": {
-    "en-US": "New email in Outlook",
-    "de": "Neue Mail in Outlook",
-    "es": "Nuevo correo en Outlook"
-  },
-  "In Outlook einsetzen": {
-    "en-US": "Insert into Outlook",
-    "de": "In Outlook einsetzen",
-    "es": "Insertar en Outlook"
-  },
-  "Überweisungsdaten kopieren": {
-    "en-US": "Copy transfer details",
-    "de": "Überweisungsdaten kopieren",
-    "es": "Copiar datos de transferencia"
-  },
-  "Im Kalender anlegen": {
-    "en-US": "Add to calendar",
-    "de": "Im Kalender anlegen",
-    "es": "Añadir al calendario"
-  },
-  "Deine Anweisung": {
-    "en-US": "Your instructions",
-    "de": "Deine Anweisung",
-    "es": "Tus instrucciones"
-  },
-  "Anweisung für den Mailentwurf": {
-    "en-US": "Instructions for the email draft",
-    "de": "Anweisung für den Mailentwurf",
-    "es": "Instrucciones para el borrador del correo"
-  },
-  "Bearbeitbarer Mailentwurf": {
-    "en-US": "Editable email draft",
-    "de": "Bearbeitbarer Mailentwurf",
-    "es": "Borrador de correo editable"
-  },
-  "Versendet wird erst in Outlook.": {
-    "en-US": "You send the email in Outlook.",
-    "de": "Versendet wird erst in Outlook.",
-    "es": "El correo se envía desde Outlook."
-  },
-  "Vor dem Übernehmen prüfen.": {
-    "en-US": "Review before applying.",
-    "de": "Vor dem Übernehmen prüfen.",
-    "es": "Revisa los datos antes de continuar."
-  },
-  "Prüfen, einsetzen, selbst senden.": {
-    "en-US": "Review, insert, then send yourself.",
-    "de": "Prüfen, einsetzen, selbst senden.",
-    "es": "Revisa, inserta y envía tú mismo."
-  },
-  "Lädt …": {
-    "en-US": "Loading…",
-    "de": "Lädt …",
-    "es": "Cargando…"
-  },
-  "Mail erkannt": {
-    "en-US": "Email detected",
-    "de": "Mail erkannt",
-    "es": "Correo detectado"
-  },
-  "Ohne Mail-Kontext": {
-    "en-US": "No email context",
-    "de": "Ohne Mail-Kontext",
-    "es": "Sin contexto de correo"
-  },
-  "Outlook-Mail erneut lesen": {
-    "en-US": "Read Outlook email again",
-    "de": "Outlook-Mail erneut lesen",
-    "es": "Volver a leer el correo de Outlook"
-  },
-  "Die geöffnete Outlook-Mail dient als Kontext.": {
-    "en-US": "The open Outlook email provides context.",
-    "de": "Die geöffnete Outlook-Mail dient als Kontext.",
-    "es": "El correo abierto en Outlook aporta el contexto."
-  },
-  "Neue Mail ohne Kontext möglich. Für Reply oder Forward zuerst eine Outlook-Mail öffnen.": {
-    "en-US": "You can create a new email without context. To reply or forward, open an Outlook email first.",
-    "de": "Neue Mail ohne Kontext möglich. Zum Antworten oder Weiterleiten zuerst eine Outlook-Mail öffnen.",
-    "es": "Puedes crear un correo sin contexto. Para responder o reenviar, abre primero un correo en Outlook."
-  },
-  "Ton": {
-    "en-US": "Tone",
-    "de": "Ton",
-    "es": "Tono"
-  },
-  "Ton des Mailentwurfs": {
-    "en-US": "Email draft tone",
-    "de": "Ton des Mailentwurfs",
-    "es": "Tono del borrador"
-  },
-  "Compact": {
-    "en-US": "Compact",
-    "de": "Kompakt",
-    "es": "Breve"
-  },
-  "So kurz wie möglich formulieren": {
-    "en-US": "Keep it as short as possible",
-    "de": "So kurz wie möglich formulieren",
-    "es": "Redactar lo más breve posible"
-  },
-  "Ausgabesprache": {
-    "en-US": "Output language",
-    "de": "Ausgabesprache",
-    "es": "Idioma del texto generado"
-  },
-  "Deutsch": {
-    "en-US": "German",
-    "de": "Deutsch",
-    "es": "Alemán"
-  },
-  "US English": {
-    "en-US": "US English",
-    "de": "US-Englisch",
-    "es": "Inglés de EE. UU."
-  },
-  "Reminder": {
-    "en-US": "Reminder",
-    "de": "Erinnerung",
-    "es": "Recordatorio"
-  },
-  "Reminder-Tag und Uhrzeit ändern": {
-    "en-US": "Change reminder day and time",
-    "de": "Tag und Uhrzeit der Erinnerung ändern",
-    "es": "Cambiar día y hora del recordatorio"
-  },
-  "Reminder-Tag": {
-    "en-US": "Reminder day",
-    "de": "Erinnerungstag",
-    "es": "Día del recordatorio"
-  },
-  "Tag": {
-    "en-US": "Day",
-    "de": "Tag",
-    "es": "Día"
-  },
-  "Uhrzeit": {
-    "en-US": "Time",
-    "de": "Uhrzeit",
-    "es": "Hora"
-  },
-  "Mo": {
-    "en-US": "Mon",
-    "de": "Mo",
-    "es": "Lun"
-  },
-  "Di": {
-    "en-US": "Tue",
-    "de": "Di",
-    "es": "Mar"
-  },
-  "Mi": {
-    "en-US": "Wed",
-    "de": "Mi",
-    "es": "Mié"
-  },
-  "Do": {
-    "en-US": "Thu",
-    "de": "Do",
-    "es": "Jue"
-  },
-  "Fr": {
-    "en-US": "Fri",
-    "de": "Fr",
-    "es": "Vie"
-  },
-  "Sa": {
-    "en-US": "Sat",
-    "de": "Sa",
-    "es": "Sáb"
-  },
-  "So": {
-    "en-US": "Sun",
-    "de": "So",
-    "es": "Dom"
-  },
-  "BCC: {0}": {
-    "en-US": "BCC: {0}",
-    "de": "BCC: {0}",
-    "es": "CCO: {0}"
-  },
-  "Termin aus Mail": {
-    "en-US": "Event from email",
-    "de": "Termin aus Mail",
-    "es": "Evento a partir del correo"
-  },
-  "Überweisung aus Mail + PDF": {
-    "en-US": "Transfer from email + PDF",
-    "de": "Überweisung aus Mail + PDF",
-    "es": "Transferencia a partir del correo y PDF"
-  },
-  "Titel, Kurzbeschreibung und erkennbaren Zeitpunkt aus der Mail übernehmen. Den Zielkalender wählst du anschließend aus.": {
-    "en-US": "Extract a title, short description, and clear date and time from the email. Choose the destination calendar afterward.",
-    "de": "Titel, Kurzbeschreibung und erkennbaren Zeitpunkt aus der Mail übernehmen. Den Zielkalender wählst du anschließend aus.",
-    "es": "Extrae el título, una breve descripción y la fecha y hora indicadas en el correo. Después podrás elegir el calendario de destino."
-  },
-  "Empfänger, IBAN, Betrag und Verwendungszweck aus dem PDF-Anhang auslesen. Alle Angaben bleiben vor dem Kopieren bearbeitbar. Es wird keine Überweisung ausgelöst.": {
-    "en-US": "Extract the recipient, IBAN, amount, and payment reference from the PDF attachment. You can edit all details before copying. No transfer is initiated.",
-    "de": "Empfänger, IBAN, Betrag und Verwendungszweck aus dem PDF-Anhang auslesen. Alle Angaben bleiben vor dem Kopieren bearbeitbar. Es wird keine Überweisung ausgelöst.",
-    "es": "Extrae el destinatario, IBAN, importe y concepto del PDF adjunto. Puedes editar todos los datos antes de copiarlos. No se realiza ninguna transferencia."
-  },
-  "Betreff": {
-    "en-US": "Subject",
-    "de": "Betreff",
-    "es": "Asunto"
-  },
-  "Reply": {
-    "en-US": "Reply",
-    "de": "Antworten",
-    "es": "Responder"
-  },
-  "New Mail": {
-    "en-US": "New email",
-    "de": "Neue Mail",
-    "es": "Nuevo correo"
-  },
-  "Forward": {
-    "en-US": "Forward",
-    "de": "Weiterleiten",
-    "es": "Reenviar"
-  },
-  "New": {
-    "en-US": "New email",
-    "de": "Neue Mail",
-    "es": "Nuevo correo"
-  },
-  "Reply All": {
-    "en-US": "Reply all",
-    "de": "Allen antworten",
-    "es": "Responder a todos"
-  },
-  "Cancel": {
-    "en-US": "Decline",
-    "de": "Absagen",
-    "es": "Rechazar"
-  },
-  "Calendar": {
-    "en-US": "Calendar",
-    "de": "Kalender",
-    "es": "Calendario"
-  },
-  "Payment": {
-    "en-US": "Payment",
-    "de": "Überweisung",
-    "es": "Pago"
-  },
-  "Friendly": {
-    "en-US": "Friendly",
-    "de": "Freundlich",
-    "es": "Amable"
-  },
-  "Direct": {
-    "en-US": "Direct",
-    "de": "Direkt",
-    "es": "Directo"
-  },
-  "Professional": {
-    "en-US": "Professional",
-    "de": "Professionell",
-    "es": "Profesional"
-  },
-  "Formal": {
-    "en-US": "Formal",
-    "de": "Förmlich",
-    "es": "Formal"
-  },
-  "Casual": {
-    "en-US": "Casual",
-    "de": "Locker",
-    "es": "Informal"
-  },
-  "Neutral": {
-    "en-US": "Neutral",
-    "de": "Neutral",
-    "es": "Neutro"
-  },
-  "Fett": {
-    "en-US": "Bold",
-    "de": "Fett",
-    "es": "Negrita"
-  },
-  "Kursiv": {
-    "en-US": "Italic",
-    "de": "Kursiv",
-    "es": "Cursiva"
-  },
-  "Aufzählung": {
-    "en-US": "Bulleted list",
-    "de": "Aufzählung",
-    "es": "Lista con viñetas"
-  },
-  "Nummerierte Liste": {
-    "en-US": "Numbered list",
-    "de": "Nummerierte Liste",
-    "es": "Lista numerada"
-  },
-  "Formatierung entfernen": {
-    "en-US": "Clear formatting",
-    "de": "Formatierung entfernen",
-    "es": "Quitar formato"
-  },
-  "Nur Anzeige, kein Einfluss auf Outlook": {
-    "en-US": "Display only; does not affect Outlook",
-    "de": "Nur Anzeige, kein Einfluss auf Outlook",
-    "es": "Solo visualización; no afecta a Outlook"
-  },
-  "Editor-Zoom. Outlook erhält unverändert Calibri Light 10,5 pt.": {
-    "en-US": "Editor zoom. Outlook still receives Calibri Light, 10.5 pt.",
-    "de": "Editor-Zoom. Outlook erhält unverändert Calibri Light 10,5 pt.",
-    "es": "Zoom del editor. Outlook sigue recibiendo Calibri Light de 10,5 pt."
-  },
-  "Editor-Zoom": {
-    "en-US": "Editor zoom",
-    "de": "Editor-Zoom",
-    "es": "Zoom del editor"
-  },
-  "{0} Prozent": {
-    "en-US": "{0} percent",
-    "de": "{0} Prozent",
-    "es": "{0} por ciento"
-  },
-  "Einen Moment": {
-    "en-US": "One moment",
-    "de": "Einen Moment",
-    "es": "Un momento"
-  },
-  "Update wird installiert": {
-    "en-US": "Installing update",
-    "de": "Update wird installiert",
-    "es": "Instalando actualización"
-  },
-  "Neue Version wird geladen und eingerichtet …": {
-    "en-US": "Downloading and setting up the new version…",
-    "de": "Neue Version wird geladen und eingerichtet …",
-    "es": "Descargando y configurando la nueva versión…"
-  },
-  "Fast fertig": {
-    "en-US": "Almost done",
-    "de": "Fast fertig",
-    "es": "Casi listo"
-  },
-  "ReplyZen läuft": {
-    "en-US": "ReplyZen is running",
-    "de": "ReplyZen läuft",
-    "es": "ReplyZen está funcionando"
-  },
-  "Bereit in Outlook · ⌃⌥R oder ✨ AI": {
-    "en-US": "Ready in Outlook · ⌃⌥R or ✨ AI",
-    "de": "Bereit in Outlook · ⌃⌥R oder ✨ AI",
-    "es": "Listo en Outlook · ⌃⌥R o ✨ AI"
-  },
-  "Witz zum Start": {
-    "en-US": "A little humor to start",
-    "de": "Witz zum Start",
-    "es": "Un poco de humor para empezar"
-  },
-  "ReplyZen öffnen": {
-    "en-US": "Open ReplyZen",
-    "de": "ReplyZen öffnen",
-    "es": "Abrir ReplyZen"
-  },
-  "Mail, Termin oder Überweisung, direkt aus Outlook.": {
-    "en-US": "Email, events, and transfer details, directly from Outlook.",
-    "de": "Mail, Termin oder Überweisung, direkt aus Outlook.",
-    "es": "Correos, eventos y datos de transferencia, directamente desde Outlook."
-  },
-  "Ich erstelle deine Antwort …": {
-    "en-US": "Creating your reply…",
-    "de": "Ich erstelle deine Antwort …",
-    "es": "Creando tu respuesta…"
-  },
-  "Ich formuliere deine neue Mail …": {
-    "en-US": "Drafting your new email…",
-    "de": "Ich formuliere deine neue Mail …",
-    "es": "Redactando tu nuevo correo…"
-  },
-  "Ich bereite die Weiterleitung vor …": {
-    "en-US": "Preparing your forward…",
-    "de": "Ich bereite die Weiterleitung vor …",
-    "es": "Preparando el reenvío…"
-  },
-  "Ich erstelle einen kurzen Termintitel und erkenne den Zeitpunkt …": {
-    "en-US": "Creating a short event title and identifying the date and time…",
-    "de": "Ich erstelle einen kurzen Termintitel und erkenne den Zeitpunkt …",
-    "es": "Creando un título breve para el evento e identificando la fecha y hora…"
-  },
-  "Ich lese den PDF-Anhang und extrahiere die Überweisungsdaten …": {
-    "en-US": "Reading the PDF attachment and extracting transfer details…",
-    "de": "Ich lese den PDF-Anhang und extrahiere die Überweisungsdaten …",
-    "es": "Leyendo el PDF adjunto y extrayendo los datos de transferencia…"
-  },
-  "Ich öffne eine neue Outlook-Mail und setze den Text ein …": {
-    "en-US": "Opening a new Outlook email and inserting your text…",
-    "de": "Ich öffne eine neue Outlook-Mail und setze den Text ein …",
-    "es": "Abriendo un nuevo correo en Outlook e insertando tu texto…"
-  },
-  "Ich öffne die Outlook-Weiterleitung und setze deinen Text über den Thread …": {
-    "en-US": "Opening the Outlook forward and inserting your text above the thread…",
-    "de": "Ich öffne die Outlook-Weiterleitung und setze deinen Text über den Thread …",
-    "es": "Abriendo el reenvío en Outlook e insertando tu texto encima del hilo…"
-  },
-  "Ich setze die Antwort in Outlook ein …": {
-    "en-US": "Inserting your reply into Outlook…",
-    "de": "Ich setze die Antwort in Outlook ein …",
-    "es": "Insertando tu respuesta en Outlook…"
-  },
-  "Fast fertig …": {
-    "en-US": "Almost done…",
-    "de": "Fast fertig …",
-    "es": "Casi listo…"
-  },
-  "Überweisung prüfen": {
-    "en-US": "Review transfer details",
-    "de": "Überweisung prüfen",
-    "es": "Revisar datos de transferencia"
-  },
-  "Kurzer Termintitel": {
-    "en-US": "Short event title",
-    "de": "Kurzer Termintitel",
-    "es": "Título breve del evento"
-  },
-  "Worum geht es?": {
-    "en-US": "What is it about?",
-    "de": "Worum geht es?",
-    "es": "¿De qué se trata?"
-  },
-  "Zeitzone: CET / Europe-Berlin": {
-    "en-US": "Time zone: Europe/Berlin (CET/CEST)",
-    "de": "Zeitzone: Europe/Berlin (MEZ/MESZ)",
-    "es": "Zona horaria: Europe/Berlin (CET/CEST)"
-  },
-  "Einmalig Google OAuth einrichten: Google Calendar API aktivieren und einen OAuth-Client vom Typ „Desktop-App“ erstellen. Client-ID und Client Secret hier einfügen.": {
-    "en-US": "Set up Google OAuth once: enable the Google Calendar API and create an OAuth client of type Desktop app. Enter the client ID and client secret here.",
-    "de": "Einmalig Google OAuth einrichten: Google Calendar API aktivieren und einen OAuth-Client vom Typ „Desktop-App“ erstellen. Client-ID und Client Secret hier einfügen.",
-    "es": "Configura Google OAuth una vez: activa la API de Google Calendar y crea un cliente OAuth de tipo Aplicación de escritorio. Introduce aquí el ID y el secreto del cliente."
-  },
-  "Google OAuth Client-ID": {
-    "en-US": "Google OAuth client ID",
-    "de": "Google OAuth Client-ID",
-    "es": "ID de cliente de Google OAuth"
-  },
-  "Google OAuth Client Secret": {
-    "en-US": "Google OAuth client secret",
-    "de": "Google OAuth Client Secret",
-    "es": "Secreto de cliente de Google OAuth"
-  },
-  "Google Cloud öffnen": {
-    "en-US": "Open Google Cloud",
-    "de": "Google Cloud öffnen",
-    "es": "Abrir Google Cloud"
-  },
-  "Verbinde …": {
-    "en-US": "Connecting…",
-    "de": "Verbinde …",
-    "es": "Conectando…"
-  },
-  "Speichern & Google verbinden": {
-    "en-US": "Save and connect Google",
-    "de": "Speichern & Google verbinden",
-    "es": "Guardar y conectar Google"
-  },
-  "Noch nicht verbunden.": {
-    "en-US": "Not connected yet.",
-    "de": "Noch nicht verbunden.",
-    "es": "Aún sin conexión."
-  },
-  "OAuth-Zugang ändern": {
-    "en-US": "Change OAuth credentials",
-    "de": "OAuth-Zugang ändern",
-    "es": "Cambiar credenciales de OAuth"
-  },
-  "Mit Google verbinden": {
-    "en-US": "Connect to Google",
-    "de": "Mit Google verbinden",
-    "es": "Conectar con Google"
-  },
-  "Verbunden: {0}": {
-    "en-US": "Connected: {0}",
-    "de": "Verbunden: {0}",
-    "es": "Conectado: {0}"
-  },
-  "Trennen": {
-    "en-US": "Disconnect",
-    "de": "Trennen",
-    "es": "Desconectar"
-  },
-  "Es wird keine Zahlung ausgelöst.": {
-    "en-US": "No payment is initiated.",
-    "de": "Es wird keine Zahlung ausgelöst.",
-    "es": "No se realiza ningún pago."
-  },
-  "Zeit und Zielkalender prüfen.": {
-    "en-US": "Check the time and destination calendar.",
-    "de": "Zeit und Zielkalender prüfen.",
-    "es": "Comprueba la hora y el calendario de destino."
-  },
-  "Der Text wurde in eine neue Outlook-Mail eingesetzt. Bitte Empfänger und Betreff ergänzen, prüfen und selbst senden.": {
-    "en-US": "Your text was inserted into a new Outlook email. Add the recipient and subject, review it, and send it yourself.",
-    "de": "Der Text wurde in eine neue Outlook-Mail eingesetzt. Bitte Empfänger und Betreff ergänzen, prüfen und selbst senden.",
-    "es": "El texto se ha insertado en un nuevo correo de Outlook. Añade el destinatario y el asunto, revísalo y envíalo tú mismo."
-  },
-  "Die Antwort ist in Outlook eingesetzt. Bitte noch kurz prüfen und selbst senden.": {
-    "en-US": "Your reply is in Outlook. Please review it and send it yourself.",
-    "de": "Die Antwort ist in Outlook eingesetzt. Bitte noch kurz prüfen und selbst senden.",
-    "es": "La respuesta está en Outlook. Revísala y envíala tú mismo."
-  },
-  "Einmalige Berechtigung": {
-    "en-US": "One-time permission",
-    "de": "Einmalige Berechtigung",
-    "es": "Permiso inicial"
-  },
-  "Für das Lesen aus Outlook und das automatische Einsetzen braucht Replyzen Zugriff auf Bedienungshilfen. New Mail erstellen kannst du auch ohne Mail-Kontext.": {
-    "en-US": "ReplyZen needs Accessibility access to read from Outlook and insert text automatically. You can create a new email without email context.",
-    "de": "Zum Lesen aus Outlook und automatischen Einsetzen braucht ReplyZen Zugriff auf Bedienungshilfen. Neue Mails kannst du auch ohne Mail-Kontext erstellen.",
-    "es": "ReplyZen necesita acceso a Accesibilidad para leer Outlook e insertar texto automáticamente. Puedes crear un correo nuevo sin contexto de correo."
-  },
-  "Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen → Replyzen einschalten.": {
-    "en-US": "System Settings → Privacy & Security → Accessibility → enable ReplyZen.",
-    "de": "Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen → ReplyZen einschalten.",
-    "es": "Ajustes del Sistema → Privacidad y seguridad → Accesibilidad → activa ReplyZen."
-  },
-  "Systemeinstellungen öffnen": {
-    "en-US": "Open System Settings",
-    "de": "Systemeinstellungen öffnen",
-    "es": "Abrir Ajustes del Sistema"
-  },
-  "Zurück zu Replyzen": {
-    "en-US": "Back to ReplyZen",
-    "de": "Zurück zu ReplyZen",
-    "es": "Volver a ReplyZen"
-  },
-  "OpenAI API-Key": {
-    "en-US": "OpenAI API key",
-    "de": "OpenAI API-Key",
-    "es": "Clave de API de OpenAI"
-  },
-  "Der Key wird einmalig im macOS-Schlüsselbund gespeichert.": {
-    "en-US": "The key is stored in your macOS Keychain.",
-    "de": "Der Key wird einmalig im macOS-Schlüsselbund gespeichert.",
-    "es": "La clave se guarda en el llavero de macOS."
-  },
-  "Das hat nicht geklappt": {
-    "en-US": "Something went wrong",
-    "de": "Das hat nicht geklappt",
-    "es": "Algo salió mal"
-  },
-  "Commands": {
-    "en-US": "Commands",
-    "de": "Befehle",
-    "es": "Comandos"
-  },
-  "Name, Prompt und Tone festlegen. Die Sprache steuerst du weiterhin über 🇩🇪 / 🇺🇸.": {
-    "en-US": "Set the name, instructions, and tone. Choose the email language separately.",
-    "de": "Name, Anweisung und Ton festlegen. Die E-Mail-Sprache wählst du separat.",
-    "es": "Define el nombre, las instrucciones y el tono. El idioma del correo se selecciona por separado."
-  },
   "+ Add Command": {
-    "en-US": "+ Add command",
     "de": "+ Befehl hinzufügen",
+    "en-US": "+ Add command",
     "es": "+ Añadir comando"
   },
-  "Command name": {
-    "en-US": "Command name",
-    "de": "Befehlsname",
-    "es": "Nombre del comando"
+  "0,00": {
+    "de": "0,00",
+    "en-US": "0.00",
+    "es": "0,00"
   },
-  "Prompt": {
-    "en-US": "Instructions",
-    "de": "Anweisung",
-    "es": "Instrucciones"
+  "API-Key ändern …": {
+    "de": "API-Key ändern …",
+    "en-US": "Change API key…",
+    "es": "Cambiar clave de API…"
   },
-  "Tone": {
-    "en-US": "Tone",
-    "de": "Ton",
-    "es": "Tono"
+  "API-Key ändern…": {
+    "de": "API-Key ändern…",
+    "en-US": "Change API key…",
+    "es": "Cambiar clave de API…"
   },
-  "Delete": {
-    "en-US": "Delete",
-    "de": "Löschen",
-    "es": "Eliminar"
+  "Abbrechen": {
+    "de": "Abbrechen",
+    "en-US": "Cancel",
+    "es": "Cancelar"
   },
-  "Save": {
-    "en-US": "Save",
-    "de": "Speichern",
-    "es": "Guardar"
-  },
-  "Reset Defaults": {
-    "en-US": "Reset defaults",
-    "de": "Standardeinstellungen wiederherstellen",
-    "es": "Restablecer valores predeterminados"
-  },
-  "Done": {
-    "en-US": "Done",
-    "de": "Fertig",
-    "es": "Listo"
-  },
-  "Anfrage fehlgeschlagen. Technische Details: {0}": {
-    "en-US": "The request failed. Technical details: {0}",
-    "de": "Anfrage fehlgeschlagen. Technische Details: {0}",
-    "es": "La solicitud ha fallado. Detalles técnicos: {0}"
-  },
-  "Weitere technische Details": {
-    "en-US": "More technical details",
-    "de": "Weitere technische Details",
-    "es": "Más detalles técnicos"
-  },
-  "Kopieren": {
-    "en-US": "Copy",
-    "de": "Kopieren",
-    "es": "Copiar"
-  },
-  "Ausschneiden": {
-    "en-US": "Cut",
-    "de": "Ausschneiden",
-    "es": "Cortar"
-  },
-  "Einsetzen": {
-    "en-US": "Paste",
-    "de": "Einsetzen",
-    "es": "Pegar"
+  "Absage fehlgeschlagen": {
+    "de": "Absage fehlgeschlagen",
+    "en-US": "Could not create decline",
+    "es": "No se ha podido crear la respuesta de rechazo"
   },
   "Alles auswählen": {
-    "en-US": "Select all",
     "de": "Alles auswählen",
+    "en-US": "Select all",
     "es": "Seleccionar todo"
   },
-  "Widerrufen": {
-    "en-US": "Undo",
-    "de": "Widerrufen",
-    "es": "Deshacer"
+  "An ChatGPT senden": {
+    "de": "An ChatGPT senden",
+    "en-US": "Send to ChatGPT",
+    "es": "Enviar a ChatGPT"
   },
-  "Wiederholen": {
-    "en-US": "Redo",
-    "de": "Wiederholen",
-    "es": "Rehacer"
+  "Anfrage fehlgeschlagen. Technische Details: {0}": {
+    "de": "Anfrage fehlgeschlagen. Technische Details: {0}",
+    "en-US": "The request failed. Technical details: {0}",
+    "es": "La solicitud ha fallado. Detalles técnicos: {0}"
+  },
+  "Antwort erstellen": {
+    "de": "Antwort erstellen",
+    "en-US": "Create reply",
+    "es": "Crear respuesta"
+  },
+  "Antwortvorschlag": {
+    "de": "Antwortvorschlag",
+    "en-US": "Suggested reply",
+    "es": "Respuesta sugerida"
+  },
+  "Anweisung für den Mailentwurf": {
+    "de": "Anweisung für den Mailentwurf",
+    "en-US": "Instructions for the email draft",
+    "es": "Instrucciones para el borrador del correo"
+  },
+  "App-Sprache": {
+    "de": "App-Sprache",
+    "en-US": "App language",
+    "es": "Idioma de la aplicación"
+  },
+  "Aufzählung": {
+    "de": "Aufzählung",
+    "en-US": "Bulleted list",
+    "es": "Lista con viñetas"
+  },
+  "Ausgabesprache": {
+    "de": "Ausgabesprache",
+    "en-US": "Output language",
+    "es": "Idioma del texto generado"
+  },
+  "Ausschneiden": {
+    "de": "Ausschneiden",
+    "en-US": "Cut",
+    "es": "Cortar"
+  },
+  "BCC: {0}": {
+    "de": "BCC: {0}",
+    "en-US": "BCC: {0}",
+    "es": "CCO: {0}"
+  },
+  "BIC (optional)": {
+    "de": "BIC (optional)",
+    "en-US": "BIC (optional)",
+    "es": "BIC (opcional)"
+  },
+  "Bearbeitbarer Mailentwurf": {
+    "de": "Bearbeitbarer Mailentwurf",
+    "en-US": "Editable email draft",
+    "es": "Borrador de correo editable"
+  },
+  "Bedienungshilfen öffnen …": {
+    "de": "Bedienungshilfen öffnen …",
+    "en-US": "Open Accessibility settings…",
+    "es": "Abrir ajustes de accesibilidad…"
+  },
+  "Beenden": {
+    "de": "Beenden",
+    "en-US": "Quit",
+    "es": "Salir"
+  },
+  "Bei Anmeldung starten": {
+    "de": "Bei Anmeldung starten",
+    "en-US": "Launch at login",
+    "es": "Abrir al iniciar sesión"
+  },
+  "Bereit": {
+    "de": "Bereit",
+    "en-US": "Ready",
+    "es": "Listo"
+  },
+  "Bereit in Outlook · ⌃⌥R oder ✨ AI": {
+    "de": "Bereit in Outlook · ⌃⌥R oder ✨ AI",
+    "en-US": "Ready in Outlook · ⌃⌥R or ✨ AI",
+    "es": "Listo en Outlook · ⌃⌥R o ✨ AI"
+  },
+  "Betrag": {
+    "de": "Betrag",
+    "en-US": "Amount",
+    "es": "Importe"
+  },
+  "Betrag: {0} {1}": {
+    "de": "Betrag: {0} {1}",
+    "en-US": "Amount: {0} {1}",
+    "es": "Importe: {0} {1}"
+  },
+  "Betreff": {
+    "de": "Betreff",
+    "en-US": "Subject",
+    "es": "Asunto"
+  },
+  "Bitte Client-ID und Client Secret eintragen.": {
+    "de": "Bitte Client-ID und Client Secret eintragen.",
+    "en-US": "Enter the client ID and client secret.",
+    "es": "Introduce el ID y el secreto del cliente."
+  },
+  "Bitte IBAN, Betrag und Verwendungszweck vor einer Überweisung immer mit der PDF-Rechnung vergleichen.": {
+    "de": "Bitte IBAN, Betrag und Verwendungszweck vor einer Überweisung immer mit der PDF-Rechnung vergleichen.",
+    "en-US": "Always compare the IBAN, amount, and payment reference with the PDF invoice before making a transfer.",
+    "es": "Compara siempre el IBAN, el importe y el concepto con la factura en PDF antes de realizar una transferencia."
+  },
+  "Bitte eine vollständige HTTPS-Adresse zu update.json eintragen.": {
+    "de": "Bitte eine vollständige HTTPS-Adresse zu update.json eintragen.",
+    "en-US": "Enter a full HTTPS address for update.json.",
+    "es": "Introduce una dirección HTTPS completa para update.json."
+  },
+  "Bitte erneut mit lennard@minubo.com verbinden.": {
+    "de": "Bitte erneut mit lennard@minubo.com verbinden.",
+    "en-US": "Please reconnect with lennard@minubo.com.",
+    "es": "Vuelve a conectar con lennard@minubo.com."
+  },
+  "Bitte mit lennard@minubo.com anmelden. Angemeldet wurde {0}.": {
+    "de": "Bitte mit lennard@minubo.com anmelden. Angemeldet wurde {0}.",
+    "en-US": "Please sign in with lennard@minubo.com. You signed in as {0}.",
+    "es": "Inicia sesión con lennard@minubo.com. Has iniciado sesión como {0}."
+  },
+  "Bitte mit lennard@minubo.com verbinden.": {
+    "de": "Bitte mit lennard@minubo.com verbinden.",
+    "en-US": "Please connect with lennard@minubo.com.",
+    "es": "Conecta con lennard@minubo.com."
+  },
+  "Bitte zuerst einen Kalender auswählen.": {
+    "de": "Bitte zuerst einen Kalender auswählen.",
+    "en-US": "Please select a calendar first.",
+    "es": "Selecciona primero un calendario."
+  },
+  "CC ist die höfliche Art zu sagen: Jetzt weißt du es auch.": {
+    "de": "CC ist die höfliche Art zu sagen: Jetzt weißt du es auch.",
+    "en-US": "CC is the polite way of saying: now you know, too.",
+    "es": "CC es la forma educada de decir: ahora tú también lo sabes."
+  },
+  "Calendar": {
+    "de": "Kalender",
+    "en-US": "Calendar",
+    "es": "Calendario"
+  },
+  "Cancel": {
+    "de": "Absagen",
+    "en-US": "Decline",
+    "es": "Rechazar"
+  },
+  "Casual": {
+    "de": "Locker",
+    "en-US": "Casual",
+    "es": "Informal"
+  },
+  "Command name": {
+    "de": "Befehlsname",
+    "en-US": "Command name",
+    "es": "Nombre del comando"
+  },
+  "Commands": {
+    "de": "Befehle",
+    "en-US": "Commands",
+    "es": "Comandos"
+  },
+  "Compact": {
+    "de": "Kompakt",
+    "en-US": "Compact",
+    "es": "Breve"
+  },
+  "Das Update gehört nicht zu Replyzen.": {
+    "de": "Das Update gehört nicht zu ReplyZen.",
+    "en-US": "This update is not for ReplyZen.",
+    "es": "Esta actualización no corresponde a ReplyZen."
+  },
+  "Das Update konnte nicht vorbereitet werden: {0}": {
+    "de": "Das Update konnte nicht vorbereitet werden: {0}",
+    "en-US": "The update could not be prepared: {0}",
+    "es": "No se ha podido preparar la actualización: {0}"
+  },
+  "Das hat nicht geklappt": {
+    "de": "Das hat nicht geklappt",
+    "en-US": "Something went wrong",
+    "es": "Algo salió mal"
+  },
+  "Das heruntergeladene Update enthält keine gültige Replyzen.app.": {
+    "de": "Das heruntergeladene Update enthält keine gültige ReplyZen.app.",
+    "en-US": "The downloaded update does not contain a valid Replyzen.app.",
+    "es": "La actualización descargada no contiene una Replyzen.app válida."
+  },
+  "Daten prüfen": {
+    "de": "Daten prüfen",
+    "en-US": "Review details",
+    "es": "Revisar datos"
+  },
+  "Deine Anweisung": {
+    "de": "Deine Anweisung",
+    "en-US": "Your instructions",
+    "es": "Tus instrucciones"
+  },
+  "Delete": {
+    "de": "Löschen",
+    "en-US": "Delete",
+    "es": "Eliminar"
+  },
+  "Der API-Key konnte nicht im macOS-Schlüsselbund gespeichert werden.": {
+    "de": "Der API-Key konnte nicht im macOS-Schlüsselbund gespeichert werden.",
+    "en-US": "The API key could not be saved to the macOS Keychain.",
+    "es": "No se ha podido guardar la clave de API en el llavero de macOS."
+  },
+  "Der Betreff konnte nicht zuverlässig in Outlook eingesetzt werden. Der Mailtext liegt in der Zwischenablage.": {
+    "de": "Der Betreff konnte nicht zuverlässig in Outlook eingesetzt werden. Der Mailtext liegt in der Zwischenablage.",
+    "en-US": "The subject could not be inserted reliably in Outlook. The email body is in the clipboard.",
+    "es": "El asunto no se pudo insertar de forma fiable en Outlook. El texto del correo está en el portapapeles."
+  },
+  "Der Editor-Zoom verändert nur die Anzeige. Mailtext wird weiterhin in Calibri Light, 10,5 pt eingesetzt.": {
+    "de": "Der Editor-Zoom verändert nur die Anzeige. Mailtext wird weiterhin in Calibri Light, 10,5 pt eingesetzt.",
+    "en-US": "Editor zoom only changes the display. Email text is still inserted in Calibri Light, 10.5 pt.",
+    "es": "El zoom solo cambia la visualización. El texto del correo se sigue insertando en Calibri Light de 10,5 pt."
+  },
+  "Der Forward wurde in Outlook geöffnet, aber Replyzen konnte den Text nicht automatisch über dem Thread einsetzen. Der Text liegt in der Zwischenablage.": {
+    "de": "Die Weiterleitung wurde in Outlook geöffnet, aber ReplyZen konnte den Text nicht über dem Verlauf einsetzen. Der Text liegt in der Zwischenablage.",
+    "en-US": "The forward opened in Outlook, but ReplyZen could not insert the text above the thread. The text is on the clipboard.",
+    "es": "Se ha abierto el reenvío en Outlook, pero ReplyZen no ha podido insertar el texto encima del hilo. El texto está en el portapapeles."
+  },
+  "Der Key wird einmalig im macOS-Schlüsselbund gespeichert.": {
+    "de": "Der Key wird einmalig im macOS-Schlüsselbund gespeichert.",
+    "en-US": "The key is stored in your macOS Keychain.",
+    "es": "La clave se guarda en el llavero de macOS."
+  },
+  "Der Mailtext konnte nicht automatisch eingesetzt werden. Er liegt in der Zwischenablage.": {
+    "de": "Der Mailtext konnte nicht automatisch eingesetzt werden. Er liegt in der Zwischenablage.",
+    "en-US": "The email text could not be inserted automatically. It is on the clipboard.",
+    "es": "No se ha podido insertar el texto automáticamente. Está en el portapapeles."
+  },
+  "Der PDF-Anhang konnte nicht gelesen werden: {0}": {
+    "de": "Der PDF-Anhang konnte nicht gelesen werden: {0}",
+    "en-US": "The PDF attachment could not be read: {0}",
+    "es": "No se ha podido leer el PDF adjunto: {0}"
+  },
+  "Der Text wurde in eine neue Outlook-Mail eingesetzt. Bitte Empfänger und Betreff ergänzen, prüfen und selbst senden.": {
+    "de": "Der Text wurde in eine neue Outlook-Mail eingesetzt. Bitte Empfänger und Betreff ergänzen, prüfen und selbst senden.",
+    "en-US": "Your text was inserted into a new Outlook email. Add the recipient and subject, review it, and send it yourself.",
+    "es": "El texto se ha insertado en un nuevo correo de Outlook. Añade el destinatario y el asunto, revísalo y envíalo tú mismo."
+  },
+  "Der ausgewählte Google-Kalender ist nicht mehr verfügbar. Bitte einen anderen Kalender wählen.": {
+    "de": "Der ausgewählte Google-Kalender ist nicht mehr verfügbar. Bitte einen anderen Kalender wählen.",
+    "en-US": "The selected Google calendar is no longer available. Please choose another calendar.",
+    "es": "El calendario de Google seleccionado ya no está disponible. Elige otro calendario."
+  },
+  "Der kürzeste Büro-Witz? ‚Kurze Abstimmung‘.": {
+    "de": "Der kürzeste Büro-Witz? ‚Kurze Abstimmung‘.",
+    "en-US": "The shortest office joke? A quick meeting.",
+    "es": "¿El chiste de oficina más corto? Una reunión rápida."
+  },
+  "Deutsch": {
+    "de": "Deutsch",
+    "en-US": "German",
+    "es": "Alemán"
+  },
+  "Di": {
+    "de": "Di",
+    "en-US": "Tue",
+    "es": "Mar"
+  },
+  "Die Antwort ist in Outlook eingesetzt. Bitte noch kurz prüfen und selbst senden.": {
+    "de": "Die Antwort ist in Outlook eingesetzt. Bitte noch kurz prüfen und selbst senden.",
+    "en-US": "Your reply is in Outlook. Please review it and send it yourself.",
+    "es": "La respuesta está en Outlook. Revísala y envíala tú mismo."
+  },
+  "Die Auswahl wird automatisch gespeichert.": {
+    "de": "Die Auswahl wird automatisch gespeichert.",
+    "en-US": "Your choice is saved automatically.",
+    "es": "Tu elección se guarda automáticamente."
+  },
+  "Die Download-Adresse des Updates ist ungültig.": {
+    "de": "Die Download-Adresse des Updates ist ungültig.",
+    "en-US": "The update download address is invalid.",
+    "es": "La dirección de descarga de la actualización no es válida."
+  },
+  "Die Endzeit muss nach der Startzeit liegen.": {
+    "de": "Die Endzeit muss nach der Startzeit liegen.",
+    "en-US": "The end time must be after the start time.",
+    "es": "La hora de finalización debe ser posterior a la de inicio."
+  },
+  "Die Extraktion ist nicht eindeutig. Bitte die PDF-Rechnung mit den Feldern unten vergleichen.": {
+    "de": "Die Extraktion ist nicht eindeutig. Bitte die PDF-Rechnung mit den Feldern unten vergleichen.",
+    "en-US": "The extraction is ambiguous. Please compare the fields below with the PDF invoice.",
+    "es": "La extracción no es inequívoca. Compara los campos de abajo con la factura en PDF."
+  },
+  "Die Google-Anmeldung wurde abgebrochen.": {
+    "de": "Die Google-Anmeldung wurde abgebrochen.",
+    "en-US": "Google sign-in was canceled.",
+    "es": "Se ha cancelado el inicio de sesión de Google."
+  },
+  "Die OpenAI-Antwort auf den PDF-Upload war ungültig.": {
+    "de": "Die OpenAI-Antwort auf den PDF-Upload war ungültig.",
+    "en-US": "The OpenAI response to the PDF upload was invalid.",
+    "es": "La respuesta de OpenAI a la subida del PDF no era válida."
+  },
+  "Die Prüfsumme des Updates stimmt nicht. Das Update wurde aus Sicherheitsgründen abgebrochen.": {
+    "de": "Die Prüfsumme des Updates stimmt nicht. Das Update wurde aus Sicherheitsgründen abgebrochen.",
+    "en-US": "The update checksum does not match. The update was canceled for security reasons.",
+    "es": "La suma de comprobación no coincide. Se ha cancelado la actualización por seguridad."
+  },
+  "Die Update-Datei update.json ist ungültig.": {
+    "de": "Die Update-Datei update.json ist ungültig.",
+    "en-US": "The update.json manifest is invalid.",
+    "es": "El archivo update.json no es válido."
+  },
+  "Die Update-Quelle hat keine gültige Antwort geliefert.": {
+    "de": "Die Update-Quelle hat keine gültige Antwort geliefert.",
+    "en-US": "The update source did not return a valid response.",
+    "es": "El origen de actualizaciones no ha devuelto una respuesta válida."
+  },
+  "Die Update-URL ist ungültig. Bitte eine HTTPS-Adresse verwenden.": {
+    "de": "Die Update-URL ist ungültig. Bitte eine HTTPS-Adresse verwenden.",
+    "en-US": "The update URL is invalid. Please use an HTTPS address.",
+    "es": "La URL de actualización no es válida. Utiliza una dirección HTTPS."
+  },
+  "Die geöffnete Outlook-Mail dient als Kontext.": {
+    "de": "Die geöffnete Outlook-Mail dient als Kontext.",
+    "en-US": "The open Outlook email provides context.",
+    "es": "El correo abierto en Outlook aporta el contexto."
+  },
+  "Die geöffnete Outlook-Mail konnte nicht gelesen werden.": {
+    "de": "Die geöffnete Outlook-Mail konnte nicht gelesen werden.",
+    "en-US": "The open Outlook email could not be read.",
+    "es": "No se ha podido leer el correo abierto en Outlook."
+  },
+  "Die geöffnete Outlook-Nachricht oder Termineinladung konnte nicht gelesen werden.": {
+    "de": "Die geöffnete Outlook-Nachricht oder Termineinladung konnte nicht gelesen werden.",
+    "en-US": "The selected Outlook message or meeting invitation could not be read.",
+    "es": "No se ha podido leer el mensaje o la invitación de reunión seleccionados en Outlook."
+  },
+  "Die installierte App kann nicht ersetzt werden. Bitte Replyzen in den Programme-Ordner verschieben und erneut versuchen.": {
+    "de": "Die installierte App kann nicht ersetzt werden. Bitte ReplyZen in den Programme-Ordner verschieben und erneut versuchen.",
+    "en-US": "The installed app cannot be replaced. Move ReplyZen to the Applications folder and try again.",
+    "es": "No se puede sustituir la aplicación instalada. Mueve ReplyZen a la carpeta Aplicaciones y vuelve a intentarlo."
+  },
+  "Die neue Version kann jetzt automatisch geladen und installiert werden.": {
+    "de": "Die neue Version kann jetzt automatisch geladen und installiert werden.",
+    "en-US": "The new version is ready to download and install.",
+    "es": "La nueva versión está lista para descargar e instalar."
+  },
+  "Die ursprüngliche Outlook-Mail ist nicht mehr verfügbar. Bitte erneut laden.": {
+    "de": "Die ursprüngliche Outlook-Mail ist nicht mehr verfügbar. Bitte erneut laden.",
+    "en-US": "The original Outlook email is no longer available. Please load it again.",
+    "es": "El correo original de Outlook ya no está disponible. Vuelve a cargarlo."
+  },
+  "Diese Daten werden an ChatGPT übergeben": {
+    "de": "Diese Daten werden an ChatGPT übergeben",
+    "en-US": "This data will be sent to ChatGPT",
+    "es": "Estos datos se enviarán a ChatGPT"
+  },
+  "Direct": {
+    "de": "Direkt",
+    "en-US": "Direct",
+    "es": "Directo"
+  },
+  "Do": {
+    "de": "Do",
+    "en-US": "Thu",
+    "es": "Jue"
+  },
+  "Done": {
+    "de": "Fertig",
+    "en-US": "Done",
+    "es": "Listo"
+  },
+  "Du verwendest bereits die aktuelle Version {0}.": {
+    "de": "Du verwendest bereits die aktuelle Version {0}.",
+    "en-US": "You are already using the latest version, {0}.",
+    "es": "Ya estás usando la versión más reciente, {0}."
+  },
+  "Editor-Zoom": {
+    "de": "Editor-Zoom",
+    "en-US": "Editor zoom",
+    "es": "Zoom del editor"
+  },
+  "Editor-Zoom. Outlook erhält unverändert Calibri Light 10,5 pt.": {
+    "de": "Editor-Zoom. Outlook erhält unverändert Calibri Light 10,5 pt.",
+    "en-US": "Editor zoom. Outlook still receives Calibri Light, 10.5 pt.",
+    "es": "Zoom del editor. Outlook sigue recibiendo Calibri Light de 10,5 pt."
+  },
+  "Eine E-Mail ohne Betreff ist wie ein Termin ohne Uhrzeit: spannend, aber unnötig.": {
+    "de": "Eine E-Mail ohne Betreff ist wie ein Termin ohne Uhrzeit: spannend, aber unnötig.",
+    "en-US": "An email without a subject is like an event without a time: exciting, but not helpful.",
+    "es": "Un correo sin asunto es como una cita sin hora: emocionante, pero poco útil."
+  },
+  "Einen Moment": {
+    "de": "Einen Moment",
+    "en-US": "One moment",
+    "es": "Un momento"
+  },
+  "Einmalig Google OAuth einrichten.": {
+    "de": "Einmalig Google OAuth einrichten.",
+    "en-US": "Set up Google OAuth once.",
+    "es": "Configura Google OAuth una vez."
+  },
+  "Einmalig Google OAuth einrichten: Google Calendar API aktivieren und einen OAuth-Client vom Typ „Desktop-App“ erstellen. Client-ID und Client Secret hier einfügen.": {
+    "de": "Einmalig Google OAuth einrichten: Google Calendar API aktivieren und einen OAuth-Client vom Typ „Desktop-App“ erstellen. Client-ID und Client Secret hier einfügen.",
+    "en-US": "Set up Google OAuth once: enable the Google Calendar API and create an OAuth client of type Desktop app. Enter the client ID and client secret here.",
+    "es": "Configura Google OAuth una vez: activa la API de Google Calendar y crea un cliente OAuth de tipo Aplicación de escritorio. Introduce aquí el ID y el secreto del cliente."
+  },
+  "Einmalige Berechtigung": {
+    "de": "Einmalige Berechtigung",
+    "en-US": "One-time permission",
+    "es": "Permiso inicial"
+  },
+  "Einsetzen": {
+    "de": "Einsetzen",
+    "en-US": "Paste",
+    "es": "Pegar"
+  },
+  "Einstellungen": {
+    "de": "Einstellungen",
+    "en-US": "Settings",
+    "es": "Configuración"
+  },
+  "Einstellungen und Hinweise": {
+    "de": "Einstellungen und Hinweise",
+    "en-US": "Settings and help",
+    "es": "Configuración y ayuda"
+  },
+  "Einstellungen…": {
+    "de": "Einstellungen…",
+    "en-US": "Settings…",
+    "es": "Configuración…"
+  },
+  "Empfänger": {
+    "de": "Empfänger",
+    "en-US": "Recipient",
+    "es": "Destinatario"
+  },
+  "Empfänger, IBAN, Betrag und Verwendungszweck aus dem PDF-Anhang auslesen. Alle Angaben bleiben vor dem Kopieren bearbeitbar. Es wird keine Überweisung ausgelöst.": {
+    "de": "Empfänger, IBAN, Betrag und Verwendungszweck aus dem PDF-Anhang auslesen. Alle Angaben bleiben vor dem Kopieren bearbeitbar. Es wird keine Überweisung ausgelöst.",
+    "en-US": "Extract the recipient, IBAN, amount, and payment reference from the PDF attachment. You can edit all details before copying. No transfer is initiated.",
+    "es": "Extrae el destinatario, IBAN, importe y concepto del PDF adjunto. Puedes editar todos los datos antes de copiarlos. No se realiza ninguna transferencia."
+  },
+  "Empfänger: {0}": {
+    "de": "Empfänger: {0}",
+    "en-US": "Recipient: {0}",
+    "es": "Destinatario: {0}"
+  },
+  "Ende": {
+    "de": "Ende",
+    "en-US": "End",
+    "es": "Fin"
+  },
+  "Entwurf prüfen": {
+    "de": "Entwurf prüfen",
+    "en-US": "Review draft",
+    "es": "Revisar borrador"
+  },
+  "Es ist noch keine Update-Quelle eingerichtet.": {
+    "de": "Es ist noch keine Update-Quelle eingerichtet.",
+    "en-US": "No update source has been configured.",
+    "es": "No se ha configurado ningún origen de actualizaciones."
+  },
+  "Es wird keine Zahlung ausgelöst.": {
+    "de": "Es wird keine Zahlung ausgelöst.",
+    "en-US": "No payment is initiated.",
+    "es": "No se realiza ningún pago."
   },
   "Español": {
-    "en-US": "Spanish",
     "de": "Spanisch",
+    "en-US": "Spanish",
     "es": "Español"
   },
-  "Outlook hat den Antworteditor nicht geöffnet. Der Text wurde in die Zwischenablage kopiert.": {
-    "en-US": "Outlook did not open the reply editor. The text was copied to the clipboard.",
-    "de": "Outlook hat den Antworteditor nicht geöffnet. Der Text wurde in die Zwischenablage kopiert.",
-    "es": "Outlook no ha abierto el editor de respuesta. El texto se ha copiado al portapapeles."
+  "Falsches Google-Konto.": {
+    "de": "Falsches Google-Konto.",
+    "en-US": "Wrong Google account.",
+    "es": "Cuenta de Google incorrecta."
+  },
+  "Fast fertig": {
+    "de": "Fast fertig",
+    "en-US": "Almost done",
+    "es": "Casi listo"
+  },
+  "Fast fertig …": {
+    "de": "Fast fertig …",
+    "en-US": "Almost done…",
+    "es": "Casi listo…"
+  },
+  "Fertig": {
+    "de": "Fertig",
+    "en-US": "Done",
+    "es": "Listo"
+  },
+  "Fett": {
+    "de": "Fett",
+    "en-US": "Bold",
+    "es": "Negrita"
+  },
+  "Formal": {
+    "de": "Förmlich",
+    "en-US": "Formal",
+    "es": "Formal"
+  },
+  "Formatierung entfernen": {
+    "de": "Formatierung entfernen",
+    "en-US": "Clear formatting",
+    "es": "Quitar formato"
+  },
+  "Forward": {
+    "de": "Weiterleiten",
+    "en-US": "Forward",
+    "es": "Reenviar"
+  },
+  "Forward erstellen": {
+    "de": "Weiterleitung erstellen",
+    "en-US": "Create forward",
+    "es": "Preparar reenvío"
+  },
+  "Fr": {
+    "de": "Fr",
+    "en-US": "Fri",
+    "es": "Vie"
+  },
+  "Friendly": {
+    "de": "Freundlich",
+    "en-US": "Friendly",
+    "es": "Amable"
+  },
+  "Für das Lesen aus Outlook und das automatische Einsetzen braucht Replyzen Zugriff auf Bedienungshilfen. New Mail erstellen kannst du auch ohne Mail-Kontext.": {
+    "de": "Zum Lesen aus Outlook und automatischen Einsetzen braucht ReplyZen Zugriff auf Bedienungshilfen. Neue Mails kannst du auch ohne Mail-Kontext erstellen.",
+    "en-US": "ReplyZen needs Accessibility access to read from Outlook and insert text automatically. You can create a new email without email context.",
+    "es": "ReplyZen necesita acceso a Accesibilidad para leer Outlook e insertar texto automáticamente. Puedes crear un correo nuevo sin contexto de correo."
+  },
+  "Gilt für die gesamte Oberfläche. Die Sprache deiner E-Mails bleibt unabhängig davon.": {
+    "de": "Gilt für die gesamte Oberfläche. Die Sprache deiner E-Mails bleibt unabhängig davon.",
+    "en-US": "Applies to the entire interface. Your email language is a separate setting.",
+    "es": "Se aplica a toda la interfaz. El idioma de tus correos se configura por separado."
+  },
+  "Google Calendar ist noch nicht verbunden.": {
+    "de": "Google Calendar ist noch nicht verbunden.",
+    "en-US": "Google Calendar is not connected yet.",
+    "es": "Google Calendar aún no está conectado."
+  },
+  "Google Calendar wurde getrennt.": {
+    "de": "Google Calendar wurde getrennt.",
+    "en-US": "Google Calendar was disconnected.",
+    "es": "Google Calendar se ha desconectado."
+  },
+  "Google Calendar: {0}": {
+    "de": "Google Calendar: {0}",
+    "en-US": "Google Calendar: {0}",
+    "es": "Google Calendar: {0}"
+  },
+  "Google Cloud öffnen": {
+    "de": "Google Cloud öffnen",
+    "en-US": "Open Google Cloud",
+    "es": "Abrir Google Cloud"
+  },
+  "Google OAuth Client Secret": {
+    "de": "Google OAuth Client Secret",
+    "en-US": "Google OAuth client secret",
+    "es": "Secreto de cliente de Google OAuth"
+  },
+  "Google OAuth Client-ID": {
+    "de": "Google OAuth Client-ID",
+    "en-US": "Google OAuth client ID",
+    "es": "ID de cliente de Google OAuth"
+  },
+  "Google OAuth ist noch nicht eingerichtet. Bitte einmalig Client-ID und Client Secret eines Google-OAuth-Clients vom Typ Desktop-App hinterlegen.": {
+    "de": "Google OAuth ist noch nicht eingerichtet. Bitte einmalig Client-ID und Client Secret eines Google-OAuth-Clients vom Typ Desktop-App hinterlegen.",
+    "en-US": "Google OAuth is not set up yet. Enter the client ID and client secret for a Desktop app OAuth client.",
+    "es": "Google OAuth aún no está configurado. Introduce el ID y el secreto de un cliente OAuth de tipo Aplicación de escritorio."
+  },
+  "Google hat eine unerwartete Antwort geliefert.": {
+    "de": "Google hat eine unerwartete Antwort geliefert.",
+    "en-US": "Google returned an unexpected response.",
+    "es": "Google ha devuelto una respuesta inesperada."
+  },
+  "Google-Anmeldung fehlgeschlagen: {0}": {
+    "de": "Google-Anmeldung fehlgeschlagen: {0}",
+    "en-US": "Google sign-in failed: {0}",
+    "es": "Ha fallado el inicio de sesión de Google: {0}"
+  },
+  "Google-Anmeldung wird im Browser geöffnet …": {
+    "de": "Google-Anmeldung wird im Browser geöffnet …",
+    "en-US": "Opening Google sign-in in your browser…",
+    "es": "Abriendo el inicio de sesión de Google en el navegador…"
+  },
+  "Google-Anmeldung wurde abgebrochen.": {
+    "de": "Google-Anmeldung wurde abgebrochen.",
+    "en-US": "Google sign-in was canceled.",
+    "es": "Se ha cancelado el inicio de sesión de Google."
+  },
+  "Google-Kalender werden geladen …": {
+    "de": "Google-Kalender werden geladen …",
+    "en-US": "Loading Google calendars…",
+    "es": "Cargando calendarios de Google…"
+  },
+  "Google-Zugangsdaten konnten nicht im Schlüsselbund gespeichert werden ({0}).": {
+    "de": "Google-Zugangsdaten konnten nicht im Schlüsselbund gespeichert werden ({0}).",
+    "en-US": "Google credentials could not be saved to the Keychain ({0}).",
+    "es": "No se han podido guardar las credenciales de Google en el llavero ({0})."
+  },
+  "Google-Zugriff muss erneut autorisiert werden.": {
+    "de": "Google-Zugriff muss erneut autorisiert werden.",
+    "en-US": "Google access must be authorized again.",
+    "es": "Es necesario autorizar de nuevo el acceso a Google."
+  },
+  "Ich bereite die Weiterleitung vor …": {
+    "de": "Ich bereite die Weiterleitung vor …",
+    "en-US": "Preparing your forward…",
+    "es": "Preparando el reenvío…"
+  },
+  "Ich erstelle deine Antwort …": {
+    "de": "Ich erstelle deine Antwort …",
+    "en-US": "Creating your reply…",
+    "es": "Creando tu respuesta…"
+  },
+  "Ich erstelle einen kurzen Termintitel und erkenne den Zeitpunkt …": {
+    "de": "Ich erstelle einen kurzen Termintitel und erkenne den Zeitpunkt …",
+    "en-US": "Creating a short event title and identifying the date and time…",
+    "es": "Creando un título breve para el evento e identificando la fecha y hora…"
+  },
+  "Ich finde kein Outlook-Fenster. Öffne die Mail bitte sichtbar in Outlook.": {
+    "de": "Ich finde kein Outlook-Fenster. Öffne die Mail bitte sichtbar in Outlook.",
+    "en-US": "No Outlook window found. Please open the email visibly in Outlook.",
+    "es": "No se ha encontrado ninguna ventana de Outlook. Abre el correo de forma visible en Outlook."
+  },
+  "Ich formuliere deine neue Mail …": {
+    "de": "Ich formuliere deine neue Mail …",
+    "en-US": "Drafting your new email…",
+    "es": "Redactando tu nuevo correo…"
+  },
+  "Ich konnte in der geöffneten Outlook-Mail keinen lesbaren Mailtext finden.": {
+    "de": "Ich konnte in der geöffneten Outlook-Mail keinen lesbaren Mailtext finden.",
+    "en-US": "No readable email text was found in the open Outlook email.",
+    "es": "No se ha encontrado texto legible en el correo abierto en Outlook."
+  },
+  "Ich lese den PDF-Anhang und extrahiere die Überweisungsdaten …": {
+    "de": "Ich lese den PDF-Anhang und extrahiere die Überweisungsdaten …",
+    "en-US": "Reading the PDF attachment and extracting transfer details…",
+    "es": "Leyendo el PDF adjunto y extrayendo los datos de transferencia…"
+  },
+  "Ich setze die Antwort in Outlook ein …": {
+    "de": "Ich setze die Antwort in Outlook ein …",
+    "en-US": "Inserting your reply into Outlook…",
+    "es": "Insertando tu respuesta en Outlook…"
+  },
+  "Ich wollte meinem Posteingang Urlaub geben. Er hat die Abwesenheitsnotiz abgelehnt.": {
+    "de": "Ich wollte meinem Posteingang Urlaub geben. Er hat die Abwesenheitsnotiz abgelehnt.",
+    "en-US": "I tried giving my inbox a vacation. It rejected the out-of-office reply.",
+    "es": "Quise darle vacaciones a mi bandeja de entrada. Rechazó la respuesta de ausencia."
+  },
+  "Ich öffne die Outlook-Weiterleitung und setze deinen Text über den Thread …": {
+    "de": "Ich öffne die Outlook-Weiterleitung und setze deinen Text über den Thread …",
+    "en-US": "Opening the Outlook forward and inserting your text above the thread…",
+    "es": "Abriendo el reenvío en Outlook e insertando tu texto encima del hilo…"
+  },
+  "Ich öffne eine neue Outlook-Mail und setze den Text ein …": {
+    "de": "Ich öffne eine neue Outlook-Mail und setze den Text ein …",
+    "en-US": "Opening a new Outlook email and inserting your text…",
+    "es": "Abriendo un nuevo correo en Outlook e insertando tu texto…"
+  },
+  "Im Kalender anlegen": {
+    "de": "Im Kalender anlegen",
+    "en-US": "Add to calendar",
+    "es": "Añadir al calendario"
+  },
+  "Im Mailverlauf wurde kein eindeutiger Terminzeitpunkt erkannt. Bitte Datum und Uhrzeit prüfen.": {
+    "de": "Im Mailverlauf wurde kein eindeutiger Terminzeitpunkt erkannt. Bitte Datum und Uhrzeit prüfen.",
+    "en-US": "No unambiguous event time was found in the thread. Please check the date and time.",
+    "es": "No se ha encontrado una fecha y hora inequívocas en el hilo. Comprueba la fecha y la hora."
+  },
+  "In Outlook einsetzen": {
+    "de": "In Outlook einsetzen",
+    "en-US": "Insert into Outlook",
+    "es": "Insertar en Outlook"
+  },
+  "Installieren": {
+    "de": "Installieren",
+    "en-US": "Install",
+    "es": "Instalar"
+  },
+  "Kalender": {
+    "de": "Kalender",
+    "en-US": "Calendar",
+    "es": "Calendario"
+  },
+  "Kalender konnten nicht geladen werden.": {
+    "de": "Kalender konnten nicht geladen werden.",
+    "en-US": "Calendars could not be loaded.",
+    "es": "No se han podido cargar los calendarios."
+  },
+  "Kein PDF wurde direkt von OpenAI gelesen. Bitte Empfänger, IBAN und Betrag besonders sorgfältig prüfen.": {
+    "de": "Kein PDF wurde direkt von OpenAI gelesen. Bitte Empfänger, IBAN und Betrag besonders sorgfältig prüfen.",
+    "en-US": "No PDF was read directly by OpenAI. Please check the recipient, IBAN, and amount especially carefully.",
+    "es": "OpenAI no ha leído ningún PDF directamente. Comprueba con especial cuidado el destinatario, el IBAN y el importe."
+  },
+  "Kein PDF-Anhang erkannt. Extraktion aus dem Mailtext.": {
+    "de": "Kein PDF-Anhang erkannt. Extraktion aus dem Mailtext.",
+    "en-US": "No PDF attachment detected. Extracting from the email text.",
+    "es": "No se ha detectado ningún PDF adjunto. Extrayendo los datos del texto del correo."
+  },
+  "Kein direkt zugängliches PDF; lokal gelesen: {0}": {
+    "de": "Kein direkt zugängliches PDF; lokal gelesen: {0}",
+    "en-US": "No directly accessible PDF; read locally: {0}",
+    "es": "No hay un PDF accesible directamente; leído localmente: {0}"
+  },
+  "Keine Antwort beim PDF-Upload von OpenAI erhalten.": {
+    "de": "Keine Antwort beim PDF-Upload von OpenAI erhalten.",
+    "en-US": "No response received from OpenAI while uploading the PDF.",
+    "es": "No se ha recibido respuesta de OpenAI al subir el PDF."
+  },
+  "Keine Antwort von OpenAI erhalten.": {
+    "de": "Keine Antwort von OpenAI erhalten.",
+    "en-US": "No response received from OpenAI.",
+    "es": "No se ha recibido respuesta de OpenAI."
+  },
+  "Keine Outlook-Mail verfügbar. Reply ist ausgeblendet.": {
+    "de": "Keine Outlook-Mail verfügbar. Antworten ist ausgeblendet.",
+    "en-US": "No Outlook email available. Reply is hidden.",
+    "es": "No hay ningún correo de Outlook disponible. La opción Responder está oculta."
+  },
+  "Keine beschreibbaren Google-Kalender gefunden.": {
+    "de": "Keine beschreibbaren Google-Kalender gefunden.",
+    "en-US": "No writable Google calendars found.",
+    "es": "No se han encontrado calendarios de Google con permiso de escritura."
+  },
+  "Keine lesbare Outlook-Mail erkannt. Für Forward bitte eine Mail öffnen und erneut versuchen.": {
+    "de": "Keine lesbare Outlook-Mail erkannt. Zum Weiterleiten eine Mail öffnen und erneut versuchen.",
+    "en-US": "No readable Outlook email detected. To forward, open an email and try again.",
+    "es": "No se ha detectado ningún correo legible. Para reenviar, abre un correo en Outlook y vuelve a intentarlo."
+  },
+  "Keine lesbare Outlook-Mail erkannt. Für eine Überweisung bitte die Rechnungsmail öffnen und erneut versuchen.": {
+    "de": "Keine lesbare Outlook-Mail erkannt. Für eine Überweisung bitte die Rechnungsmail öffnen und erneut versuchen.",
+    "en-US": "No readable Outlook email detected. To extract transfer details, open the invoice email and try again.",
+    "es": "No se ha detectado ningún correo legible. Para extraer los datos de transferencia, abre el correo de la factura y vuelve a intentarlo."
+  },
+  "Keine lesbare Outlook-Mail erkannt. Für einen Termin bitte eine Mail öffnen und erneut versuchen.": {
+    "de": "Keine lesbare Outlook-Mail erkannt. Für einen Termin bitte eine Mail öffnen und erneut versuchen.",
+    "en-US": "No readable Outlook email detected. To create an event, open an email and try again.",
+    "es": "No se ha detectado ningún correo legible. Para crear un evento, abre un correo y vuelve a intentarlo."
+  },
+  "Keine lesbare Outlook-Mail erkannt. New Mail funktioniert trotzdem.": {
+    "de": "Keine lesbare Outlook-Mail erkannt. Neue Mail funktioniert trotzdem.",
+    "en-US": "No readable Outlook email detected. You can still create a new email.",
+    "es": "No se ha detectado ningún correo legible en Outlook. Aun así, puedes crear un correo nuevo."
+  },
+  "Keine lesbare Outlook-Mail erkannt. Nutze New Mail oder versuche es erneut.": {
+    "de": "Keine lesbare Outlook-Mail erkannt. Nutze Neue Mail oder versuche es erneut.",
+    "en-US": "No readable Outlook email detected. Create a new email or try again.",
+    "es": "No se ha detectado ningún correo legible en Outlook. Crea un correo nuevo o vuelve a intentarlo."
+  },
+  "Kopieren": {
+    "de": "Kopieren",
+    "en-US": "Copy",
+    "es": "Copiar"
+  },
+  "Kursiv": {
+    "de": "Kursiv",
+    "en-US": "Italic",
+    "es": "Cursiva"
+  },
+  "Kurzer Termintitel": {
+    "de": "Kurzer Termintitel",
+    "en-US": "Short event title",
+    "es": "Título breve del evento"
+  },
+  "Künftig prüft die App beim Start automatisch auf neue Versionen. Installiert wird erst nach deinem Klick auf „Installieren“. ": {
+    "de": "Künftig prüft die App beim Start automatisch auf neue Versionen. Installiert wird erst nach deinem Klick auf „Installieren“. ",
+    "en-US": "The app will check for updates automatically at startup. Updates are only installed after you click Install.",
+    "es": "La aplicación buscará actualizaciones al iniciarse. Solo se instalarán cuando pulses Instalar."
+  },
+  "Lokaler Callback-Port konnte nicht geöffnet werden.": {
+    "de": "Lokaler Callback-Port konnte nicht geöffnet werden.",
+    "en-US": "The local callback port could not be opened.",
+    "es": "No se ha podido abrir el puerto de respuesta local."
+  },
+  "Lädt …": {
+    "de": "Lädt …",
+    "en-US": "Loading…",
+    "es": "Cargando…"
+  },
+  "Mail AI": {
+    "de": "KI-Mailassistent",
+    "en-US": "AI email assistant",
+    "es": "Asistente de correo con IA"
+  },
+  "Mail erkannt": {
+    "de": "Mail erkannt",
+    "en-US": "Email detected",
+    "es": "Correo detectado"
+  },
+  "Mail erstellen": {
+    "de": "Mail erstellen",
+    "en-US": "Create email",
+    "es": "Crear correo"
   },
   "Mail und Termin, direkt aus Outlook.": {
     "de": "Mail und Termin, direkt aus Outlook.",
     "en-US": "Mail and calendar, directly from Outlook.",
     "es": "Correo y calendario, directamente desde Outlook."
   },
-  "Der Betreff konnte nicht zuverlässig in Outlook eingesetzt werden. Der Mailtext liegt in der Zwischenablage.": {
-    "en-US": "The subject could not be inserted reliably in Outlook. The email body is in the clipboard.",
-    "de": "Der Betreff konnte nicht zuverlässig in Outlook eingesetzt werden. Der Mailtext liegt in der Zwischenablage.",
-    "es": "El asunto no se pudo insertar de forma fiable en Outlook. El texto del correo está en el portapapeles."
+  "Mail, Termin oder Überweisung, direkt aus Outlook.": {
+    "de": "Mail, Termin oder Überweisung, direkt aus Outlook.",
+    "en-US": "Email, events, and transfer details, directly from Outlook.",
+    "es": "Correos, eventos y datos de transferencia, directamente desde Outlook."
   },
-  "Die geöffnete Outlook-Nachricht oder Termineinladung konnte nicht gelesen werden.": {
-    "de": "Die geöffnete Outlook-Nachricht oder Termineinladung konnte nicht gelesen werden.",
-    "en-US": "The selected Outlook message or meeting invitation could not be read.",
-    "es": "No se ha podido leer el mensaje o la invitación de reunión seleccionados en Outlook."
+  "Mail-Kontext konnte nicht geladen werden. New Mail funktioniert trotzdem.": {
+    "de": "Mail-Kontext konnte nicht geladen werden. Neue Mail funktioniert trotzdem.",
+    "en-US": "Email context could not be loaded. You can still create a new email.",
+    "es": "No se ha podido cargar el contexto del correo. Aun así, puedes crear un correo nuevo."
+  },
+  "Mein Kalender und ich haben eine gute Beziehung: Er sagt mir ständig, wo ich sein soll.": {
+    "de": "Mein Kalender und ich haben eine gute Beziehung: Er sagt mir ständig, wo ich sein soll.",
+    "en-US": "My calendar and I have a great relationship: it always tells me where to be.",
+    "es": "Mi calendario y yo nos llevamos bien: siempre me dice dónde tengo que estar."
+  },
+  "Mein Kalender wollte spontan sein. Ich habe ihm dafür einen Termin eingetragen.": {
+    "de": "Mein Kalender wollte spontan sein. Ich habe ihm dafür einen Termin eingetragen.",
+    "en-US": "My calendar wanted to be spontaneous. I scheduled a time for it.",
+    "es": "Mi calendario quería ser espontáneo. Le reservé una cita para ello."
+  },
+  "Mi": {
+    "de": "Mi",
+    "en-US": "Wed",
+    "es": "Mié"
+  },
+  "Microsoft Outlook läuft nicht.": {
+    "de": "Microsoft Outlook läuft nicht.",
+    "en-US": "Microsoft Outlook is not running.",
+    "es": "Microsoft Outlook no está abierto."
+  },
+  "Microsoft Outlook läuft nicht. Der Mailtext wurde in die Zwischenablage kopiert.": {
+    "de": "Microsoft Outlook läuft nicht. Der Mailtext wurde in die Zwischenablage kopiert.",
+    "en-US": "Microsoft Outlook is not running. The email text was copied to the clipboard.",
+    "es": "Microsoft Outlook no está abierto. El texto del correo se ha copiado al portapapeles."
+  },
+  "Mit Google verbinden": {
+    "de": "Mit Google verbinden",
+    "en-US": "Connect to Google",
+    "es": "Conectar con Google"
+  },
+  "Mo": {
+    "de": "Mo",
+    "en-US": "Mon",
+    "es": "Lun"
+  },
+  "Nach Updates suchen…": {
+    "de": "Nach Updates suchen…",
+    "en-US": "Check for updates…",
+    "es": "Buscar actualizaciones…"
+  },
+  "Name": {
+    "de": "Name",
+    "en-US": "Name",
+    "es": "Nombre"
+  },
+  "Name, Prompt und Tone festlegen. Die Sprache steuerst du weiterhin über 🇩🇪 / 🇺🇸.": {
+    "de": "Name, Anweisung und Ton festlegen. Die E-Mail-Sprache wählst du separat.",
+    "en-US": "Set the name, instructions, and tone. Choose the email language separately.",
+    "es": "Define el nombre, las instrucciones y el tono. El idioma del correo se selecciona por separado."
+  },
+  "Neue Mail": {
+    "de": "Neue Mail",
+    "en-US": "New email",
+    "es": "Nuevo correo"
+  },
+  "Neue Mail in Outlook": {
+    "de": "Neue Mail in Outlook",
+    "en-US": "New email in Outlook",
+    "es": "Nuevo correo en Outlook"
+  },
+  "Neue Mail ohne Kontext möglich. Für Reply oder Forward zuerst eine Outlook-Mail öffnen.": {
+    "de": "Neue Mail ohne Kontext möglich. Zum Antworten oder Weiterleiten zuerst eine Outlook-Mail öffnen.",
+    "en-US": "You can create a new email without context. To reply or forward, open an Outlook email first.",
+    "es": "Puedes crear un correo sin contexto. Para responder o reenviar, abre primero un correo en Outlook."
+  },
+  "Neue Outlook-Mail wird geöffnet und befüllt": {
+    "de": "Neue Outlook-Mail wird geöffnet und befüllt",
+    "en-US": "Opening and filling a new Outlook email",
+    "es": "Abriendo y rellenando un nuevo correo en Outlook"
+  },
+  "Neue Version wird geladen und eingerichtet …": {
+    "de": "Neue Version wird geladen und eingerichtet …",
+    "en-US": "Downloading and setting up the new version…",
+    "es": "Descargando y configurando la nueva versión…"
+  },
+  "Neutral": {
+    "de": "Neutral",
+    "en-US": "Neutral",
+    "es": "Neutro"
+  },
+  "New": {
+    "de": "Neue Mail",
+    "en-US": "New email",
+    "es": "Nuevo correo"
+  },
+  "New Mail": {
+    "de": "Neue Mail",
+    "en-US": "New email",
+    "es": "Nuevo correo"
+  },
+  "Noch nicht mit Google verbunden.": {
+    "de": "Noch nicht mit Google verbunden.",
+    "en-US": "Not connected to Google yet.",
+    "es": "Aún sin conexión con Google."
+  },
+  "Noch nicht verbunden.": {
+    "de": "Noch nicht verbunden.",
+    "en-US": "Not connected yet.",
+    "es": "Aún sin conexión."
+  },
+  "Nummerierte Liste": {
+    "de": "Nummerierte Liste",
+    "en-US": "Numbered list",
+    "es": "Lista numerada"
+  },
+  "Nur Anzeige, kein Einfluss auf Outlook": {
+    "de": "Nur Anzeige, kein Einfluss auf Outlook",
+    "en-US": "Display only; does not affect Outlook",
+    "es": "Solo visualización; no afecta a Outlook"
+  },
+  "OAuth-Prüfung fehlgeschlagen.": {
+    "de": "OAuth-Prüfung fehlgeschlagen.",
+    "en-US": "OAuth verification failed.",
+    "es": "Ha fallado la verificación de OAuth."
+  },
+  "OAuth-URL konnte nicht erstellt werden.": {
+    "de": "OAuth-URL konnte nicht erstellt werden.",
+    "en-US": "The OAuth URL could not be created.",
+    "es": "No se ha podido crear la URL de OAuth."
+  },
+  "OAuth-Zugang ändern": {
+    "de": "OAuth-Zugang ändern",
+    "en-US": "Change OAuth credentials",
+    "es": "Cambiar credenciales de OAuth"
+  },
+  "OK": {
+    "de": "OK",
+    "en-US": "OK",
+    "es": "Aceptar"
+  },
+  "Ohne Mail-Kontext": {
+    "de": "Ohne Mail-Kontext",
+    "en-US": "No email context",
+    "es": "Sin contexto de correo"
+  },
+  "OpenAI API-Key": {
+    "de": "OpenAI API-Key",
+    "en-US": "OpenAI API key",
+    "es": "Clave de API de OpenAI"
+  },
+  "OpenAI formuliert den Forward Text": {
+    "de": "OpenAI formuliert den Weiterleitungstext",
+    "en-US": "OpenAI is drafting the forwarding note",
+    "es": "OpenAI está redactando la nota de reenvío"
+  },
+  "OpenAI formuliert eine neue Mail": {
+    "de": "OpenAI formuliert eine neue Mail",
+    "en-US": "OpenAI is drafting a new email",
+    "es": "OpenAI está redactando un correo nuevo"
+  },
+  "OpenAI hat den Antwortentwurf nicht im erwarteten Format geliefert.": {
+    "de": "OpenAI hat den Antwortentwurf nicht im erwarteten Format geliefert.",
+    "en-US": "OpenAI returned the reply draft in an unexpected format.",
+    "es": "OpenAI ha devuelto el borrador de respuesta en un formato inesperado."
+  },
+  "OpenAI hat den Mailentwurf nicht im erwarteten Format geliefert.": {
+    "de": "OpenAI hat den Mailentwurf nicht im erwarteten Format geliefert.",
+    "en-US": "OpenAI returned the email draft in an unexpected format.",
+    "es": "OpenAI ha devuelto el borrador de correo en un formato inesperado."
+  },
+  "OpenAI hat den Terminvorschlag nicht im erwarteten Format geliefert.": {
+    "de": "OpenAI hat den Terminvorschlag nicht im erwarteten Format geliefert.",
+    "en-US": "OpenAI returned the event suggestion in an unexpected format.",
+    "es": "OpenAI ha devuelto la propuesta de evento en un formato inesperado."
+  },
+  "OpenAI hat die Überweisungsdaten nicht im erwarteten Format geliefert.": {
+    "de": "OpenAI hat die Überweisungsdaten nicht im erwarteten Format geliefert.",
+    "en-US": "OpenAI returned transfer details in an unexpected format.",
+    "es": "OpenAI ha devuelto los datos de transferencia en un formato inesperado."
+  },
+  "OpenAI hat ein unerwartetes Antwortformat geliefert.": {
+    "de": "OpenAI hat ein unerwartetes Antwortformat geliefert.",
+    "en-US": "OpenAI returned an unexpected response format.",
+    "es": "OpenAI ha devuelto un formato de respuesta inesperado."
+  },
+  "OpenAI hat keine Datei-ID für den PDF-Anhang geliefert.": {
+    "de": "OpenAI hat keine Datei-ID für den PDF-Anhang geliefert.",
+    "en-US": "OpenAI did not return a file ID for the PDF attachment.",
+    "es": "OpenAI no ha devuelto un ID de archivo para el PDF adjunto."
+  },
+  "OpenAI hat keine gültigen Überweisungsdaten geliefert.": {
+    "de": "OpenAI hat keine gültigen Überweisungsdaten geliefert.",
+    "en-US": "OpenAI did not return valid transfer details.",
+    "es": "OpenAI no ha devuelto datos de transferencia válidos."
+  },
+  "OpenAI hat keinen Antworttext geliefert.": {
+    "de": "OpenAI hat keinen Antworttext geliefert.",
+    "en-US": "OpenAI did not return any reply text.",
+    "es": "OpenAI no ha devuelto texto de respuesta."
+  },
+  "OpenAI hat keinen Mailtext geliefert.": {
+    "de": "OpenAI hat keinen Mailtext geliefert.",
+    "en-US": "OpenAI did not return any email text.",
+    "es": "OpenAI no ha devuelto texto de correo."
+  },
+  "OpenAI hat keinen gültigen Antwortentwurf geliefert.": {
+    "de": "OpenAI hat keinen gültigen Antwortentwurf geliefert.",
+    "en-US": "OpenAI did not return a valid reply draft.",
+    "es": "OpenAI no ha devuelto un borrador de respuesta válido."
+  },
+  "OpenAI hat keinen gültigen Mailentwurf geliefert.": {
+    "de": "OpenAI hat keinen gültigen Mailentwurf geliefert.",
+    "en-US": "OpenAI did not return a valid email draft.",
+    "es": "OpenAI no ha devuelto un borrador de correo válido."
+  },
+  "OpenAI hat keinen gültigen Terminvorschlag geliefert.": {
+    "de": "OpenAI hat keinen gültigen Terminvorschlag geliefert.",
+    "en-US": "OpenAI did not return a valid event suggestion.",
+    "es": "OpenAI no ha devuelto una propuesta de evento válida."
+  },
+  "OpenAI verarbeitet die Mail": {
+    "de": "OpenAI verarbeitet die Mail",
+    "en-US": "OpenAI is processing the email",
+    "es": "OpenAI está procesando el correo"
+  },
+  "OpenAI-Fehler HTTP {0}.": {
+    "de": "OpenAI-Fehler HTTP {0}.",
+    "en-US": "OpenAI error, HTTP {0}.",
+    "es": "Error de OpenAI, HTTP {0}."
+  },
+  "OpenAI-PDF-Upload fehlgeschlagen (HTTP {0}).": {
+    "de": "OpenAI-PDF-Upload fehlgeschlagen (HTTP {0}).",
+    "en-US": "OpenAI PDF upload failed (HTTP {0}).",
+    "es": "Ha fallado la subida del PDF a OpenAI (HTTP {0})."
+  },
+  "Outlook Forward wird geöffnet; Thread und Anhänge bleiben erhalten": {
+    "de": "Outlook-Weiterleitung wird geöffnet; Verlauf und Anhänge bleiben erhalten",
+    "en-US": "Opening the Outlook forward; the thread and attachments are preserved",
+    "es": "Abriendo el reenvío en Outlook; se conservan el hilo y los adjuntos"
+  },
+  "Outlook blockiert den PDF-Zugriff – bitte Rechnung auswählen …": {
+    "de": "Outlook blockiert den PDF-Zugriff – bitte Rechnung auswählen …",
+    "en-US": "Outlook is blocking PDF access. Please choose the invoice…",
+    "es": "Outlook está bloqueando el acceso al PDF. Selecciona la factura…"
+  },
+  "Outlook gibt den PDF-Anhang nicht frei. Bitte Payment erneut klicken und im Dateidialog die Rechnung auswählen.": {
+    "de": "Outlook gibt den PDF-Anhang nicht frei. Bitte Überweisung erneut klicken und im Dateidialog die Rechnung auswählen.",
+    "en-US": "Outlook is not providing the PDF attachment. Click Payment again and choose the invoice in the file dialog.",
+    "es": "Outlook no está proporcionando el PDF adjunto. Pulsa Pago de nuevo y selecciona la factura en el diálogo de archivos."
+  },
+  "Outlook hat den Antworteditor nicht geöffnet. Der Text wurde in die Zwischenablage kopiert.": {
+    "de": "Outlook hat den Antworteditor nicht geöffnet. Der Text wurde in die Zwischenablage kopiert.",
+    "en-US": "Outlook did not open the reply editor. The text was copied to the clipboard.",
+    "es": "Outlook no ha abierto el editor de respuesta. El texto se ha copiado al portapapeles."
+  },
+  "Outlook läuft gerade nicht. New Mail funktioniert trotzdem.": {
+    "de": "Outlook läuft gerade nicht. Neue Mail funktioniert trotzdem.",
+    "en-US": "Outlook is not running. You can still create a new email.",
+    "es": "Outlook no está abierto. Aun así, puedes crear un correo nuevo."
+  },
+  "Outlook stellt den erkannten PDF-Anhang nicht als Datei bereit. Wähle die Rechnung einmal aus; Replyzen liest sie danach direkt mit OpenAI.": {
+    "de": "Outlook stellt den erkannten PDF-Anhang nicht als Datei bereit. Wähle die Rechnung einmal aus; ReplyZen liest sie danach direkt mit OpenAI.",
+    "en-US": "Outlook is not providing the PDF attachment as a file. Select the invoice; ReplyZen will then read it directly with OpenAI.",
+    "es": "Outlook no está proporcionando el PDF adjunto como archivo. Selecciona la factura; ReplyZen la leerá directamente con OpenAI."
+  },
+  "Outlook wird aktiviert": {
+    "de": "Outlook wird aktiviert",
+    "en-US": "Activating Outlook",
+    "es": "Activando Outlook"
+  },
+  "Outlook-Mail erneut lesen": {
+    "de": "Outlook-Mail erneut lesen",
+    "en-US": "Read Outlook email again",
+    "es": "Volver a leer el correo de Outlook"
+  },
+  "PDF automatisch aus Outlook gespeichert und direkt mit OpenAI gelesen: {0}": {
+    "de": "PDF automatisch aus Outlook gespeichert und direkt mit OpenAI gelesen: {0}",
+    "en-US": "PDF saved from Outlook and read directly by OpenAI: {0}",
+    "es": "PDF guardado desde Outlook y leído directamente por OpenAI: {0}"
+  },
+  "PDF direkt mit OpenAI gelesen: {0}": {
+    "de": "PDF direkt mit OpenAI gelesen: {0}",
+    "en-US": "PDF read directly by OpenAI: {0}",
+    "es": "PDF leído directamente por OpenAI: {0}"
+  },
+  "PDF nicht verfügbar": {
+    "de": "PDF nicht verfügbar",
+    "en-US": "PDF unavailable",
+    "es": "PDF no disponible"
+  },
+  "PDF verwenden": {
+    "de": "PDF verwenden",
+    "en-US": "Use PDF",
+    "es": "Usar PDF"
+  },
+  "PDF wird aus Outlook geladen …": {
+    "de": "PDF wird aus Outlook geladen …",
+    "en-US": "Loading the PDF from Outlook…",
+    "es": "Cargando el PDF desde Outlook…"
+  },
+  "PDF wird automatisch aus Outlook gespeichert …": {
+    "de": "PDF wird automatisch aus Outlook gespeichert …",
+    "en-US": "Saving the PDF from Outlook automatically…",
+    "es": "Guardando el PDF de Outlook automáticamente…"
+  },
+  "PDF wird direkt an OpenAI übergeben und gelesen …": {
+    "de": "PDF wird direkt an OpenAI übergeben und gelesen …",
+    "en-US": "Sending the PDF directly to OpenAI for reading…",
+    "es": "Enviando el PDF directamente a OpenAI para su lectura…"
+  },
+  "PDF-Anhang erkannt, aber Outlook konnte ihn weder lokal bereitstellen noch automatisch speichern.": {
+    "de": "PDF-Anhang erkannt, aber Outlook konnte ihn weder lokal bereitstellen noch automatisch speichern.",
+    "en-US": "PDF attachment detected, but Outlook could not provide a local file or save it automatically.",
+    "es": "Se ha detectado un PDF adjunto, pero Outlook no ha podido proporcionar un archivo local ni guardarlo automáticamente."
+  },
+  "Payment": {
+    "de": "Überweisung",
+    "en-US": "Payment",
+    "es": "Pago"
+  },
+  "Professional": {
+    "de": "Professionell",
+    "en-US": "Professional",
+    "es": "Profesional"
+  },
+  "Prompt": {
+    "de": "Anweisung",
+    "en-US": "Instructions",
+    "es": "Instrucciones"
+  },
+  "Prüfe den Inhalt. Erst nach deiner Bestätigung wird genau dieser Datenblock gesendet.": {
+    "de": "Prüfe den Inhalt. Erst nach deiner Bestätigung wird genau dieser Datenblock gesendet.",
+    "en-US": "Review the content. This exact data block is sent only after you confirm.",
+    "es": "Revisa el contenido. Este bloque de datos exacto solo se enviará después de tu confirmación."
+  },
+  "Prüfen, einsetzen, selbst senden.": {
+    "de": "Prüfen, einsetzen, selbst senden.",
+    "en-US": "Review, insert, then send yourself.",
+    "es": "Revisa, inserta y envía tú mismo."
+  },
+  "Rechnung auswählen": {
+    "de": "Rechnung auswählen",
+    "en-US": "Choose invoice",
+    "es": "Seleccionar factura"
+  },
+  "Reminder": {
+    "de": "Erinnerung",
+    "en-US": "Reminder",
+    "es": "Recordatorio"
+  },
+  "Reminder-Tag": {
+    "de": "Erinnerungstag",
+    "en-US": "Reminder day",
+    "es": "Día del recordatorio"
+  },
+  "Reminder-Tag und Uhrzeit ändern": {
+    "de": "Tag und Uhrzeit der Erinnerung ändern",
+    "en-US": "Change reminder day and time",
+    "es": "Cambiar día y hora del recordatorio"
+  },
+  "Reply": {
+    "de": "Antworten",
+    "en-US": "Reply",
+    "es": "Responder"
+  },
+  "Reply All": {
+    "de": "Allen antworten",
+    "en-US": "Reply all",
+    "es": "Responder a todos"
+  },
+  "ReplyZen läuft": {
+    "de": "ReplyZen läuft",
+    "en-US": "ReplyZen is running",
+    "es": "ReplyZen está funcionando"
+  },
+  "ReplyZen öffnen": {
+    "de": "ReplyZen öffnen",
+    "en-US": "Open ReplyZen",
+    "es": "Abrir ReplyZen"
+  },
+  "ReplyZen öffnen   ⌃⌥R": {
+    "de": "ReplyZen öffnen   ⌃⌥R",
+    "en-US": "Open ReplyZen   ⌃⌥R",
+    "es": "Abrir ReplyZen   ⌃⌥R"
+  },
+  "Replyzen braucht Bedienungshilfen, um automatisch eine neue Outlook-Mail zu befüllen. Der Mailtext wurde in die Zwischenablage kopiert.": {
+    "de": "ReplyZen braucht Bedienungshilfen, um automatisch eine neue Outlook-Mail zu befüllen. Der Mailtext wurde in die Zwischenablage kopiert.",
+    "en-US": "ReplyZen needs Accessibility access to fill a new Outlook email automatically. The text was copied to the clipboard.",
+    "es": "ReplyZen necesita acceso a Accesibilidad para rellenar un nuevo correo en Outlook automáticamente. El texto se ha copiado al portapapeles."
+  },
+  "Replyzen braucht Bedienungshilfen, um den Forward automatisch in Outlook vorzubereiten. Dein Text wurde in die Zwischenablage kopiert.": {
+    "de": "ReplyZen braucht Bedienungshilfen, um die Weiterleitung in Outlook vorzubereiten. Dein Text wurde in die Zwischenablage kopiert.",
+    "en-US": "ReplyZen needs Accessibility access to prepare the forward in Outlook. Your text was copied to the clipboard.",
+    "es": "ReplyZen necesita acceso a Accesibilidad para preparar el reenvío en Outlook. El texto se ha copiado al portapapeles."
+  },
+  "Replyzen braucht Bedienungshilfen, um den Text automatisch in Outlook einzusetzen. Der Text wurde in die Zwischenablage kopiert.": {
+    "de": "ReplyZen braucht Bedienungshilfen, um den Text automatisch in Outlook einzusetzen. Der Text wurde in die Zwischenablage kopiert.",
+    "en-US": "ReplyZen needs Accessibility access to insert text into Outlook automatically. The text was copied to the clipboard.",
+    "es": "ReplyZen necesita acceso a Accesibilidad para insertar texto en Outlook automáticamente. El texto se ha copiado al portapapeles."
+  },
+  "Replyzen erstellt den Terminvorschlag": {
+    "de": "ReplyZen erstellt den Terminvorschlag",
+    "en-US": "ReplyZen is preparing the event suggestion",
+    "es": "ReplyZen está preparando la propuesta de evento"
+  },
+  "Replyzen ist mit Google Calendar verbunden. Dieses Fenster kann geschlossen werden.": {
+    "de": "ReplyZen ist mit Google Calendar verbunden. Dieses Fenster kann geschlossen werden.",
+    "en-US": "ReplyZen is connected to Google Calendar. You can close this window.",
+    "es": "ReplyZen está conectado con Google Calendar. Puedes cerrar esta ventana."
+  },
+  "Replyzen ist noch nicht mit Google Calendar verbunden. Bitte zuerst mit lennard@minubo.com anmelden.": {
+    "de": "ReplyZen ist noch nicht mit Google Calendar verbunden. Bitte zuerst mit lennard@minubo.com anmelden.",
+    "en-US": "ReplyZen is not connected to Google Calendar yet. First sign in with lennard@minubo.com.",
+    "es": "ReplyZen aún no está conectado con Google Calendar. Inicia sesión primero con lennard@minubo.com."
+  },
+  "Replyzen läuft. Das ist heute schon die halbe Miete.": {
+    "de": "ReplyZen läuft. Das ist heute schon die halbe Miete.",
+    "en-US": "ReplyZen is running. That's half the battle today.",
+    "es": "ReplyZen está funcionando. Eso ya es medio camino recorrido."
+  },
+  "Replyzen nutzt standardmäßig den offiziellen Update-Kanal. Hier kannst du die HTTPS-Adresse zu update.json bei Bedarf ändern.": {
+    "de": "ReplyZen nutzt standardmäßig den offiziellen Update-Kanal. Hier kannst du die HTTPS-Adresse zu update.json bei Bedarf ändern.",
+    "en-US": "ReplyZen uses the official update channel by default. You can change the HTTPS address for update.json here.",
+    "es": "ReplyZen utiliza el canal oficial de actualizaciones por defecto. Aquí puedes cambiar la dirección HTTPS de update.json."
+  },
+  "Replyzen sucht den PDF-Anhang …": {
+    "de": "ReplyZen sucht den PDF-Anhang …",
+    "en-US": "ReplyZen is looking for the PDF attachment…",
+    "es": "ReplyZen está buscando el PDF adjunto…"
+  },
+  "Replyzen wartet auf die Google-Anmeldung.": {
+    "de": "ReplyZen wartet auf die Google-Anmeldung.",
+    "en-US": "ReplyZen is waiting for Google sign-in.",
+    "es": "ReplyZen está esperando el inicio de sesión de Google."
+  },
+  "Replyzen {0} ist verfügbar": {
+    "de": "ReplyZen {0} ist verfügbar",
+    "en-US": "ReplyZen {0} is available",
+    "es": "ReplyZen {0} está disponible"
+  },
+  "Replyzen · Update-Quelle": {
+    "de": "ReplyZen · Update-Quelle",
+    "en-US": "ReplyZen · Update source",
+    "es": "ReplyZen · Origen de las actualizaciones"
+  },
+  "Reset Defaults": {
+    "de": "Standardeinstellungen wiederherstellen",
+    "en-US": "Reset defaults",
+    "es": "Restablecer valores predeterminados"
+  },
+  "SHA-256 konnte nicht berechnet werden.": {
+    "de": "SHA-256 konnte nicht berechnet werden.",
+    "en-US": "SHA-256 could not be calculated.",
+    "es": "No se ha podido calcular la suma SHA-256."
+  },
+  "Sa": {
+    "de": "Sa",
+    "en-US": "Sat",
+    "es": "Sáb"
+  },
+  "Save": {
+    "de": "Speichern",
+    "en-US": "Save",
+    "es": "Guardar"
+  },
+  "Schließen": {
+    "de": "Schließen",
+    "en-US": "Close",
+    "es": "Cerrar"
+  },
+  "So": {
+    "de": "So",
+    "en-US": "Sun",
+    "es": "Dom"
+  },
+  "So kurz wie möglich formulieren": {
+    "de": "So kurz wie möglich formulieren",
+    "en-US": "Keep it as short as possible",
+    "es": "Redactar lo más breve posible"
+  },
+  "Speichern": {
+    "de": "Speichern",
+    "en-US": "Save",
+    "es": "Guardar"
+  },
+  "Speichern & Google verbinden": {
+    "de": "Speichern & Google verbinden",
+    "en-US": "Save and connect Google",
+    "es": "Guardar y conectar Google"
+  },
+  "Später": {
+    "de": "Später",
+    "en-US": "Later",
+    "es": "Más tarde"
+  },
+  "Start": {
+    "de": "Start",
+    "en-US": "Start",
+    "es": "Inicio"
+  },
+  "Start- und Endzeit des Termins sind ungültig.": {
+    "de": "Start- und Endzeit des Termins sind ungültig.",
+    "en-US": "The event's start and end times are invalid.",
+    "es": "Las horas de inicio y fin del evento no son válidas."
+  },
+  "State oder Autorisierungscode fehlt.": {
+    "de": "State oder Autorisierungscode fehlt.",
+    "en-US": "The state or authorization code is missing.",
+    "es": "Falta el estado o el código de autorización."
+  },
+  "Systemeinstellungen öffnen": {
+    "de": "Systemeinstellungen öffnen",
+    "en-US": "Open System Settings",
+    "es": "Abrir Ajustes del Sistema"
+  },
+  "Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen → Replyzen einschalten.": {
+    "de": "Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen → ReplyZen einschalten.",
+    "en-US": "System Settings → Privacy & Security → Accessibility → enable ReplyZen.",
+    "es": "Ajustes del Sistema → Privacidad y seguridad → Accesibilidad → activa ReplyZen."
+  },
+  "Tag": {
+    "de": "Tag",
+    "en-US": "Day",
+    "es": "Día"
+  },
+  "Termin": {
+    "de": "Termin",
+    "en-US": "Event",
+    "es": "Evento"
+  },
+  "Termin aus Mail": {
+    "de": "Termin aus Mail",
+    "en-US": "Event from email",
+    "es": "Evento a partir del correo"
+  },
+  "Termin erstellen": {
+    "de": "Termin erstellen",
+    "en-US": "Create event",
+    "es": "Crear evento"
+  },
+  "Termin nicht erstellt": {
+    "de": "Termin nicht erstellt",
+    "en-US": "Event not created",
+    "es": "No se ha creado el evento"
+  },
+  "Termin prüfen": {
+    "de": "Termin prüfen",
+    "en-US": "Review event",
+    "es": "Revisar evento"
+  },
+  "Termin wird direkt in Google Calendar angelegt": {
+    "de": "Termin wird direkt in Google Calendar angelegt",
+    "en-US": "Creating the event in Google Calendar",
+    "es": "Creando el evento en Google Calendar"
+  },
+  "Titel": {
+    "de": "Titel",
+    "en-US": "Title",
+    "es": "Título"
+  },
+  "Titel, Kurzbeschreibung und erkennbaren Zeitpunkt aus der Mail übernehmen. Den Zielkalender wählst du anschließend aus.": {
+    "de": "Titel, Kurzbeschreibung und erkennbaren Zeitpunkt aus der Mail übernehmen. Den Zielkalender wählst du anschließend aus.",
+    "en-US": "Extract a title, short description, and clear date and time from the email. Choose the destination calendar afterward.",
+    "es": "Extrae el título, una breve descripción y la fecha y hora indicadas en el correo. Después podrás elegir el calendario de destino."
+  },
+  "Token konnte nicht abgerufen werden.": {
+    "de": "Token konnte nicht abgerufen werden.",
+    "en-US": "The token could not be retrieved.",
+    "es": "No se ha podido obtener el token."
+  },
+  "Token-Antwort konnte nicht gelesen werden.": {
+    "de": "Token-Antwort konnte nicht gelesen werden.",
+    "en-US": "The token response could not be read.",
+    "es": "No se ha podido leer la respuesta del token."
+  },
+  "Token-URL fehlt.": {
+    "de": "Token-URL fehlt.",
+    "en-US": "The token URL is missing.",
+    "es": "Falta la URL del token."
+  },
+  "Ton": {
+    "de": "Ton",
+    "en-US": "Tone",
+    "es": "Tono"
+  },
+  "Ton des Mailentwurfs": {
+    "de": "Ton des Mailentwurfs",
+    "en-US": "Email draft tone",
+    "es": "Tono del borrador"
+  },
+  "Tone": {
+    "de": "Ton",
+    "en-US": "Tone",
+    "es": "Tono"
+  },
+  "Trennen": {
+    "de": "Trennen",
+    "en-US": "Disconnect",
+    "es": "Desconectar"
+  },
+  "US English": {
+    "de": "US-Englisch",
+    "en-US": "US English",
+    "es": "Inglés de EE. UU."
+  },
+  "Uhrzeit": {
+    "de": "Uhrzeit",
+    "en-US": "Time",
+    "es": "Hora"
+  },
+  "Ungültige OAuth-Antwort.": {
+    "de": "Ungültige OAuth-Antwort.",
+    "en-US": "Invalid OAuth response.",
+    "es": "Respuesta de OAuth no válida."
+  },
+  "Ungültige OpenAI-Datei-URL.": {
+    "de": "Ungültige OpenAI-Datei-URL.",
+    "en-US": "Invalid OpenAI file URL.",
+    "es": "URL de archivo de OpenAI no válida."
+  },
+  "Ungültige OpenAI-URL.": {
+    "de": "Ungültige OpenAI-URL.",
+    "en-US": "Invalid OpenAI URL.",
+    "es": "URL de OpenAI no válida."
+  },
+  "Ungültige Update-URL": {
+    "de": "Ungültige Update-URL",
+    "en-US": "Invalid update URL",
+    "es": "URL de actualización no válida"
+  },
+  "Update ist vorbereitet – App startet gleich neu": {
+    "de": "Update ist vorbereitet – App startet gleich neu",
+    "en-US": "Update ready. The app will restart shortly.",
+    "es": "Actualización preparada. La aplicación se reiniciará en breve."
+  },
+  "Update verfügbar: {0}…": {
+    "de": "Update verfügbar: {0}…",
+    "en-US": "Update available: {0}…",
+    "es": "Actualización disponible: {0}…"
+  },
+  "Update wird installiert": {
+    "de": "Update wird installiert",
+    "en-US": "Installing update",
+    "es": "Instalando actualización"
+  },
+  "Update-Prüfung fehlgeschlagen": {
+    "de": "Update-Prüfung fehlgeschlagen",
+    "en-US": "Could not check for updates",
+    "es": "No se han podido buscar actualizaciones"
+  },
+  "Update-Quelle gespeichert": {
+    "de": "Update-Quelle gespeichert",
+    "en-US": "Update source saved",
+    "es": "Origen de actualizaciones guardado"
+  },
+  "Update-Quelle…": {
+    "de": "Update-Quelle…",
+    "en-US": "Update source…",
+    "es": "Origen de las actualizaciones…"
+  },
+  "Updates und weitere Optionen findest du im ReplyZen-Menü in der macOS-Menüleiste.": {
+    "de": "Updates und weitere Optionen findest du im ReplyZen-Menü in der macOS-Menüleiste.",
+    "en-US": "Find updates and more options in the ReplyZen menu in the macOS menu bar.",
+    "es": "Encontrarás las actualizaciones y otras opciones en el menú de ReplyZen de la barra de menús de macOS."
+  },
+  "Verbinde …": {
+    "de": "Verbinde …",
+    "en-US": "Connecting…",
+    "es": "Conectando…"
+  },
+  "Verbunden mit {0}": {
+    "de": "Verbunden mit {0}",
+    "en-US": "Connected as {0}",
+    "es": "Conectado como {0}"
+  },
+  "Verbunden: {0}": {
+    "de": "Verbunden: {0}",
+    "en-US": "Connected: {0}",
+    "es": "Conectado: {0}"
+  },
+  "Versendet wird erst in Outlook.": {
+    "de": "Versendet wird erst in Outlook.",
+    "en-US": "You send the email in Outlook.",
+    "es": "El correo se envía desde Outlook."
+  },
+  "Version {0} wird heruntergeladen": {
+    "de": "Version {0} wird heruntergeladen",
+    "en-US": "Downloading version {0}",
+    "es": "Descargando la versión {0}"
+  },
+  "Verwendungszweck": {
+    "de": "Verwendungszweck",
+    "en-US": "Payment reference",
+    "es": "Concepto de pago"
+  },
+  "Verwendungszweck: {0}": {
+    "de": "Verwendungszweck: {0}",
+    "en-US": "Payment reference: {0}",
+    "es": "Concepto: {0}"
+  },
+  "Vor dem Übernehmen prüfen.": {
+    "de": "Vor dem Übernehmen prüfen.",
+    "en-US": "Review before applying.",
+    "es": "Revisa los datos antes de continuar."
+  },
+  "Warum hat der Termin nicht zurückgerufen? Er war schon vergeben.": {
+    "de": "Warum hat der Termin nicht zurückgerufen? Er war schon vergeben.",
+    "en-US": "Why didn't the appointment call back? It was already taken.",
+    "es": "¿Por qué no devolvió la llamada la cita? Porque ya estaba ocupada."
+  },
+  "Warum mag Replyzen Montagmorgen? Weil selbst eine kurze Antwort schon wie Fortschritt aussieht.": {
+    "de": "Warum mag ReplyZen Montagmorgen? Weil selbst eine kurze Antwort schon wie Fortschritt aussieht.",
+    "en-US": "Why does ReplyZen like Monday mornings? Even a short reply feels like progress.",
+    "es": "¿Por qué le gustan los lunes a ReplyZen? Hasta una respuesta breve parece un avance."
+  },
+  "Warum sind E-Mails schlechte Geheimnisträger? Weil am Ende doch jemand auf ‚Allen antworten‘ klickt.": {
+    "de": "Warum sind E-Mails schlechte Geheimnisträger? Weil am Ende doch jemand auf ‚Allen antworten‘ klickt.",
+    "en-US": "Why are emails bad at keeping secrets? Someone always clicks Reply all.",
+    "es": "¿Por qué los correos no guardan secretos? Porque alguien siempre pulsa Responder a todos."
+  },
+  "Warum war die Mail so entspannt? Sie hatte keinen Anhang zu tragen.": {
+    "de": "Warum war die Mail so entspannt? Sie hatte keinen Anhang zu tragen.",
+    "en-US": "Why was the email so relaxed? It had no attachments to carry.",
+    "es": "¿Por qué estaba tan tranquilo el correo? No tenía adjuntos que cargar."
+  },
+  "Weitere technische Details": {
+    "de": "Weitere technische Details",
+    "en-US": "More technical details",
+    "es": "Más detalles técnicos"
+  },
+  "Weiterleitung": {
+    "de": "Weiterleitung",
+    "en-US": "Forward",
+    "es": "Reenvío"
+  },
+  "Widerrufen": {
+    "de": "Widerrufen",
+    "en-US": "Undo",
+    "es": "Deshacer"
+  },
+  "Wiederholen": {
+    "de": "Wiederholen",
+    "en-US": "Redo",
+    "es": "Rehacer"
+  },
+  "Witz zum Start": {
+    "de": "Witz zum Start",
+    "en-US": "A little humor to start",
+    "es": "Un poco de humor para empezar"
+  },
+  "Worum geht es?": {
+    "de": "Worum geht es?",
+    "en-US": "What is it about?",
+    "es": "¿De qué se trata?"
+  },
+  "Währung": {
+    "de": "Währung",
+    "en-US": "Currency",
+    "es": "Moneda"
+  },
+  "Zeigt vor dem Senden genau die Daten, die an ChatGPT übergeben werden.": {
+    "de": "Zeigt vor dem Senden genau die Daten, die an ChatGPT übergeben werden.",
+    "en-US": "Shows the exact data that will be sent to ChatGPT before sending.",
+    "es": "Muestra los datos exactos que se enviarán a ChatGPT antes de enviarlos."
+  },
+  "Zeit und Zielkalender prüfen.": {
+    "de": "Zeit und Zielkalender prüfen.",
+    "en-US": "Check the time and destination calendar.",
+    "es": "Comprueba la hora y el calendario de destino."
+  },
+  "Zeitzone: CET / Europe-Berlin": {
+    "de": "Zeitzone: Europe/Berlin (MEZ/MESZ)",
+    "en-US": "Time zone: Europe/Berlin (CET/CEST)",
+    "es": "Zona horaria: Europe/Berlin (CET/CEST)"
+  },
+  "Zurück": {
+    "de": "Zurück",
+    "en-US": "Back",
+    "es": "Volver"
+  },
+  "Zurück zu Replyzen": {
+    "de": "Zurück zu ReplyZen",
+    "en-US": "Back to ReplyZen",
+    "es": "Volver a ReplyZen"
+  },
+  "{0} Prozent": {
+    "de": "{0} Prozent",
+    "en-US": "{0} percent",
+    "es": "{0} por ciento"
+  },
+  "Öffnen in Outlook: ⌃⌥R": {
+    "de": "Öffnen in Outlook: ⌃⌥R",
+    "en-US": "Open in Outlook: ⌃⌥R",
+    "es": "Abrir en Outlook: ⌃⌥R"
+  },
+  "Übergabe an ChatGPT prüfen": {
+    "de": "Übergabe an ChatGPT prüfen",
+    "en-US": "Review data sent to ChatGPT",
+    "es": "Revisar datos enviados a ChatGPT"
+  },
+  "Übergabe vor ChatGPT anzeigen": {
+    "de": "Übergabe vor ChatGPT anzeigen",
+    "en-US": "Preview before ChatGPT",
+    "es": "Vista previa antes de ChatGPT"
+  },
+  "Überweisung": {
+    "de": "Überweisung",
+    "en-US": "Bank transfer",
+    "es": "Transferencia"
+  },
+  "Überweisung aus Mail + PDF": {
+    "de": "Überweisung aus Mail + PDF",
+    "en-US": "Transfer from email + PDF",
+    "es": "Transferencia a partir del correo y PDF"
+  },
+  "Überweisung extrahieren": {
+    "de": "Überweisung extrahieren",
+    "en-US": "Extract transfer details",
+    "es": "Extraer datos de transferencia"
+  },
+  "Überweisung nicht erkannt": {
+    "de": "Überweisung nicht erkannt",
+    "en-US": "Transfer details not detected",
+    "es": "No se han detectado datos de transferencia"
+  },
+  "Überweisung prüfen": {
+    "de": "Überweisung prüfen",
+    "en-US": "Review transfer details",
+    "es": "Revisar datos de transferencia"
+  },
+  "Überweisungsdaten kopieren": {
+    "de": "Überweisungsdaten kopieren",
+    "en-US": "Copy transfer details",
+    "es": "Copiar datos de transferencia"
+  },
+  "Überweisungsdaten wurden in die Zwischenablage kopiert. Bitte vor der Zahlung im Banking prüfen.": {
+    "de": "Überweisungsdaten wurden in die Zwischenablage kopiert. Bitte vor der Zahlung im Banking prüfen.",
+    "en-US": "Transfer details were copied to the clipboard. Check them in your banking app before paying.",
+    "es": "Los datos de transferencia se han copiado al portapapeles. Compruébalos en tu aplicación bancaria antes de pagar."
+  },
+  "„{0}“ wurde am {1} direkt in Google Calendar · „{2}“ angelegt.": {
+    "de": "„{0}“ wurde am {1} direkt in Google Calendar · „{2}“ angelegt.",
+    "en-US": "“{0}” was added for {1} to Google Calendar · “{2}”.",
+    "es": "Se ha añadido «{0}» para el {1} a Google Calendar · «{2}»."
   }
 }

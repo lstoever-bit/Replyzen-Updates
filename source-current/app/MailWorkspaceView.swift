@@ -25,10 +25,7 @@ enum MailWorkspaceLogic {
             }
             if mode == .newMail { state.newMailSubject = "" }
         case .reply:
-            if trimmed.isEmpty {
-                state.instruction = state.replyLanguage.defaultReplyInstruction
-                state.instructionHTML = ""
-            }
+            break
         case .calendar: break
         }
     }
@@ -37,9 +34,6 @@ enum MailWorkspaceLogic {
         state.replyScope = all ? .all : .sender
         if state.outputMode != .reply {
             select(.reply, in: state)
-        } else if state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            state.instruction = state.replyLanguage.defaultReplyInstruction
-            state.instructionHTML = ""
         }
     }
 }
@@ -75,6 +69,8 @@ struct MailWorkspaceView: View {
                     }
                     .frame(maxHeight: .infinity)
                     optionsRow
+                        .fixedSize(horizontal: false, vertical: true)
+                    transferPreviewControl
                         .fixedSize(horizontal: false, vertical: true)
                     reminderControl
                         .fixedSize(horizontal: false, vertical: true)
@@ -195,6 +191,19 @@ struct MailWorkspaceView: View {
             .buttonStyle(WorkspaceChoiceStyle(selected: state.replyLanguage == language))
             .help(title).accessibilityLabel(title)
             .accessibilityAddTraits(state.replyLanguage == language ? .isSelected : [])
+    }
+
+    private var transferPreviewControl: some View {
+        HStack {
+            Toggle(isOn: $state.previewBeforeChatGPT) {
+                Label(L10n.tr("Übergabe vor ChatGPT anzeigen"), systemImage: "eye")
+            }
+            .toggleStyle(.checkbox)
+            .controlSize(.small)
+            .help(L10n.tr("Zeigt vor dem Senden genau die Daten, die an ChatGPT übergeben werden."))
+            Spacer(minLength: 0)
+        }
+        .font(.system(size: 12))
     }
 
     private var reminderControl: some View {

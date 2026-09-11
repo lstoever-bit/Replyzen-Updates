@@ -15,104 +15,40 @@ final class OpenAIClient {
 
     func generateReply(
         apiKey: String,
-        mailText: String,
-        instruction: String,
-        instructionHTML: String,
-        tone: ReplyTone,
-        language: AppState.ReplyLanguage,
-        compact: Bool,
+        payload: ChatGPTTransferPayload,
         completion: @escaping (Result<ReplyDraft, Error>) -> Void
     ) {
-        var systemInstructions = [
-            "Draft an email reply for the user.",
-            "Return ONLY valid JSON with exactly these keys: body, html.",
-            "body is the plain text final reply.",
-            "html is the same final reply as a clean email safe HTML fragment. Use only p, br, strong, em, ul, ol and li. Do not use CSS, script, html or body tags.",
-            "If the user's rich text instruction intentionally uses bold, italic, bullets or numbering, preserve that formatting in the final email where it makes sense.",
-            "Be concise, natural, and appropriate for email.",
-            tone.apiInstruction,
-            restrainedDashInstruction,
-            languageInstruction(for: language, purpose: "reply"),
-            "Follow the user's instruction precisely. The language of the instruction is input only and must never override the selected output language.",
-            "The USER INSTRUCTION is authoritative. Reflect every explicit requested point in the reply unless it conflicts with the source email or would require inventing facts. Do not silently omit user-provided instructions.",
-            "Do not invent facts, promises, dates, attachments, or commitments.",
-            "Do not add a subject line.",
-            "Do not add a signature or the user's name."
-        ]
-        if compact {
-            systemInstructions.append("COMPACT MODE IS ON: make the reply as short as possible while preserving the requested meaning. Prefer 1 to 3 short sentences and normally stay under 70 words.")
-        }
-
-        let richInstruction = instructionHTML.trimmingCharacters(in: .whitespacesAndNewlines)
-        let input = "USER INSTRUCTION PLAIN:\n\(instruction)" +
-            (richInstruction.isEmpty ? "" : "\n\nUSER INSTRUCTION HTML FORMATTING CUES:\n\(richInstruction)") +
-            "\n\nEMAIL CONTENT:\n\(String(mailText.prefix(30_000)))"
-
-        performRequest(
-            apiKey: apiKey,
-            instructions: systemInstructions.joined(separator: "\n"),
-            input: input,
-            maxOutputTokens: compact ? 340 : 700,
-            lowVerbosity: true
-        ) { result in
+        var rules = commonMailRules(payload: payload, purpose: "reply")
+        rules.append("Return ONLY valid JSON with exactly these keys: body, html.")
+        rules.append("body is the plain text final reply. html is the same reply as clean email-safe HTML using only p, br, strong, em, ul, ol and li.")
+        rules.append("Do not add a subject line or signature.")
+        performRequest(apiKey: apiKey, instructions: rules.joined(separator: "\n"), input: payload.apiJSON,
+                       maxOutputTokens: payload.compact ? 340 : 700, lowVerbosity: true) { result in
             switch result {
             case .success(let text):
                 do { completion(.success(try Self.decodeReplyDraft(text))) }
                 catch { completion(.failure(error)) }
-            case .failure(let error):
-                completion(.failure(error))
+            case .failure(let error): completion(.failure(error))
             }
         }
     }
 
     func generateForwardNote(
         apiKey: String,
-        mailText: String,
-        instruction: String,
-        instructionHTML: String,
-        tone: ReplyTone,
-        language: AppState.ReplyLanguage,
-        compact: Bool,
+        payload: ChatGPTTransferPayload,
         completion: @escaping (Result<ReplyDraft, Error>) -> Void
     ) {
-        var systemInstructions = [
-            "Draft the short note that the user will place above an existing forwarded email thread.",
-            "Return ONLY valid JSON with exactly these keys: body, html.",
-            "body is the plain text forwarding note only.",
-            "html is the same note as a clean email safe HTML fragment. Use only p, br, strong, em, ul, ol and li. Do not use CSS, script, html or body tags.",
-            "If the user's rich text instruction intentionally uses bold, italic, bullets or numbering, preserve that formatting in the final note where it makes sense.",
-            "The original email thread and attachments will be preserved by Outlook below this note. Do not reproduce or summarize the whole forwarded thread unless the user explicitly asks for that.",
-            "Do not invent a recipient. Do not add To, CC, BCC or a subject line.",
-            "Do not add a signature or the user's name unless explicitly requested.",
-            "Be concise, natural, and appropriate for email.",
-            tone.apiInstruction,
-            restrainedDashInstruction,
-            languageInstruction(for: language, purpose: "forwarding note"),
-            "Follow the user's instruction precisely. The language of the instruction is input only and must never override the selected output language.",
-            "Do not invent facts, promises, dates, attachments, or commitments."
-        ]
-        if compact {
-            systemInstructions.append("COMPACT MODE IS ON: make the forwarding note as short as possible while preserving the requested meaning. Prefer 1 to 3 short sentences and normally stay under 70 words.")
-        }
-
-        let richInstruction = instructionHTML.trimmingCharacters(in: .whitespacesAndNewlines)
-        let input = "USER INSTRUCTION PLAIN:\n\(instruction)" +
-            (richInstruction.isEmpty ? "" : "\n\nUSER INSTRUCTION HTML FORMATTING CUES:\n\(richInstruction)") +
-            "\n\nEMAIL BEING FORWARDED:\n\(String(mailText.prefix(30_000)))"
-
-        performRequest(
-            apiKey: apiKey,
-            instructions: systemInstructions.joined(separator: "\n"),
-            input: input,
-            maxOutputTokens: compact ? 340 : 700,
-            lowVerbosity: true
-        ) { result in
+        var rules = commonMailRules(payload: payload, purpose: "forwarding note")
+        rules.append("Return ONLY valid JSON with exactly these keys: body, html.")
+        rules.append("body is only the note placed above the forwarded thread. html is the same note as clean email-safe HTML using only p, br, strong, em, ul, ol and li.")
+        rules.append("Do not reproduce the forwarded thread, add recipients, a subject line or a signature.")
+        performRequest(apiKey: apiKey, instructions: rules.joined(separator: "\n"), input: payload.apiJSON,
+                       maxOutputTokens: payload.compact ? 340 : 700, lowVerbosity: true) { result in
             switch result {
             case .success(let text):
                 do { completion(.success(try Self.decodeReplyDraft(text))) }
                 catch { completion(.failure(error)) }
-            case .failure(let error):
-                completion(.failure(error))
+            case .failure(let error): completion(.failure(error))
             }
         }
     }
@@ -153,51 +89,43 @@ final class OpenAIClient {
 
     func generateNewMail(
         apiKey: String,
-        instruction: String,
-        instructionHTML: String,
-        tone: ReplyTone,
-        language: AppState.ReplyLanguage,
-        compact: Bool,
+        payload: ChatGPTTransferPayload,
         completion: @escaping (Result<NewMailDraft, Error>) -> Void
     ) {
-        var systemInstructions = [
-            "Draft a new email for the user based only on the user's instruction.",
-            "Return ONLY valid JSON with exactly these keys: subject, body, html.",
-            "subject: write a short useful email subject in the selected output language, ideally 2 to 7 words. Do not prefix it with Subject, Betreff, Re or Fwd.",
-            "body: write the actual email body only as plain text. Do not repeat the subject in the body.",
-            "html: the same final body as a clean email safe HTML fragment. Use only p, br, strong, em, ul, ol and li. Do not use CSS, script, html or body tags.",
-            "If the user's rich text instruction intentionally uses bold, italic, bullets or numbering, preserve that formatting in the final email where it makes sense.",
-            "Be concise, natural, and appropriate for email.",
-            tone.apiInstruction,
-            languageInstruction(for: language, purpose: "email subject and body"),
-            restrainedDashInstruction,
-            "Follow the user's instruction precisely. The language of the instruction is input only and must never override the selected output language.",
-            "Do not invent facts, promises, dates, attachments, recipients, or commitments that the user did not provide.",
-            "Do not add a signature or the user's name unless the user explicitly asks for it."
-        ]
-        if compact {
-            systemInstructions.append("COMPACT MODE IS ON: make the body as short as possible while preserving the requested meaning. Prefer 2 to 4 short sentences and normally stay under 80 words.")
-        }
-
-        let richInstruction = instructionHTML.trimmingCharacters(in: .whitespacesAndNewlines)
-        let input = "USER INSTRUCTION PLAIN:\n\(instruction)" +
-            (richInstruction.isEmpty ? "" : "\n\nUSER INSTRUCTION HTML FORMATTING CUES:\n\(richInstruction)")
-
-        performRequest(
-            apiKey: apiKey,
-            instructions: systemInstructions.joined(separator: "\n"),
-            input: input,
-            maxOutputTokens: compact ? 380 : 760,
-            lowVerbosity: true
-        ) { result in
+        var rules = commonMailRules(payload: payload, purpose: "new email")
+        rules.append("Return ONLY valid JSON with exactly these keys: subject, body, html.")
+        rules.append("Create a short useful subject using only the user's provided content. Do not invent a topic.")
+        rules.append("body is the plain text email body. html is the same body as clean email-safe HTML using only p, br, strong, em, ul, ol and li.")
+        rules.append("Do not add a signature unless the user text explicitly asks for one.")
+        performRequest(apiKey: apiKey, instructions: rules.joined(separator: "\n"), input: payload.apiJSON,
+                       maxOutputTokens: payload.compact ? 380 : 760, lowVerbosity: true) { result in
             switch result {
             case .success(let text):
                 do { completion(.success(try Self.decodeNewMailDraft(text))) }
                 catch { completion(.failure(error)) }
-            case .failure(let error):
-                completion(.failure(error))
+            case .failure(let error): completion(.failure(error))
             }
         }
+    }
+
+    private func commonMailRules(payload: ChatGPTTransferPayload, purpose: String) -> [String] {
+        var rules = [
+            "Formulate the \(purpose) using only the information contained in the JSON input.",
+            "user_text is authoritative. Preserve every explicit point from user_text.",
+            "mail_thread is context only. Use it to understand references in user_text, but do not introduce a new substantive point merely because it appears in the thread.",
+            "Do not invent or infer facts, reasons, promises, commitments, dates, names, numbers, attachments, recipients, opinions, decisions or next steps that the user did not provide.",
+            "Do not silently omit a requested point. You may improve grammar, structure and natural phrasing without changing meaning.",
+            "If user_html is present, preserve its intentional bold, italic, bullet and numbered-list cues where appropriate.",
+            "Tone setting is \(payload.tone).",
+            "Output language setting is \(payload.language): de means German, en-US means natural US English, es means natural Spanish.",
+            restrainedDashInstruction
+        ]
+        if payload.compact {
+            rules.append("Compact is true: make the result as short as possible while preserving every requested point.")
+        } else {
+            rules.append("Compact is false: use only the length needed to express the user's requested points clearly; do not add filler.")
+        }
+        return rules
     }
 
     private var restrainedDashInstruction: String {
