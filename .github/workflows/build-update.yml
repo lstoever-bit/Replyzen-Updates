@@ -5,6 +5,7 @@ on:
     paths:
       - 'source-current/**'
       - 'maintenance/replyzen_1_59_mail_context_and_editor.py'
+      - 'maintenance/replyzen_1_59_runner.py'
       - 'tests/**'
       - '.github/workflows/build-update.yml'
   workflow_dispatch:
@@ -20,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Apply ReplyZen 1.59 mail context and editor integrity fixes
-        run: python3 maintenance/replyzen_1_59_mail_context_and_editor.py source-current
+        run: python3 maintenance/replyzen_1_59_runner.py source-current
       - name: Existing regression and typography tests
         run: bash tests/run-tests.sh source-current
       - name: Localization and mail language tests
