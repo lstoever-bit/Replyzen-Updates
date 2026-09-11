@@ -1,11 +1,10 @@
 name: Build ReplyZen Update
 on:
   push:
-    branches: [main, codex/replyzen-1.61-central-mail-prompts]
+    branches: [main, codex/replyzen-1.62-settings-reminder]
     paths:
       - 'source-current/**'
-      - 'maintenance/replyzen_1_61_central_mail_prompts.py'
-      - 'maintenance/replyzen_1_61_prompt_spacing_fix.py'
+      - 'maintenance/replyzen_1_62_settings_reminder.py'
       - 'tests/**'
       - '.github/workflows/build-update.yml'
   workflow_dispatch:
@@ -20,10 +19,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Apply ReplyZen 1.61 central mail prompt update
-        run: python3 maintenance/replyzen_1_61_central_mail_prompts.py source-current
-      - name: Normalize ReplyZen 1.61 prompt spacing
-        run: python3 maintenance/replyzen_1_61_prompt_spacing_fix.py source-current
+      - name: Apply ReplyZen 1.62 settings and reminder update
+        run: python3 maintenance/replyzen_1_62_settings_reminder.py source-current
       - name: Existing regression, prompt and typography tests
         run: bash tests/run-tests.sh source-current
       - name: Localization and mail language tests
@@ -38,7 +35,7 @@ jobs:
         run: bash source-current/Build-CI.sh
       - name: Verify exact updater archive and manifest
         run: python3 tests/verify_update.py source-current
-      - name: Preserve tested canonical 1.61 source
+      - name: Preserve tested canonical 1.62 source
         shell: bash
         run: |
           set -euo pipefail
@@ -46,7 +43,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A source-current/app source-current/Release-notes.txt source-current/Release-notes.localized.json tests
           if ! git diff --cached --quiet; then
-            git commit -m "Build ReplyZen 1.61 central mail prompts"
+            git commit -m "Build ReplyZen 1.62 settings and reminder defaults"
             git push origin "HEAD:${{ github.ref_name }}"
           fi
       - name: Publish verified main update
@@ -63,13 +60,13 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f "$PACKAGE" update.json "update-${VERSION%.0}.json"
           if ! git diff --cached --quiet; then
-            git commit -m "Publish ReplyZen $VERSION central mail prompts"
+            git commit -m "Publish ReplyZen $VERSION settings and reminder defaults"
             git push origin HEAD:main
           fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ReplyZen-1.61-build
+          name: ReplyZen-1.62-build
           path: |
             source-current/Replyzen-update-*.zip
             source-current/update.json
