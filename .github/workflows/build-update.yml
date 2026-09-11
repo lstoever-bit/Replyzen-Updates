@@ -6,6 +6,7 @@ on:
       - 'source-current/**'
       - 'maintenance/replyzen_1_60_preview_and_editor.py'
       - 'maintenance/replyzen_1_60_preserve_user_text.py'
+      - 'maintenance/replyzen_1_60_exact_user_payload.py'
       - 'tests/**'
       - '.github/workflows/build-update.yml'
   workflow_dispatch:
@@ -24,6 +25,8 @@ jobs:
         run: python3 maintenance/replyzen_1_60_preview_and_editor.py source-current
       - name: Guarantee mail loading never clears user text
         run: python3 maintenance/replyzen_1_60_preserve_user_text.py source-current
+      - name: Restrict ChatGPT data block to requested user data
+        run: python3 maintenance/replyzen_1_60_exact_user_payload.py source-current
       - name: Existing regression and typography tests
         run: bash tests/run-tests.sh source-current
       - name: Localization and mail language tests
