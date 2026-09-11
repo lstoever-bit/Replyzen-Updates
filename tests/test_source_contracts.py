@@ -120,13 +120,13 @@ class SourceContracts(unittest.TestCase):
         self.assertIn("selectInstructionTextSoon(expectedText:", panel)
         self.assertIn("state.instruction == expectedText", panel)
         refresh = delegate[delegate.index("private func refreshMailContext()") : delegate.index("private func generateCurrentOutput()")]
-        self.assertIn("instructionAtLoadStart", refresh)
-        self.assertIn("userHasNotEdited", refresh)
+        self.assertNotIn("instructionAtLoadStart", refresh)
+        self.assertNotIn("userHasNotEdited", refresh)
         self.assertNotIn("selectInstructionTextSoon", refresh)
         self.assertIn("flushPendingEdits", editor)
         self.assertIn("replyZenCommitRichEditors", editor)
         self.assertGreaterEqual(workspace.count("replyZenCommitRichEditors"), 2)
-        self.assertIn("USER INSTRUCTION is authoritative", client)
+        self.assertIn("user_text is authoritative", client)
 
     def test_overlay_restores_after_workspace_close(self):
         delegate = self.read("AppDelegate.swift")
