@@ -5,6 +5,7 @@ on:
     paths:
       - 'source-current/**'
       - 'maintenance/replyzen_1_61_central_mail_prompts.py'
+      - 'maintenance/replyzen_1_61_prompt_spacing_fix.py'
       - 'tests/**'
       - '.github/workflows/build-update.yml'
   workflow_dispatch:
@@ -21,6 +22,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Apply ReplyZen 1.61 central mail prompt update
         run: python3 maintenance/replyzen_1_61_central_mail_prompts.py source-current
+      - name: Normalize ReplyZen 1.61 prompt spacing
+        run: python3 maintenance/replyzen_1_61_prompt_spacing_fix.py source-current
       - name: Existing regression, prompt and typography tests
         run: bash tests/run-tests.sh source-current
       - name: Localization and mail language tests
