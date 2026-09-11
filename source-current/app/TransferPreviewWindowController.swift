@@ -4,7 +4,7 @@ final class TransferPreviewWindowController: NSObject, NSWindowDelegate {
     private var window: NSWindow?
     private var completion: ((Bool) -> Void)?
 
-    func show(payload: ChatGPTTransferPayload, completion: @escaping (Bool) -> Void) {
+    func show(prompt: MailWritingPrompt, completion: @escaping (Bool) -> Void) {
         finish(false, invokeCompletion: false)
         self.completion = completion
 
@@ -36,7 +36,7 @@ final class TransferPreviewWindowController: NSObject, NSWindowDelegate {
         textView.isSelectable = true
         textView.isRichText = false
         textView.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
-        textView.string = payload.apiJSON
+        textView.string = prompt.previewText
         textView.textContainerInset = NSSize(width: 10, height: 10)
         textView.minSize = NSSize(width: 0, height: 0)
         textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)

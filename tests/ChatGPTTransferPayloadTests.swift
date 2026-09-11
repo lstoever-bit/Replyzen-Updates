@@ -2,45 +2,41 @@ import Foundation
 
 @main
 struct ChatGPTTransferPayloadTests {
-    static func main() throws {
+    static func main() {
+        let exactInstruction = "  schreibe ein gedicht\nmit zwei Strophen  "
         let reply = ChatGPTTransferPayload(
             mailThread: "Incoming mail thread",
-            userText: "Please confirm Tuesday.",
-            userHTML: "<p>Please confirm <strong>Tuesday</strong>.</p>",
-            tone: "friendly",
+            userText: exactInstruction,
+            tone: "professional",
             language: "en-US",
-            compact: true
+            compact: false
         )
-        let replyObject = try decode(reply.apiJSON)
-        precondition(Set(replyObject.keys) == ["mail_thread", "user_text", "user_html", "tone", "language", "compact"])
-        precondition(replyObject["mail_thread"] as? String == "Incoming mail thread")
-        precondition(replyObject["user_text"] as? String == "Please confirm Tuesday.")
-        precondition(replyObject["tone"] as? String == "friendly")
-        precondition(replyObject["language"] as? String == "en-US")
-        precondition(replyObject["compact"] as? Bool == true)
-        precondition(replyObject["action"] == nil)
+        let prompt = MailPromptBuilder.make(payload: reply)
+        precondition(prompt.system == MailPromptBuilder.systemPrompt)
+        precondition(prompt.system.contains("You are an email writing assistant."))
+        precondition(prompt.system.contains("Do not invent facts, names, dates, commitments or explanations."))
+        precondition(prompt.user.contains("Language: en-US"))
+        precondition(prompt.user.contains("Tone: professional"))
+        precondition(prompt.user.contains("Compact: false"))
+        precondition(prompt.user.contains("Email context:\nIncoming mail thread"))
+        precondition(prompt.user.hasSuffix("User instruction:\n" + exactInstruction))
+        precondition(!prompt.user.lowercased().contains("user_html"))
+        precondition(!prompt.user.lowercased().contains("<html"))
 
         let newMail = ChatGPTTransferPayload(
             mailThread: nil,
             userText: "Invite Stefan for lunch.",
-            userHTML: nil,
-            tone: "professional",
+            tone: "friendly",
             language: "de",
-            compact: false
+            compact: true
         )
-        let newObject = try decode(newMail.apiJSON)
-        precondition(Set(newObject.keys) == ["user_text", "tone", "language", "compact"])
-        precondition(newObject["mail_thread"] == nil)
-        precondition(newObject["user_html"] == nil)
-        precondition(newObject["action"] == nil)
-        print("PASS: ChatGPT payload contains exactly the allowed user data fields")
-    }
-
-    private static func decode(_ json: String) throws -> [String: Any] {
-        let data = Data(json.utf8)
-        guard let object = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            throw NSError(domain: "ReplyZenTests", code: 1)
-        }
-        return object
+        let newPrompt = MailPromptBuilder.make(payload: newMail)
+        precondition(newPrompt.user.contains("Language: de"))
+        precondition(newPrompt.user.contains("Tone: friendly"))
+        precondition(newPrompt.user.contains("Compact: true"))
+        precondition(newPrompt.user.contains("Email context:\n\nUser instruction:\nInvite Stefan for lunch."))
+        precondition(newPrompt.previewText.contains("SYSTEM PROMPT:"))
+        precondition(newPrompt.previewText.contains("USER PROMPT:"))
+        print("PASS: central mail prompt preserves user_text and sends only requested context/settings")
     }
 }

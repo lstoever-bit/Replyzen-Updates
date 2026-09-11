@@ -752,13 +752,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func makeTransferPayload(mailThread: String?) -> ChatGPTTransferPayload? {
-        let userText = state.instruction.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !userText.isEmpty else { return nil }
-        let html = state.instructionHTML.trimmingCharacters(in: .whitespacesAndNewlines)
+        let userText = state.instruction
+        guard !userText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
         return ChatGPTTransferPayload(
             mailThread: mailThread.map { String($0.prefix(30_000)) },
             userText: userText,
-            userHTML: html.isEmpty ? nil : html,
             tone: state.replyTone.rawValue,
             language: chatGPTLanguageCode(),
             compact: state.newMailCompact
@@ -770,7 +768,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             send()
             return
         }
-        transferPreviewWindow.show(payload: payload) { accepted in
+        let prompt = MailPromptBuilder.make(payload: payload)
+        transferPreviewWindow.show(prompt: prompt) { accepted in
             if accepted { send() }
         }
     }

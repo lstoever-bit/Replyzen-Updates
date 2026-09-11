@@ -18,12 +18,15 @@ final class OpenAIClient {
         payload: ChatGPTTransferPayload,
         completion: @escaping (Result<ReplyDraft, Error>) -> Void
     ) {
-        var rules = commonMailRules(payload: payload, purpose: "reply")
-        rules.append("Return ONLY valid JSON with exactly these keys: body, html.")
-        rules.append("body is the plain text final reply. html is the same reply as clean email-safe HTML using only p, br, strong, em, ul, ol and li.")
-        rules.append("Do not add a subject line or signature.")
-        performRequest(apiKey: apiKey, instructions: rules.joined(separator: "\n"), input: payload.apiJSON,
-                       maxOutputTokens: payload.compact ? 340 : 700, lowVerbosity: true) { result in
+        let prompt = MailPromptBuilder.make(payload: payload)
+        performRequest(
+            apiKey: apiKey,
+            instructions: prompt.system,
+            input: prompt.user,
+            maxOutputTokens: payload.compact ? 340 : 700,
+            lowVerbosity: true,
+            responseFormat: replyDraftResponseFormat
+        ) { result in
             switch result {
             case .success(let text):
                 do { completion(.success(try Self.decodeReplyDraft(text))) }
@@ -38,12 +41,15 @@ final class OpenAIClient {
         payload: ChatGPTTransferPayload,
         completion: @escaping (Result<ReplyDraft, Error>) -> Void
     ) {
-        var rules = commonMailRules(payload: payload, purpose: "forwarding note")
-        rules.append("Return ONLY valid JSON with exactly these keys: body, html.")
-        rules.append("body is only the note placed above the forwarded thread. html is the same note as clean email-safe HTML using only p, br, strong, em, ul, ol and li.")
-        rules.append("Do not reproduce the forwarded thread, add recipients, a subject line or a signature.")
-        performRequest(apiKey: apiKey, instructions: rules.joined(separator: "\n"), input: payload.apiJSON,
-                       maxOutputTokens: payload.compact ? 340 : 700, lowVerbosity: true) { result in
+        let prompt = MailPromptBuilder.make(payload: payload)
+        performRequest(
+            apiKey: apiKey,
+            instructions: prompt.system,
+            input: prompt.user,
+            maxOutputTokens: payload.compact ? 340 : 700,
+            lowVerbosity: true,
+            responseFormat: replyDraftResponseFormat
+        ) { result in
             switch result {
             case .success(let text):
                 do { completion(.success(try Self.decodeReplyDraft(text))) }
@@ -58,21 +64,18 @@ final class OpenAIClient {
         mailText: String,
         completion: @escaping (Result<String, Error>) -> Void
     ) {
-        let systemInstructions = [
-            "Draft a very short, friendly decline as an email reply.",
-            "Automatically detect the language of the latest relevant incoming message and write the reply in that same language.",
-            "If the thread mixes languages, use the language of the most recent request that is being declined.",
-            "Keep it warm, polite and concise: normally 1-3 short sentences.",
-            restrainedDashInstruction,
-            "Clearly decline the request or invitation, but do not invent a reason, excuse, date, promise or alternative unless it is explicitly supported by the email.",
-            "Do not add a subject line, greeting-only filler, signature or the user's name.",
-            "Return only the reply text."
-        ].joined(separator: "\n")
-
+        let payload = ChatGPTTransferPayload(
+            mailThread: String(mailText.prefix(30_000)),
+            userText: "Decline the request or invitation politely and briefly. Do not add a reason, excuse, date, promise, alternative or commitment unless it is explicitly supported by the email context.",
+            tone: "friendly",
+            language: "the language of the latest relevant incoming message",
+            compact: true
+        )
+        let prompt = MailPromptBuilder.make(payload: payload)
         performRequest(
             apiKey: apiKey,
-            instructions: systemInstructions,
-            input: "EMAIL THREAD:\n\(String(mailText.prefix(30_000)))",
+            instructions: prompt.system,
+            input: prompt.user,
             model: "gpt-5.6-luna",
             reasoningEffort: "none",
             maxOutputTokens: 180,
@@ -92,13 +95,15 @@ final class OpenAIClient {
         payload: ChatGPTTransferPayload,
         completion: @escaping (Result<NewMailDraft, Error>) -> Void
     ) {
-        var rules = commonMailRules(payload: payload, purpose: "new email")
-        rules.append("Return ONLY valid JSON with exactly these keys: subject, body, html.")
-        rules.append("Create a short useful subject using only the user's provided content. Do not invent a topic.")
-        rules.append("body is the plain text email body. html is the same body as clean email-safe HTML using only p, br, strong, em, ul, ol and li.")
-        rules.append("Do not add a signature unless the user text explicitly asks for one.")
-        performRequest(apiKey: apiKey, instructions: rules.joined(separator: "\n"), input: payload.apiJSON,
-                       maxOutputTokens: payload.compact ? 380 : 760, lowVerbosity: true) { result in
+        let prompt = MailPromptBuilder.make(payload: payload)
+        performRequest(
+            apiKey: apiKey,
+            instructions: prompt.system,
+            input: prompt.user,
+            maxOutputTokens: payload.compact ? 380 : 760,
+            lowVerbosity: true,
+            responseFormat: newMailDraftResponseFormat
+        ) { result in
             switch result {
             case .success(let text):
                 do { completion(.success(try Self.decodeNewMailDraft(text))) }
@@ -108,24 +113,54 @@ final class OpenAIClient {
         }
     }
 
-    private func commonMailRules(payload: ChatGPTTransferPayload, purpose: String) -> [String] {
-        var rules = [
-            "Formulate the \(purpose) using only the information contained in the JSON input.",
-            "user_text is authoritative. Preserve every explicit point from user_text.",
-            "mail_thread is context only. Use it to understand references in user_text, but do not introduce a new substantive point merely because it appears in the thread.",
-            "Do not invent or infer facts, reasons, promises, commitments, dates, names, numbers, attachments, recipients, opinions, decisions or next steps that the user did not provide.",
-            "Do not silently omit a requested point. You may improve grammar, structure and natural phrasing without changing meaning.",
-            "If user_html is present, preserve its intentional bold, italic, bullet and numbered-list cues where appropriate.",
-            "Tone setting is \(payload.tone).",
-            "Output language setting is \(payload.language): de means German, en-US means natural US English, es means natural Spanish.",
-            restrainedDashInstruction
+    private var replyDraftResponseFormat: [String: Any] {
+        [
+            "type": "json_schema",
+            "name": "replyzen_reply_draft",
+            "strict": true,
+            "schema": [
+                "type": "object",
+                "properties": [
+                    "body": [
+                        "type": "string",
+                        "description": "The final email editor text only, without explanation, subject line or signature unless explicitly requested."
+                    ],
+                    "html": [
+                        "type": "string",
+                        "description": "The same final text as clean email-safe HTML using only p, br, strong, em, ul, ol and li. Use an empty string when no HTML formatting is needed."
+                    ]
+                ],
+                "required": ["body", "html"],
+                "additionalProperties": false
+            ]
         ]
-        if payload.compact {
-            rules.append("Compact is true: make the result as short as possible while preserving every requested point.")
-        } else {
-            rules.append("Compact is false: use only the length needed to express the user's requested points clearly; do not add filler.")
-        }
-        return rules
+    }
+
+    private var newMailDraftResponseFormat: [String: Any] {
+        [
+            "type": "json_schema",
+            "name": "replyzen_new_mail_draft",
+            "strict": true,
+            "schema": [
+                "type": "object",
+                "properties": [
+                    "subject": [
+                        "type": "string",
+                        "description": "A short useful subject based only on the user's instruction."
+                    ],
+                    "body": [
+                        "type": "string",
+                        "description": "The final email editor text only, without explanation or signature unless explicitly requested."
+                    ],
+                    "html": [
+                        "type": "string",
+                        "description": "The same final body as clean email-safe HTML using only p, br, strong, em, ul, ol and li. Use an empty string when no HTML formatting is needed."
+                    ]
+                ],
+                "required": ["subject", "body", "html"],
+                "additionalProperties": false
+            ]
+        ]
     }
 
     private var restrainedDashInstruction: String {
@@ -297,6 +332,7 @@ final class OpenAIClient {
         reasoningEffort: String? = "none",
         maxOutputTokens: Int? = nil,
         lowVerbosity: Bool = false,
+        responseFormat: [String: Any]? = nil,
         completion: @escaping (Result<String, Error>) -> Void
     ) {
         guard let url = URL(string: "https://api.openai.com/v1/responses") else {
@@ -316,8 +352,15 @@ final class OpenAIClient {
         if let maxOutputTokens {
             payload["max_output_tokens"] = maxOutputTokens
         }
+        var textConfig: [String: Any] = [:]
         if lowVerbosity {
-            payload["text"] = ["verbosity": "low"]
+            textConfig["verbosity"] = "low"
+        }
+        if let responseFormat {
+            textConfig["format"] = responseFormat
+        }
+        if !textConfig.isEmpty {
+            payload["text"] = textConfig
         }
 
         var request = URLRequest(url: url)
