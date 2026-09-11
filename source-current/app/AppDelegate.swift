@@ -724,10 +724,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     // No mail context means Reply is not a valid action. Keep the
                     // same form in New Mail and remove only the built-in reply hint.
                     self.state.outputMode = .newMail
-                    if self.isDefaultReplyInstruction(self.state.instruction) {
-                        self.state.instruction = ""
-                        self.state.instructionHTML = ""
-                    }
                     self.requestedMailMode = nil
                 }
             }

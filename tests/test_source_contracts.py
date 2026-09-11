@@ -123,6 +123,8 @@ class SourceContracts(unittest.TestCase):
         self.assertNotIn("instructionAtLoadStart", refresh)
         self.assertNotIn("userHasNotEdited", refresh)
         self.assertNotIn("selectInstructionTextSoon", refresh)
+        self.assertNotIn("self.state.instruction = \"\"", refresh)
+        self.assertNotIn("self.state.instructionHTML = \"\"", refresh)
         self.assertIn("flushPendingEdits", editor)
         self.assertIn("replyZenCommitRichEditors", editor)
         self.assertGreaterEqual(workspace.count("replyZenCommitRichEditors"), 2)
