@@ -1,9 +1,9 @@
 import Foundation
 
 /// The complete user-data payload sent to OpenAI for mail drafting.
-/// Keep this intentionally small: no hidden app state, recipients or unrelated metadata.
+/// Intentionally contains only the mail context (when applicable), the user's
+/// written content/formatting, and the three selected generation settings.
 struct ChatGPTTransferPayload: Equatable {
-    let action: String
     let mailThread: String?
     let userText: String
     let userHTML: String?
@@ -13,7 +13,6 @@ struct ChatGPTTransferPayload: Equatable {
 
     var apiJSON: String {
         var object: [String: Any] = [
-            "action": action,
             "user_text": userText,
             "tone": tone,
             "language": language,
