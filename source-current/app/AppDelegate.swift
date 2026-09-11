@@ -751,12 +751,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func makeTransferPayload(action: String, mailThread: String?) -> ChatGPTTransferPayload? {
+    private func makeTransferPayload(mailThread: String?) -> ChatGPTTransferPayload? {
         let userText = state.instruction.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !userText.isEmpty else { return nil }
         let html = state.instructionHTML.trimmingCharacters(in: .whitespacesAndNewlines)
         return ChatGPTTransferPayload(
-            action: action,
             mailThread: mailThread.map { String($0.prefix(30_000)) },
             userText: userText,
             userHTML: html.isEmpty ? nil : html,
@@ -785,8 +784,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             state.mailStatus = .unavailable(L10n.source("Keine lesbare Outlook-Mail erkannt. Nutze New Mail oder versuche es erneut."))
             return
         }
-        let action = state.replyScope == .all ? "reply_all" : "reply"
-        guard let payload = makeTransferPayload(action: action, mailThread: state.mailText) else { return }
+        guard let payload = makeTransferPayload(mailThread: state.mailText) else { return }
         sendWithOptionalPreview(payload) { [weak self] in
             self?.performReply(payload, apiKey: apiKey)
         }
@@ -818,7 +816,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             state.stage = .apiKey
             return
         }
-        guard let payload = makeTransferPayload(action: "new_mail", mailThread: nil) else { return }
+        guard let payload = makeTransferPayload(mailThread: nil) else { return }
         sendWithOptionalPreview(payload) { [weak self] in
             self?.performNewMail(payload, apiKey: apiKey)
         }
@@ -855,7 +853,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             state.mailStatus = .unavailable(L10n.source("Keine lesbare Outlook-Mail erkannt. Für Forward bitte eine Mail öffnen und erneut versuchen."))
             return
         }
-        guard let payload = makeTransferPayload(action: "forward", mailThread: state.mailText) else { return }
+        guard let payload = makeTransferPayload(mailThread: state.mailText) else { return }
         sendWithOptionalPreview(payload) { [weak self] in
             self?.performForward(payload, apiKey: apiKey)
         }
