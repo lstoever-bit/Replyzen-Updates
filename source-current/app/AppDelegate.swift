@@ -629,6 +629,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         state.stage = .instruction
         panel.show(activate: true)
 
+        if state.outputMode == .reply {
+            panel.selectInstructionTextSoon(expectedText: state.instruction)
+        }
         refreshMailContext()
     }
 
@@ -660,6 +663,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         isLoadingMail = true
         state.mailStatus = .loading
+        let instructionAtLoadStart = state.instruction
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
@@ -701,14 +705,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     }
 
                     if self.state.outputMode == .reply {
-                        if self.state.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-                           self.isDefaultReplyInstruction(self.state.instruction) {
+                        let initialWasDefault = instructionAtLoadStart.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                            self.isDefaultReplyInstruction(instructionAtLoadStart)
+                        let userHasNotEdited = self.state.instruction == instructionAtLoadStart
+                        if initialWasDefault && userHasNotEdited {
                             self.state.instruction = self.defaultReplyInstruction(for: self.state.replyLanguage)
                             self.state.instructionHTML = ""
                         }
-                        // The lightweight suggestion is selected so typing replaces
-                        // it immediately.
-                        self.panel.selectInstructionTextSoon()
+                        // Never select text when asynchronous mail loading finishes.
+                        // The user may already be typing in the instruction editor.
                     }
                     self.requestedMailMode = nil
                 }

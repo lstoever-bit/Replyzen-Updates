@@ -34,6 +34,7 @@ final class OpenAIClient {
             restrainedDashInstruction,
             languageInstruction(for: language, purpose: "reply"),
             "Follow the user's instruction precisely. The language of the instruction is input only and must never override the selected output language.",
+            "The USER INSTRUCTION is authoritative. Reflect every explicit requested point in the reply unless it conflicts with the source email or would require inventing facts. Do not silently omit user-provided instructions.",
             "Do not invent facts, promises, dates, attachments, or commitments.",
             "Do not add a subject line.",
             "Do not add a signature or the user's name."

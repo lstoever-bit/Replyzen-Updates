@@ -11,8 +11,8 @@ class SourceContracts(unittest.TestCase):
         info = plistlib.loads((APP / "Info.plist").read_bytes())
         self.assertEqual(info["CFBundleIdentifier"], "com.lstoever.replyzen")
         self.assertEqual(info["CFBundleDisplayName"], "ReplyZen")
-        self.assertEqual(info["CFBundleShortVersionString"], "1.58.0")
-        self.assertEqual(info["CFBundleVersion"], "59")
+        self.assertEqual(info["CFBundleShortVersionString"], "1.59.0")
+        self.assertEqual(info["CFBundleVersion"], "60")
     def test_payment_is_removed_from_active_code(self):
         self.assertFalse((APP / "AttachmentTextExtractor.swift").exists())
         swift = "\n".join(p.read_text(encoding="utf-8") for p in APP.glob("*.swift"))
@@ -107,6 +107,27 @@ class SourceContracts(unittest.TestCase):
         toolbar = self.read("OutlookToolbarButtonController.swift")
         self.assertIn("defaults.set(Double(toolbarOffset.x)", toolbar)
         self.assertIn("defaults.set(Double(toolbarOffset.y)", toolbar)
+    def test_fast_mail_and_instruction_integrity(self):
+        outlook = self.read("OutlookAccessibility.swift")
+        delegate = self.read("AppDelegate.swift")
+        panel = self.read("FloatingPanelController.swift")
+        editor = self.read("RichTextMailEditor.swift")
+        workspace = self.read("MailWorkspaceView.swift")
+        client = self.read("OpenAIClient.swift")
+        self.assertIn("fastMailText(in window:", outlook)
+        self.assertIn('maxNodes: 4_500', outlook)
+        self.assertIn('maxNodes: 6_000', outlook)
+        self.assertIn("selectInstructionTextSoon(expectedText:", panel)
+        self.assertIn("state.instruction == expectedText", panel)
+        refresh = delegate[delegate.index("private func refreshMailContext()") : delegate.index("private func generateCurrentOutput()")]
+        self.assertIn("instructionAtLoadStart", refresh)
+        self.assertIn("userHasNotEdited", refresh)
+        self.assertNotIn("selectInstructionTextSoon", refresh)
+        self.assertIn("flushPendingEdits", editor)
+        self.assertIn("replyZenCommitRichEditors", editor)
+        self.assertGreaterEqual(workspace.count("replyZenCommitRichEditors"), 2)
+        self.assertIn("USER INSTRUCTION is authoritative", client)
+
     def test_overlay_restores_after_workspace_close(self):
         delegate = self.read("AppDelegate.swift")
         start = delegate.index("private func closePanel()")

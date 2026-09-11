@@ -58,21 +58,48 @@ final class OutlookAccessibility {
     }
 
     func readMail(from snapshot: Snapshot) throws -> String {
-        var best = ""
+        // Most Outlook windows expose the active message web area near the top of
+        // the accessibility tree. Resolve that small area first so ReplyZen does
+        // not walk tens of thousands of AX nodes for every normal reply.
+        for window in snapshot.windows {
+            if let fast = fastMailText(in: window) { return fast }
+        }
 
+        // Keep the previous deep scan as a compatibility fallback for unusual
+        // Outlook layouts. Correctness wins when the fast path cannot identify a
+        // readable message.
+        var best = ""
         for window in snapshot.windows {
             let webAreas = findElements(role: "AXWebArea", root: window, maxNodes: 18_000)
             for webArea in webAreas {
                 let text = collectStaticText(root: webArea, maxNodes: 18_000)
-                if text.count > best.count {
-                    best = text
-                }
+                if text.count > best.count { best = text }
             }
         }
 
         let cleaned = cleanup(best)
         guard cleaned.count > 20 else { throw OutlookError.noMailText }
         return cleaned
+    }
+
+    private func fastMailText(in window: AXUIElement) -> String? {
+        let webAreas = findElements(role: "AXWebArea", root: window, maxNodes: 4_500)
+        guard !webAreas.isEmpty else { return nil }
+
+        // The message body is normally the largest visible web area. Inspect only
+        // the three strongest candidates before falling back to the legacy scan.
+        let ranked = webAreas.sorted { left, right in
+            let leftSize = sizeAttribute(kAXSizeAttribute as CFString, from: left) ?? .zero
+            let rightSize = sizeAttribute(kAXSizeAttribute as CFString, from: right) ?? .zero
+            return leftSize.width * leftSize.height > rightSize.width * rightSize.height
+        }
+
+        var best = ""
+        for webArea in ranked.prefix(3) {
+            let cleaned = cleanup(collectStaticText(root: webArea, maxNodes: 6_000))
+            if cleaned.count > best.count { best = cleaned }
+        }
+        return best.count > 20 ? best : nil
     }
 
 

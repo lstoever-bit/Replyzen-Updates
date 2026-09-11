@@ -3,6 +3,10 @@ import AppKit
 import Combine
 import RichEditorSwiftUI
 
+extension Notification.Name {
+    static let replyZenCommitRichEditors = Notification.Name("ReplyZen.CommitRichEditors")
+}
+
 final class ReplyZenRichEditorAdapter: ObservableObject {
     weak var textView: RichTextView?
     private weak var scrollView: NSScrollView?
@@ -110,7 +114,15 @@ final class ReplyZenRichEditorAdapter: ObservableObject {
         publishWorkItem?.cancel()
         let item = DispatchWorkItem { [weak self] in self?.publishCurrentValue() }
         publishWorkItem = item
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.02, execute: item)
+        // Queue on the current run loop with no artificial debounce. This keeps the
+        // SwiftUI binding current before a following mouse click can generate mail.
+        DispatchQueue.main.async(execute: item)
+    }
+
+    func flushPendingEdits() {
+        publishWorkItem?.cancel()
+        publishWorkItem = nil
+        publishCurrentValue()
     }
 
     private func publishCurrentValue() {
@@ -259,6 +271,9 @@ struct RichTextMailEditor: View {
         }
         .onChange(of: plainText) { newValue in adapter.updateExternal(plainText: newValue, html: html) }
         .onChange(of: html) { newValue in adapter.updateExternal(plainText: plainText, html: newValue) }
+        .onReceive(NotificationCenter.default.publisher(for: .replyZenCommitRichEditors)) { _ in
+            adapter.flushPendingEdits()
+        }
     }
 }
 

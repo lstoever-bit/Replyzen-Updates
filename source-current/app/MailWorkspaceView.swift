@@ -92,7 +92,10 @@ struct MailWorkspaceView: View {
                 hint: isMail ? L10n.tr("Versendet wird erst in Outlook.") : L10n.tr("Vor dem Übernehmen prüfen."),
                 disabled: !MailWorkspaceLogic.canGenerate(state),
                 secondaryAction: { state.closeAction?() },
-                primaryAction: { state.generateAction?() }
+                primaryAction: {
+                    NotificationCenter.default.post(name: .replyZenCommitRichEditors, object: nil)
+                    DispatchQueue.main.async { state.generateAction?() }
+                }
             )
         }
     }
@@ -295,7 +298,10 @@ struct MailDraftPreviewView: View {
                 primaryTitle: state.outputMode == .newMail ? L10n.tr("Neue Mail in Outlook") : L10n.tr("In Outlook einsetzen"),
                 hint: L10n.tr("Prüfen, einsetzen, selbst senden."),
                 secondaryAction: { state.stage = .instruction },
-                primaryAction: { state.insertAction?() }
+                primaryAction: {
+                    NotificationCenter.default.post(name: .replyZenCommitRichEditors, object: nil)
+                    DispatchQueue.main.async { state.insertAction?() }
+                }
             )
         }
     }
