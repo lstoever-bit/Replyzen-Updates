@@ -6,6 +6,8 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 export REPLYZEN_TEST_CATALOG="$SOURCE/app/Resources/Localization.json"
 python3 "$ROOT/tests/test_source_contracts.py" "$SOURCE"
+swiftc -parse-as-library "$SOURCE/app/ReminderDay.swift" "$ROOT/tests/ReminderDayTests.swift" -o "$TMP/reminder-day-tests"
+"$TMP/reminder-day-tests"
 swiftc -DLOCALIZATION_TESTS -parse-as-library "$SOURCE/app/LocalizationCore.swift" "$SOURCE/app/ResponseJSON.swift" "$ROOT/tests/ResponseJSONTests.swift" -o "$TMP/json-tests"
 "$TMP/json-tests"
 swiftc -parse-as-library "$SOURCE/app/ChatGPTTransferPayload.swift" "$SOURCE/app/MailPromptBuilder.swift" "$ROOT/tests/ChatGPTTransferPayloadTests.swift" -o "$TMP/payload-tests"

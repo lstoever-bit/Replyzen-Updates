@@ -68,6 +68,10 @@ struct WorkspaceHeader: View {
                 VStack(alignment: .leading, spacing: 16) {
                     Text(ReplyZenBrand.displayName).font(.headline)
                     InterfaceLanguagePicker()
+                    Toggle(L10n.tr("Übergabe vor ChatGPT anzeigen"), isOn: $state.previewBeforeChatGPT)
+                        .toggleStyle(.checkbox)
+                        .controlSize(.small)
+                        .help(L10n.tr("Zeigt vor dem Senden genau die Daten, die an ChatGPT übergeben werden."))
                     Divider()
                     Text(L10n.tr("Öffnen in Outlook: ⌃⌥R"))
                     Text(L10n.tr("Der Editor-Zoom verändert nur die Anzeige. Mailtext wird weiterhin in Calibri Light, 10,5 pt eingesetzt."))

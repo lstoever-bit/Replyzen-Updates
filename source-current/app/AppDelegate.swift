@@ -616,6 +616,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         state.instructionHTML = ""
         state.reminderEnabled = false
+        state.reminderDay = ReminderDay.nextCode()
         state.reminderTime = "06:00"
 
         guard keychain.loadAPIKey() != nil else {

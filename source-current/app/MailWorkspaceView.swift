@@ -70,8 +70,6 @@ struct MailWorkspaceView: View {
                     .frame(maxHeight: .infinity)
                     optionsRow
                         .fixedSize(horizontal: false, vertical: true)
-                    transferPreviewControl
-                        .fixedSize(horizontal: false, vertical: true)
                     reminderControl
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
@@ -193,19 +191,6 @@ struct MailWorkspaceView: View {
             .accessibilityAddTraits(state.replyLanguage == language ? .isSelected : [])
     }
 
-    private var transferPreviewControl: some View {
-        HStack {
-            Toggle(isOn: $state.previewBeforeChatGPT) {
-                Label(L10n.tr("Übergabe vor ChatGPT anzeigen"), systemImage: "eye")
-            }
-            .toggleStyle(.checkbox)
-            .controlSize(.small)
-            .help(L10n.tr("Zeigt vor dem Senden genau die Daten, die an ChatGPT übergeben werden."))
-            Spacer(minLength: 0)
-        }
-        .font(.system(size: 12))
-    }
-
     private var reminderControl: some View {
         HStack(spacing: 10) {
             Toggle(isOn: $state.reminderEnabled) { Label(L10n.tr("Reminder"), systemImage: "bell") }
@@ -224,7 +209,13 @@ struct MailWorkspaceView: View {
             Spacer(minLength: 0)
         }
         .font(.system(size: 12)).frame(minHeight: 24)
-        .onChange(of: state.reminderEnabled) { enabled in if !enabled { showsReminder = false } }
+        .onChange(of: state.reminderEnabled) { enabled in
+            if enabled {
+                state.reminderDay = ReminderDay.nextCode()
+            } else {
+                showsReminder = false
+            }
+        }
     }
 
     private var reminderDetails: some View {

@@ -86,7 +86,7 @@ final class AppState: ObservableObject {
         didSet { UserDefaults.standard.set(previewBeforeChatGPT, forKey: "ReplyZen.PreviewBeforeChatGPT") }
     }
     @Published var reminderEnabled: Bool = false
-    @Published var reminderDay: String = "wed"
+    @Published var reminderDay: String = ReminderDay.nextCode()
     @Published var reminderTime: String = "06:00"
     @Published var newMailSubject: String = ""
     @Published var selectedCommandName: String = "Custom"
