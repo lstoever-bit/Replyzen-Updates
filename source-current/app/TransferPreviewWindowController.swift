@@ -31,17 +31,20 @@ final class TransferPreviewWindowController: NSObject, NSWindowDelegate {
         info.textColor = .secondaryLabelColor
         info.translatesAutoresizingMaskIntoConstraints = false
 
-        let textView = NSTextView()
+        let textView = NSTextView(frame: NSRect(x: 0, y: 0, width: 660, height: 450))
         textView.isEditable = false
         textView.isSelectable = true
         textView.isRichText = false
         textView.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
         textView.string = payload.apiJSON
         textView.textContainerInset = NSSize(width: 10, height: 10)
+        textView.minSize = NSSize(width: 0, height: 0)
+        textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
         textView.isHorizontallyResizable = false
         textView.isVerticallyResizable = true
         textView.autoresizingMask = [.width]
         textView.textContainer?.widthTracksTextView = true
+        textView.textContainer?.containerSize = NSSize(width: 660, height: CGFloat.greatestFiniteMagnitude)
 
         let scroll = NSScrollView()
         scroll.translatesAutoresizingMaskIntoConstraints = false
