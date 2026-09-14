@@ -649,19 +649,36 @@ final class OutlookAccessibility {
     }
 
     func setComposeBCCValue(_ bcc: String) -> Bool {
-        guard let window = focusedOutlookWindow() else { return false }
+        let recipient = bcc.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !recipient.isEmpty, let window = focusedOutlookWindow() else { return false }
+
         if let element = composeBCCElement(in: window) {
-            return setValue(bcc, on: element)
+            return commitComposeRecipient(recipient, on: element)
         }
 
         // Some Outlook layouts hide BCC until its small Bcc control is pressed.
-        // Reveal it once, then resolve the actual BCC field again by accessibility metadata.
-        if pressComposeControl(in: window, matching: ["bcc", "blind carbon", "blind copy", "blindkopie", "cco", "copia oculta"]) ,
-           let refreshed = focusedOutlookWindow(),
-           let element = composeBCCElement(in: refreshed) {
-            return setValue(bcc, on: element)
+        // Revealing the row is asynchronous in Legacy Outlook, so allow the AX tree
+        // a short moment to expose the recipient field before resolving it again.
+        guard pressComposeControl(in: window, matching: ["bcc", "blind carbon", "blind copy", "blindkopie", "cco", "copia oculta"]) else {
+            return false
+        }
+        for _ in 0..<3 {
+            Thread.sleep(forTimeInterval: 0.08)
+            if let refreshed = focusedOutlookWindow(),
+               let element = composeBCCElement(in: refreshed) {
+                return commitComposeRecipient(recipient, on: element)
+            }
         }
         return false
+    }
+
+    private func commitComposeRecipient(_ recipient: String, on element: AXUIElement) -> Bool {
+        guard focus(element), setValue(recipient, on: element) else { return false }
+        // Outlook recipient controls can visually show AXValue without adding it to
+        // the native To/Cc/Bcc recipient model. Return commits the value as a token.
+        postKey(code: 36)
+        Thread.sleep(forTimeInterval: 0.06)
+        return true
     }
 
     func setComposeSubjectValue(_ subject: String) -> Bool {

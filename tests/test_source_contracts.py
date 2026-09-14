@@ -11,8 +11,8 @@ class SourceContracts(unittest.TestCase):
         info = plistlib.loads((APP / "Info.plist").read_bytes())
         self.assertEqual(info["CFBundleIdentifier"], "com.lstoever.replyzen")
         self.assertEqual(info["CFBundleDisplayName"], "ReplyZen")
-        self.assertEqual(info["CFBundleShortVersionString"], "1.62.0")
-        self.assertEqual(info["CFBundleVersion"], "63")
+        self.assertEqual(info["CFBundleShortVersionString"], "1.63.0")
+        self.assertEqual(info["CFBundleVersion"], "64")
     def test_payment_is_removed_from_active_code(self):
         self.assertFalse((APP / "AttachmentTextExtractor.swift").exists())
         swift = "\n".join(p.read_text(encoding="utf-8") for p in APP.glob("*.swift"))
@@ -192,6 +192,24 @@ class SourceContracts(unittest.TestCase):
         self.assertIn('Picker(L10n.tr("Tag"), selection: $state.reminderDay)', workspace)
         self.assertIn('Picker(L10n.tr("Uhrzeit"), selection: $state.reminderTime)', workspace)
         self.assertIn("private func reminderBCCAddress()", delegate)
+
+    def test_reminder_bcc_is_committed_in_all_compose_paths(self):
+        delegate = self.read("AppDelegate.swift")
+        outlook = self.read("OutlookAccessibility.swift")
+        reply_start = delegate.index("private func populateReplyDraft")
+        reply_end = delegate.index("private func insertForwardDraft", reply_start)
+        reply = delegate[reply_start:reply_end]
+        self.assertLess(reply.index("setComposeBCCValue(reminder)"), reply.index("focusComposeBodyField()"))
+        self.assertIn("setComposeBCCValue(reminder)", delegate[delegate.index("private func populateForwardDraft"):delegate.index("private func insertNewMail")])
+        self.assertIn("setComposeBCCValue(reminder)", delegate[delegate.index("private func populateNewMailDraft"):delegate.index("private func finishNewMailInsertion")])
+        self.assertIn("private func commitComposeRecipient", outlook)
+        commit = outlook[outlook.index("private func commitComposeRecipient"):outlook.index("func setComposeSubjectValue")]
+        self.assertIn("focus(element)", commit)
+        self.assertIn("setValue(recipient, on: element)", commit)
+        self.assertIn("postKey(code: 36)", commit)
+        bcc = outlook[outlook.index("func setComposeBCCValue"):outlook.index("func setComposeSubjectValue")]
+        self.assertIn("for _ in 0..<3", bcc)
+        self.assertIn("Thread.sleep(forTimeInterval: 0.08)", bcc)
 
     def test_overlay_restores_after_workspace_close(self):
         delegate = self.read("AppDelegate.swift")

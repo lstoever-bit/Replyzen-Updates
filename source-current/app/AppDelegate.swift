@@ -1192,11 +1192,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             guard let self else { return }
 
+            if let reminder = self.reminderBCCAddress() {
+                _ = self.outlook.setComposeBCCValue(reminder)
+            }
+
             if self.outlook.focusComposeBodyField() {
-                if let reminder = self.reminderBCCAddress() {
-                    _ = self.outlook.setComposeBCCValue(reminder)
-                    _ = self.outlook.focusComposeBodyField()
-                }
                 self.copyMailToPasteboard(plainText: reply, html: html)
                 self.keyboard.sendCommandV()
                 self.finishNewMailInsertion()
