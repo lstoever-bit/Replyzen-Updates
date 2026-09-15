@@ -10,7 +10,6 @@ extension Notification.Name {
 final class ReplyZenRichEditorAdapter: ObservableObject {
     weak var textView: RichTextView?
     private weak var scrollView: NSScrollView?
-    private var zoomObservation: NSKeyValueObservation?
     private var keyMonitor: Any?
     private var wrapObservers: [NSObjectProtocol] = []
     private var wrapWorkItem: DispatchWorkItem?
@@ -47,27 +46,58 @@ final class ReplyZenRichEditorAdapter: ObservableObject {
         if self.scrollView === scrollView { return }
         self.scrollView = scrollView
         installWrapObservers(for: scrollView)
-        scrollView.allowsMagnification = true
-        scrollView.minMagnification = 1.0
-        scrollView.maxMagnification = 1.8
-        scrollView.magnification = CGFloat(zoomPercent) / 100.0
-        zoomObservation = scrollView.observe(\.magnification, options: [.new]) { [weak self, weak scrollView] _, _ in
-            DispatchQueue.main.async {
-                guard let self, let scrollView, self.scrollView === scrollView else { return }
-                let percent = Int((scrollView.magnification * 100).rounded())
-                if percent != self.zoomPercent { self.zoomPercent = percent }
-                self.updateWrapWidth()
-            }
-        }
+
+        // NSScrollView magnification creates a zoomed document viewport. That is
+        // useful for canvases, but wrong for a mail composer because the logical
+        // text width can extend beyond the visible Rich Text Box. Keep TextKit at
+        // 1:1 and implement ReplyZen's display-only zoom through font rendering.
+        scrollView.allowsMagnification = false
+        scrollView.magnification = 1.0
+        applyDisplayZoom()
+        scheduleWrapUpdate()
     }
 
     func setZoom(percent: Int) {
-        guard let scrollView else { return }
         let clamped = min(180, max(100, percent))
-        scrollView.magnification = CGFloat(clamped) / 100.0
+        guard clamped != zoomPercent else { return }
         zoomPercent = clamped
         UserDefaults.standard.set(clamped, forKey: "ReplyZen.EditorZoomPercent")
+        applyDisplayZoom()
         updateWrapWidth()
+    }
+
+    private func displayFont(preserving source: NSFont?) -> NSFont {
+        let normalized = MailTypography.font(preserving: source)
+        let size = MailTypography.pointSize * CGFloat(zoomPercent) / 100.0
+        return NSFont(descriptor: normalized.fontDescriptor, size: size) ?? normalized
+    }
+
+    private func applyDisplayZoom() {
+        guard let textView else { return }
+        let wasApplyingExternalValue = isApplyingExternalValue
+        isApplyingExternalValue = true
+
+        if let storage = textView.textStorage, storage.length > 0 {
+            let fullRange = NSRange(location: 0, length: storage.length)
+            var changes: [(NSRange, NSFont)] = []
+            storage.enumerateAttribute(.font, in: fullRange) { value, range, _ in
+                let old = value as? NSFont
+                let desired = displayFont(preserving: old)
+                if old?.fontName != desired.fontName || abs((old?.pointSize ?? 0) - desired.pointSize) > 0.01 {
+                    changes.append((range, desired))
+                }
+            }
+            if !changes.isEmpty {
+                storage.beginEditing()
+                for (range, font) in changes { storage.addAttribute(.font, value: font, range: range) }
+                storage.endEditing()
+            }
+        }
+
+        textView.font = displayFont(preserving: textView.font)
+        textView.typingAttributes[.font] = displayFont(preserving: textView.typingAttributes[.font] as? NSFont)
+        isApplyingExternalValue = wasApplyingExternalValue
+        textView.needsDisplay = true
     }
 
     func attach(_ view: RichTextView) {
@@ -97,8 +127,8 @@ final class ReplyZenRichEditorAdapter: ObservableObject {
         view.isRichText = true
         view.allowsUndo = true
         view.drawsBackground = false
-        view.font = MailTypography.baseFont
-        view.typingAttributes[.font] = MailTypography.baseFont
+        view.font = displayFont(preserving: nil)
+        view.typingAttributes[.font] = displayFont(preserving: nil)
         view.textContainerInset = NSSize(width: 10, height: 10)
         view.isVerticallyResizable = true
         view.isHorizontallyResizable = false
@@ -122,7 +152,8 @@ final class ReplyZenRichEditorAdapter: ObservableObject {
         let attributed = MailTypography.attributedString(plainText: pendingExternal.plain, html: pendingExternal.html)
         isApplyingExternalValue = true
         textView.setRichText(attributed)
-        textView.typingAttributes[.font] = MailTypography.baseFont
+        applyDisplayZoom()
+        textView.typingAttributes[.font] = displayFont(preserving: textView.typingAttributes[.font] as? NSFont)
         lastPublishedPlain = pendingExternal.plain
         lastPublishedHTML = pendingExternal.html
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) { [weak self] in self?.isApplyingExternalValue = false }
@@ -212,37 +243,34 @@ final class ReplyZenRichEditorAdapter: ObservableObject {
         guard let scrollView, let textView else { return }
         scrollView.layoutSubtreeIfNeeded()
 
-        // NSClipView.bounds is expressed in document coordinates, so at 130%/150%
-        // zoom it already represents the exact width that is visibly available to
-        // the text. Using NSScrollView.contentSize here made the document wider than
-        // the visible editor and caused the delayed wrap/horizontal scrolling bug.
-        let visibleWidth = scrollView.contentView.bounds.width
-        let scale = max(CGFloat(1.0), scrollView.magnification)
-        let fallbackWidth = scrollView.contentSize.width / scale
+        // With scroll magnification disabled, documentVisibleRect is the actual
+        // editable width visible through the clip view. TextKit gets exactly that
+        // width, so the document cannot create a horizontal overflow range.
+        let visibleWidth = scrollView.documentVisibleRect.width
+        let fallbackWidth = scrollView.contentSize.width
         let width = max(CGFloat(120), visibleWidth > 1 ? visibleWidth : fallbackWidth)
 
         textView.isHorizontallyResizable = false
         textView.autoresizingMask = [.width]
         textView.minSize = NSSize(width: 0, height: 0)
-        textView.maxSize = NSSize(width: width, height: CGFloat.greatestFiniteMagnitude)
-        textView.textContainer?.widthTracksTextView = true
-        textView.textContainer?.containerSize = NSSize(width: width, height: CGFloat.greatestFiniteMagnitude)
+        textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
 
         if abs(textView.frame.width - width) > 0.5 || abs(lastWrapWidth - width) > 0.5 {
             var frame = textView.frame
             frame.size.width = width
-            frame.size.height = max(frame.size.height, scrollView.contentView.bounds.height)
+            frame.size.height = max(frame.size.height, scrollView.documentVisibleRect.height)
             textView.frame = frame
             lastWrapWidth = width
         }
 
-        normalizeParagraphWrapping()
         if let container = textView.textContainer {
+            container.widthTracksTextView = true
+            container.containerSize = NSSize(width: width, height: CGFloat.greatestFiniteMagnitude)
+            container.lineBreakMode = .byWordWrapping
             textView.layoutManager?.ensureLayout(for: container)
         }
+        normalizeParagraphWrapping()
 
-        // There is intentionally no horizontal document range. Keep x pinned to
-        // zero as a final guard so the insertion caret always remains visible.
         var origin = scrollView.contentView.bounds.origin
         if origin.x != 0 {
             origin.x = 0
@@ -289,7 +317,7 @@ final class ReplyZenRichEditorAdapter: ObservableObject {
         let manager = NSFontManager.shared
         let selected = textView.selectedRange()
         if selected.length == 0 {
-            let font = textView.typingAttributes[.font] as? NSFont ?? MailTypography.baseFont
+            let font = textView.typingAttributes[.font] as? NSFont ?? displayFont(preserving: nil)
             let hasTrait = manager.traits(of: font).contains(trait)
             textView.typingAttributes[.font] = hasTrait
                 ? manager.convert(font, toNotHaveTrait: trait)
@@ -299,12 +327,12 @@ final class ReplyZenRichEditorAdapter: ObservableObject {
         }
         var allHaveTrait = true
         storage.enumerateAttribute(.font, in: selected) { value, _, stop in
-            let font = value as? NSFont ?? MailTypography.baseFont
+            let font = value as? NSFont ?? displayFont(preserving: nil)
             if !manager.traits(of: font).contains(trait) { allHaveTrait = false; stop.pointee = true }
         }
         storage.beginEditing()
         storage.enumerateAttribute(.font, in: selected) { value, range, _ in
-            let font = value as? NSFont ?? MailTypography.baseFont
+            let font = value as? NSFont ?? displayFont(preserving: nil)
             let converted = allHaveTrait
                 ? manager.convert(font, toNotHaveTrait: trait)
                 : manager.convert(font, toHaveTrait: trait)
@@ -322,14 +350,14 @@ final class ReplyZenRichEditorAdapter: ObservableObject {
         guard let textView, let storage = textView.textStorage else { return }
         let selected = textView.selectedRange()
         if selected.length == 0 {
-            textView.typingAttributes = [.font: MailTypography.baseFont]
+            textView.typingAttributes = [.font: displayFont(preserving: nil)]
             return
         }
         storage.beginEditing()
         for key: NSAttributedString.Key in [.font, .foregroundColor, .backgroundColor, .underlineStyle, .strikethroughStyle] {
             storage.removeAttribute(key, range: selected)
         }
-        storage.addAttribute(.font, value: MailTypography.baseFont, range: selected)
+        storage.addAttribute(.font, value: displayFont(preserving: nil), range: selected)
         storage.endEditing()
         textView.didChangeText()
     }
@@ -341,7 +369,7 @@ final class ReplyZenRichEditorAdapter: ObservableObject {
         let selection = textView.selectedRange()
         if ns.length == 0 {
             let prefix = style == .bullets ? "• " : "1. "
-            storage.append(NSAttributedString(string: prefix, attributes: [.font: MailTypography.baseFont]))
+            storage.append(NSAttributedString(string: prefix, attributes: [.font: displayFont(preserving: nil)]))
             textView.setSelectedRange(NSRange(location: prefix.utf16.count, length: 0))
             textView.didChangeText()
             return
@@ -382,7 +410,7 @@ final class ReplyZenRichEditorAdapter: ObservableObject {
             if oldLength > 0 { storage.deleteCharacters(in: NSRange(location: start, length: oldLength)) }
             if !shouldRemove {
                 let prefix = style == .bullets ? "• " : "\(index + 1). "
-                let attributes = start < storage.length ? storage.attributes(at: start, effectiveRange: nil) : [.font: MailTypography.baseFont]
+                let attributes = start < storage.length ? storage.attributes(at: start, effectiveRange: nil) : [.font: displayFont(preserving: nil)]
                 storage.insert(NSAttributedString(string: prefix, attributes: attributes), at: start)
             }
         }
