@@ -81,6 +81,7 @@ contracts_path = repo / "tests" / "test_source_contracts.py"
 contracts = contracts_path.read_text(encoding="utf-8")
 contracts = contracts.replace('self.assertEqual(info["CFBundleShortVersionString"], "1.64.0")', 'self.assertEqual(info["CFBundleShortVersionString"], "1.65.0")')
 contracts = contracts.replace('self.assertEqual(info["CFBundleVersion"], "65")', 'self.assertEqual(info["CFBundleVersion"], "66")')
+contracts = contracts.replace('self.assertIn("MailTypography.baseFont", self.read("RichTextMailEditor.swift"))', 'self.assertIn("MailTypography.font(preserving:", self.read("RichTextMailEditor.swift"))')
 contracts = contracts.replace('self.assertIn("scrollView.allowsMagnification = true", editor)', 'self.assertIn("scrollView.allowsMagnification = false", editor)')
 contracts = contracts.replace('self.assertIn("scrollView.contentView.bounds.width", editor)', 'self.assertIn("scrollView.documentVisibleRect.width", editor)')
 contracts = contracts.replace('self.assertIn("textView.maxSize = NSSize(width: width", editor)', 'self.assertIn("textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude", editor)')
