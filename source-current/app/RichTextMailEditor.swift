@@ -12,6 +12,10 @@ final class ReplyZenRichEditorAdapter: ObservableObject {
     private weak var scrollView: NSScrollView?
     private var zoomObservation: NSKeyValueObservation?
     private var keyMonitor: Any?
+    private var wrapObservers: [NSObjectProtocol] = []
+    private var wrapWorkItem: DispatchWorkItem?
+    private var lastWrapWidth: CGFloat = 0
+    private var isNormalizingParagraphStyles = false
     @Published private(set) var zoomPercent: Int = {
         let saved = UserDefaults.standard.integer(forKey: "ReplyZen.EditorZoomPercent")
         return [100, 115, 130, 150, 180].contains(saved) ? saved : 130
@@ -28,6 +32,8 @@ final class ReplyZenRichEditorAdapter: ObservableObject {
     deinit {
         if let storageObserver { NotificationCenter.default.removeObserver(storageObserver) }
         if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
+        wrapWorkItem?.cancel()
+        for observer in wrapObservers { NotificationCenter.default.removeObserver(observer) }
     }
 
     func bind(plainText: Binding<String>, html: Binding<String>) {
@@ -40,6 +46,7 @@ final class ReplyZenRichEditorAdapter: ObservableObject {
     func attachZoom(to scrollView: NSScrollView) {
         if self.scrollView === scrollView { return }
         self.scrollView = scrollView
+        installWrapObservers(for: scrollView)
         scrollView.allowsMagnification = true
         scrollView.minMagnification = 1.0
         scrollView.maxMagnification = 1.8
@@ -75,7 +82,11 @@ final class ReplyZenRichEditorAdapter: ObservableObject {
                 forName: NSTextStorage.didProcessEditingNotification,
                 object: storage,
                 queue: .main
-            ) { [weak self] _ in self?.schedulePublish() }
+            ) { [weak self] _ in
+                self?.normalizeParagraphWrapping()
+                self?.scheduleWrapUpdate()
+                self?.schedulePublish()
+            }
         }
         applyPendingExternal(force: true)
     }
@@ -92,7 +103,9 @@ final class ReplyZenRichEditorAdapter: ObservableObject {
         view.isVerticallyResizable = true
         view.isHorizontallyResizable = false
         view.autoresizingMask = [.width]
+        view.minSize = NSSize(width: 0, height: 0)
         view.textContainer?.widthTracksTextView = true
+        normalizeParagraphWrapping()
     }
 
     func updateExternal(plainText: String, html: String) {
@@ -143,25 +156,99 @@ final class ReplyZenRichEditorAdapter: ObservableObject {
     }
 
     func refreshWrapping() {
-        updateWrapWidth()
+        scheduleWrapUpdate()
+    }
+
+    private func installWrapObservers(for scrollView: NSScrollView) {
+        for observer in wrapObservers { NotificationCenter.default.removeObserver(observer) }
+        wrapObservers.removeAll()
+
+        scrollView.postsFrameChangedNotifications = true
+        scrollView.contentView.postsFrameChangedNotifications = true
+        let center = NotificationCenter.default
+        for view in [scrollView as NSView, scrollView.contentView as NSView] {
+            wrapObservers.append(center.addObserver(
+                forName: NSView.frameDidChangeNotification,
+                object: view,
+                queue: .main
+            ) { [weak self] _ in
+                self?.scheduleWrapUpdate()
+            })
+        }
+    }
+
+    private func scheduleWrapUpdate() {
+        wrapWorkItem?.cancel()
+        let item = DispatchWorkItem { [weak self] in self?.updateWrapWidth() }
+        wrapWorkItem = item
+        DispatchQueue.main.async(execute: item)
+    }
+
+    private func normalizeParagraphWrapping() {
+        guard !isNormalizingParagraphStyles, let textView else { return }
+        isNormalizingParagraphStyles = true
+        defer { isNormalizingParagraphStyles = false }
+
+        if let storage = textView.textStorage, storage.length > 0 {
+            let fullRange = NSRange(location: 0, length: storage.length)
+            storage.beginEditing()
+            storage.enumerateAttribute(.paragraphStyle, in: fullRange) { value, range, _ in
+                guard let current = value as? NSParagraphStyle,
+                      current.lineBreakMode != .byWordWrapping,
+                      let style = current.mutableCopy() as? NSMutableParagraphStyle else { return }
+                style.lineBreakMode = .byWordWrapping
+                storage.addAttribute(.paragraphStyle, value: style, range: range)
+            }
+            storage.endEditing()
+        }
+
+        let typingStyle = ((textView.typingAttributes[.paragraphStyle] as? NSParagraphStyle)?.mutableCopy() as? NSMutableParagraphStyle)
+            ?? NSMutableParagraphStyle()
+        typingStyle.lineBreakMode = .byWordWrapping
+        textView.typingAttributes[.paragraphStyle] = typingStyle
     }
 
     private func updateWrapWidth() {
         guard let scrollView, let textView else { return }
+        scrollView.layoutSubtreeIfNeeded()
+
+        // NSClipView.bounds is expressed in document coordinates, so at 130%/150%
+        // zoom it already represents the exact width that is visibly available to
+        // the text. Using NSScrollView.contentSize here made the document wider than
+        // the visible editor and caused the delayed wrap/horizontal scrolling bug.
+        let visibleWidth = scrollView.contentView.bounds.width
         let scale = max(CGFloat(1.0), scrollView.magnification)
-        let width = max(CGFloat(120), scrollView.contentSize.width / scale)
+        let fallbackWidth = scrollView.contentSize.width / scale
+        let width = max(CGFloat(120), visibleWidth > 1 ? visibleWidth : fallbackWidth)
+
         textView.isHorizontallyResizable = false
         textView.autoresizingMask = [.width]
+        textView.minSize = NSSize(width: 0, height: 0)
+        textView.maxSize = NSSize(width: width, height: CGFloat.greatestFiniteMagnitude)
         textView.textContainer?.widthTracksTextView = true
         textView.textContainer?.containerSize = NSSize(width: width, height: CGFloat.greatestFiniteMagnitude)
-        var frame = textView.frame
-        frame.size.width = width
-        frame.size.height = max(frame.size.height, scrollView.contentSize.height / scale)
-        textView.frame = frame
+
+        if abs(textView.frame.width - width) > 0.5 || abs(lastWrapWidth - width) > 0.5 {
+            var frame = textView.frame
+            frame.size.width = width
+            frame.size.height = max(frame.size.height, scrollView.contentView.bounds.height)
+            textView.frame = frame
+            lastWrapWidth = width
+        }
+
+        normalizeParagraphWrapping()
+        if let container = textView.textContainer {
+            textView.layoutManager?.ensureLayout(for: container)
+        }
+
+        // There is intentionally no horizontal document range. Keep x pinned to
+        // zero as a final guard so the insertion caret always remains visible.
         var origin = scrollView.contentView.bounds.origin
-        origin.x = 0
-        scrollView.contentView.scroll(to: origin)
-        scrollView.reflectScrolledClipView(scrollView.contentView)
+        if origin.x != 0 {
+            origin.x = 0
+            scrollView.contentView.scroll(to: origin)
+            scrollView.reflectScrolledClipView(scrollView.contentView)
+        }
     }
 
     private func installShortcutMonitor(for view: RichTextView) {
@@ -344,6 +431,7 @@ private struct ReplyZenRichEditorSurface: NSViewRepresentable {
         scroll.hasVerticalScroller = true
         scroll.hasHorizontalScroller = false
         scroll.horizontalScrollElasticity = .none
+        scroll.contentView.postsFrameChangedNotifications = true
         scroll.autohidesScrollers = true
         scroll.drawsBackground = false
         scroll.borderType = .noBorder
