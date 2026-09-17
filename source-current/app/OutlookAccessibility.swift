@@ -648,6 +648,49 @@ final class OutlookAccessibility {
         return AXUIElementPerformAction(best.element, kAXPressAction as CFString) == .success
     }
 
+    func hasOpenedForwardComposer(since snapshot: Snapshot) -> Bool {
+        guard let focused = focusedOutlookWindow() else { return false }
+
+        // Detached compose windows are the normal Legacy Outlook behavior.
+        if !containsSameElement(snapshot.windows, focused) {
+            return true
+        }
+
+        // Some Outlook builds compose inline in the source window. Only consider
+        // that ready once Outlook exposes its native Send/Senden/Enviar control.
+        return looksLikeComposeWindow(focused)
+    }
+
+    func openForwardComposer(from snapshot: Snapshot) -> Bool {
+        guard let sourceWindow = snapshot.windows.first else { return false }
+        activateOutlook(pid: snapshot.pid)
+
+        let appElement = AXUIElementCreateApplication(snapshot.pid)
+        _ = AXUIElementSetAttributeValue(appElement, kAXFocusedWindowAttribute as CFString, sourceWindow)
+        _ = AXUIElementPerformAction(sourceWindow, kAXRaiseAction as CFString)
+        if looksLikeMainOutlookWindow(sourceWindow) {
+            focusSelectedMessageRow(in: sourceWindow)
+        }
+
+        var stack: [AXUIElement] = [sourceWindow]
+        var visited = 0
+        var best: (element: AXUIElement, score: Int)?
+        while let element = stack.popLast(), visited < 16_000 {
+            visited += 1
+            let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
+            if role == "AXButton" || role == "AXMenuButton" || role == "AXLink" || role == "AXMenuItem" {
+                let score = OutlookReplyControlMatcher.forwardScore(metadata: composeMetadata(for: element))
+                if score > 0 && (best == nil || score > best!.score) {
+                    best = (element, score)
+                }
+            }
+            for child in children(of: element).reversed() { stack.append(child) }
+        }
+
+        guard let best else { return false }
+        return AXUIElementPerformAction(best.element, kAXPressAction as CFString) == .success
+    }
+
     func setComposeBCCValue(_ bcc: String) -> Bool {
         let recipient = bcc.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !recipient.isEmpty, let window = focusedOutlookWindow() else { return false }

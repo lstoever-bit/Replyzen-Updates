@@ -1089,6 +1089,11 @@
     "en-US": "Outlook did not open the reply editor. The text was copied to the clipboard.",
     "es": "Outlook no ha abierto el editor de respuesta. El texto se ha copiado al portapapeles."
   },
+  "Outlook hat den Forward-Editor nicht geöffnet. Der Text wurde in die Zwischenablage kopiert.": {
+    "de": "Outlook hat den Forward-Editor nicht geöffnet. Der Text wurde in die Zwischenablage kopiert.",
+    "en-US": "Outlook did not open the Forward editor. The text was copied to the clipboard.",
+    "es": "Outlook no abrió el editor de reenvío. El texto se copió al portapapeles."
+  },
   "Outlook läuft gerade nicht. New Mail funktioniert trotzdem.": {
     "de": "Outlook läuft gerade nicht. Neue Mail funktioniert trotzdem.",
     "en-US": "Outlook is not running. You can still create a new email.",

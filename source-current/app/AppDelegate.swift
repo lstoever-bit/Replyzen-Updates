@@ -1255,28 +1255,58 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         state.statusText = L10n.source("Outlook Forward wird geöffnet; Thread und Anhänge bleiben erhalten")
         isRunningFlow = true
         toolbarButton.setSuppressed(true)
+
+        // Keep the generated rich text ready before Outlook changes focus. The
+        // native Forward composer is responsible for retaining the original thread
+        // and attachments; ReplyZen inserts only its note above that content.
+        copyMailToPasteboard(plainText: body, html: html)
         panel.hide()
         outlook.activateOutlook(pid: snapshot.pid)
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.20) { [weak self] in
             guard let self else { return }
-            self.keyboard.sendCommandJ()
-            self.populateForwardDraft(body: body, html: html, attempt: 0)
+            _ = self.outlook.openForwardComposer(from: snapshot)
+
+            // Match the reliable Reply lifecycle: prefer Outlook's native Forward
+            // control, verify that a composer really opened, and use Cmd+J only as
+            // a fallback. This prevents population from racing the source message.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+                guard let self else { return }
+                if !self.outlook.hasOpenedForwardComposer(since: snapshot) {
+                    self.keyboard.sendCommandJ()
+                }
+                self.populateForwardDraft(body: body, html: html, snapshot: snapshot, attempt: 0)
+            }
         }
     }
 
-    private func populateForwardDraft(body: String, html: String, attempt: Int) {
-        let delay = attempt == 0 ? 0.95 : 0.28
+    private func populateForwardDraft(body: String, html: String, snapshot: OutlookAccessibility.Snapshot, attempt: Int) {
+        let delay = attempt == 0 ? 0.45 : 0.25
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             guard let self else { return }
+
+            // Never paste into the original message/read pane. Wait until Outlook
+            // has actually exposed a detached or inline compose window.
+            guard self.outlook.hasOpenedForwardComposer(since: snapshot) else {
+                if attempt < 12 {
+                    self.populateForwardDraft(body: body, html: html, snapshot: snapshot, attempt: attempt + 1)
+                    return
+                }
+                self.copyMailToPasteboard(plainText: body, html: html)
+                self.isRunningFlow = false
+                self.toolbarButton.setSuppressed(false)
+                self.showError(L10n.source("Outlook hat den Forward-Editor nicht geöffnet. Der Text wurde in die Zwischenablage kopiert."))
+                return
+            }
 
             if let reminder = self.reminderBCCAddress() {
                 _ = self.outlook.setComposeBCCValue(reminder)
             }
 
             if self.outlook.focusComposeBodyField() {
-                // Native Outlook Forward preserves the original message and its attachments.
-                // Move to the very top and paste only the user's Replyzen note above it.
+                // The native Forward already contains the original thread. Put the
+                // insertion point at the top and paste only ReplyZen's text plus a
+                // two-line separator, preserving both HTML formatting and line breaks.
                 self.keyboard.sendCommandUp()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
                     guard let self else { return }
@@ -1289,12 +1319,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 return
             }
 
-            // Legacy Outlook may not expose its HTML compose body through AX at all.
-            // The subject field is exposed reliably, and one Tab from Subject enters
-            // the native message body. Use that as a robust fallback.
-            if self.outlook.focusComposeSubjectField() {
+            // Legacy Outlook sometimes has a native HTML editor that Accessibility
+            // cannot identify as a body. After a couple of normal attempts, use the
+            // reliable Subject -> Tab route, then move to the top before pasting.
+            if attempt >= 2, self.outlook.focusComposeSubjectField() {
                 self.keyboard.sendTab()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) { [weak self] in
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) { [weak self] in
                     guard let self else { return }
                     self.keyboard.sendCommandUp()
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
@@ -1309,13 +1339,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 return
             }
 
-            if attempt < 3 {
-                self.populateForwardDraft(body: body, html: html, attempt: attempt + 1)
+            if attempt < 12 {
+                self.populateForwardDraft(body: body, html: html, snapshot: snapshot, attempt: attempt + 1)
                 return
             }
 
             self.copyMailToPasteboard(plainText: body, html: html)
             self.isRunningFlow = false
+            self.toolbarButton.setSuppressed(false)
             self.showError(L10n.source("Der Forward wurde in Outlook geöffnet, aber Replyzen konnte den Text nicht automatisch über dem Thread einsetzen. Der Text liegt in der Zwischenablage."))
         }
     }

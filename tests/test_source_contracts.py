@@ -11,8 +11,8 @@ class SourceContracts(unittest.TestCase):
         info = plistlib.loads((APP / "Info.plist").read_bytes())
         self.assertEqual(info["CFBundleIdentifier"], "com.lstoever.replyzen")
         self.assertEqual(info["CFBundleDisplayName"], "ReplyZen")
-        self.assertEqual(info["CFBundleShortVersionString"], "1.65.0")
-        self.assertEqual(info["CFBundleVersion"], "66")
+        self.assertEqual(info["CFBundleShortVersionString"], "1.66.0")
+        self.assertEqual(info["CFBundleVersion"], "67")
     def test_payment_is_removed_from_active_code(self):
         self.assertFalse((APP / "AttachmentTextExtractor.swift").exists())
         swift = "\n".join(p.read_text(encoding="utf-8") for p in APP.glob("*.swift"))
@@ -57,6 +57,27 @@ class SourceContracts(unittest.TestCase):
         state = self.read("AppState.swift")
         for mode in ["case reply", "case newMail", "case forward", "case calendar"]:
             self.assertIn(mode, state)
+    def test_forward_insertion_matches_reply_lifecycle(self):
+        delegate = self.read("AppDelegate.swift")
+        outlook = self.read("OutlookAccessibility.swift")
+        matcher = self.read("OutlookReplyControlMatcher.swift")
+        self.assertIn("func openForwardComposer(from snapshot: Snapshot)", outlook)
+        self.assertIn("func hasOpenedForwardComposer(since snapshot: Snapshot)", outlook)
+        self.assertIn("OutlookReplyControlMatcher.forwardScore", outlook)
+        self.assertIn("static func forwardScore(metadata: String)", matcher)
+        forward = delegate[delegate.index("private func insertForwardDraft()") : delegate.index("private func insertNewMail()") ]
+        self.assertIn("openForwardComposer(from: snapshot)", forward)
+        self.assertIn("hasOpenedForwardComposer(since: snapshot)", forward)
+        self.assertIn("self.keyboard.sendCommandJ()", forward)
+        self.assertIn("snapshot: snapshot, attempt: 0", forward)
+        self.assertIn("attempt < 12", forward)
+        self.assertIn('let plain = body + "\\n\\n"', forward)
+        self.assertIn('html + "<br><br>"', forward)
+        self.assertIn("self.keyboard.sendCommandUp()", forward)
+        reply = delegate[delegate.index("private func insertReply()") : delegate.index("private func insertForwardDraft()") ]
+        self.assertIn("openReplyComposer(replyAll: replyAll, from: snapshot)", reply)
+        self.assertIn("hasOpenedReplyComposer(since: snapshot)", reply)
+
     def test_calendar_invite_reader(self):
         outlook = self.read("OutlookAccessibility.swift")
         delegate = self.read("AppDelegate.swift")

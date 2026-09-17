@@ -14,7 +14,8 @@ struct ReplyBehaviorTests {
     static func main() {
         checkLanguageDetection()
         checkReplyControlMatching()
-        print("PASS: newest-message language detection and Reply/Reply All control matching")
+        checkForwardControlMatching()
+        print("PASS: newest-message language detection and Reply/Reply All/Forward control matching")
     }
 
     private static func checkLanguageDetection() {
@@ -51,5 +52,14 @@ struct ReplyBehaviorTests {
         precondition(OutlookReplyControlMatcher.score(metadata: "Responder a todos", replyAll: true) > 0)
         precondition(OutlookReplyControlMatcher.score(metadata: "Responder", replyAll: false) > 0)
         precondition(OutlookReplyControlMatcher.score(metadata: "Forward", replyAll: false) == 0)
+    }
+
+    private static func checkForwardControlMatching() {
+        precondition(OutlookReplyControlMatcher.forwardScore(metadata: "Forward") > 0)
+        precondition(OutlookReplyControlMatcher.forwardScore(metadata: "Weiterleiten") > 0)
+        precondition(OutlookReplyControlMatcher.forwardScore(metadata: "Reenviar") > 0)
+        precondition(OutlookReplyControlMatcher.forwardScore(metadata: "Forward message") > 0)
+        precondition(OutlookReplyControlMatcher.forwardScore(metadata: "Reply") == 0)
+        precondition(OutlookReplyControlMatcher.forwardScore(metadata: "Allen antworten") == 0)
     }
 }
