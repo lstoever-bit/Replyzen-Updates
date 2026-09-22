@@ -11,8 +11,8 @@ class SourceContracts(unittest.TestCase):
         info = plistlib.loads((APP / "Info.plist").read_bytes())
         self.assertEqual(info["CFBundleIdentifier"], "com.lstoever.replyzen")
         self.assertEqual(info["CFBundleDisplayName"], "ReplyZen")
-        self.assertEqual(info["CFBundleShortVersionString"], "1.67.0")
-        self.assertEqual(info["CFBundleVersion"], "68")
+        self.assertEqual(info["CFBundleShortVersionString"], "1.68.0")
+        self.assertEqual(info["CFBundleVersion"], "69")
     def test_payment_is_removed_from_active_code(self):
         self.assertFalse((APP / "AttachmentTextExtractor.swift").exists())
         swift = "\n".join(p.read_text(encoding="utf-8") for p in APP.glob("*.swift"))
@@ -82,10 +82,10 @@ class SourceContracts(unittest.TestCase):
         self.assertIn("self.keyboard.sendCommandJ()", forward)
         self.assertIn(r'let plain = body + "\n\n"', forward)
         self.assertIn('html + "<br><br>"', forward)
-        self.assertIn("self.keyboard.sendCommandUp()", forward)
+        self.assertIn("setComposeBodySelectionToStart()", forward)\n        self.assertIn("self.keyboard.sendCommandUp()", forward)
         self.assertNotIn("attachmentFileURLs(", forward)
         self.assertNotIn("materializeAttachment", forward)
-        self.assertNotIn("setComposeBodyValue", forward)
+        self.assertNotIn("setComposeBodyValue", forward)\n        self.assertIn("isAttributeSettable(kAXSelectedTextRangeAttribute", outlook)\n        self.assertIn("editableBest", outlook)
         reply = delegate[delegate.index("private func insertReply()") : delegate.index("private func insertForwardDraft()") ]
         self.assertIn("openReplyComposer(replyAll: replyAll, from: snapshot)", reply)
         self.assertIn("hasOpenedReplyComposer(since: snapshot)", reply)
