@@ -1244,6 +1244,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let body = state.reply.trimmingCharacters(in: .whitespacesAndNewlines)
         let html = state.replyHTML.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !body.isEmpty else { return }
+        let sourceHasAttachments = outlook.hasVisibleForwardAttachments(from: snapshot)
 
         guard outlook.isTrusted() else {
             copyMailToPasteboard(plainText: body, html: html)
@@ -1275,12 +1276,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 if !self.outlook.hasOpenedForwardComposer(since: snapshot) {
                     self.keyboard.sendCommandJ()
                 }
-                self.populateForwardDraft(body: body, html: html, snapshot: snapshot, attempt: 0)
+                self.populateForwardDraft(
+                    body: body,
+                    html: html,
+                    snapshot: snapshot,
+                    sourceHasAttachments: sourceHasAttachments,
+                    lastStabilityFingerprint: nil,
+                    stablePasses: 0,
+                    attempt: 0
+                )
             }
         }
     }
 
-    private func populateForwardDraft(body: String, html: String, snapshot: OutlookAccessibility.Snapshot, attempt: Int) {
+    private func populateForwardDraft(
+        body: String,
+        html: String,
+        snapshot: OutlookAccessibility.Snapshot,
+        sourceHasAttachments: Bool,
+        lastStabilityFingerprint: String?,
+        stablePasses: Int,
+        attempt: Int
+    ) {
         let delay = attempt == 0 ? 0.45 : 0.25
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             guard let self else { return }
@@ -1288,14 +1305,59 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // Never paste into the original message/read pane. Wait until Outlook
             // has actually exposed a detached or inline compose window.
             guard self.outlook.hasOpenedForwardComposer(since: snapshot) else {
-                if attempt < 12 {
-                    self.populateForwardDraft(body: body, html: html, snapshot: snapshot, attempt: attempt + 1)
+                let maxAttempts = sourceHasAttachments ? 48 : 24
+                if attempt < maxAttempts {
+                    self.populateForwardDraft(
+                        body: body,
+                        html: html,
+                        snapshot: snapshot,
+                        sourceHasAttachments: sourceHasAttachments,
+                        lastStabilityFingerprint: lastStabilityFingerprint,
+                        stablePasses: stablePasses,
+                        attempt: attempt + 1
+                    )
                     return
                 }
                 self.copyMailToPasteboard(plainText: body, html: html)
                 self.isRunningFlow = false
                 self.toolbarButton.setSuppressed(false)
                 self.showError(L10n.source("Outlook hat den Forward-Editor nicht geöffnet. Der Text wurde in die Zwischenablage kopiert."))
+                return
+            }
+
+            // Outlook builds a native Forward in multiple asynchronous stages.
+            // With attachments it can recreate the message body after the composer
+            // first appears. Wait until the visible compose tree (body + attachment
+            // controls) remains unchanged for several polls before inserting text.
+            let requiredStablePasses = sourceHasAttachments ? 8 : 3
+            let maxAttempts = sourceHasAttachments ? 48 : 24
+            let nilGraceAttempts = sourceHasAttachments ? 16 : 4
+            if let currentFingerprint = self.outlook.forwardComposerStabilityFingerprint() {
+                let nextStablePasses = currentFingerprint == lastStabilityFingerprint
+                    ? stablePasses + 1
+                    : 0
+                if nextStablePasses < requiredStablePasses, attempt < maxAttempts {
+                    self.populateForwardDraft(
+                        body: body,
+                        html: html,
+                        snapshot: snapshot,
+                        sourceHasAttachments: sourceHasAttachments,
+                        lastStabilityFingerprint: currentFingerprint,
+                        stablePasses: nextStablePasses,
+                        attempt: attempt + 1
+                    )
+                    return
+                }
+            } else if attempt < nilGraceAttempts {
+                self.populateForwardDraft(
+                    body: body,
+                    html: html,
+                    snapshot: snapshot,
+                    sourceHasAttachments: sourceHasAttachments,
+                    lastStabilityFingerprint: nil,
+                    stablePasses: 0,
+                    attempt: attempt + 1
+                )
                 return
             }
 
@@ -1339,8 +1401,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 return
             }
 
-            if attempt < 12 {
-                self.populateForwardDraft(body: body, html: html, snapshot: snapshot, attempt: attempt + 1)
+            let finalMaxAttempts = sourceHasAttachments ? 48 : 24
+            if attempt < finalMaxAttempts {
+                self.populateForwardDraft(
+                    body: body,
+                    html: html,
+                    snapshot: snapshot,
+                    sourceHasAttachments: sourceHasAttachments,
+                    lastStabilityFingerprint: lastStabilityFingerprint,
+                    stablePasses: stablePasses,
+                    attempt: attempt + 1
+                )
                 return
             }
 

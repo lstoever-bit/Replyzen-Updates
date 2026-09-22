@@ -691,6 +691,94 @@ final class OutlookAccessibility {
         return AXUIElementPerformAction(best.element, kAXPressAction as CFString) == .success
     }
 
+    func hasVisibleForwardAttachments(from snapshot: Snapshot) -> Bool {
+        for window in snapshot.windows {
+            if containsForwardAttachmentMarker(in: window) { return true }
+        }
+        return false
+    }
+
+    func forwardComposerStabilityFingerprint() -> String? {
+        guard let window = focusedOutlookWindow(), looksLikeComposeWindow(window) else { return nil }
+
+        let readableRoles: Set<String> = [
+            "AXStaticText", "AXTextArea", "AXTextField", "AXWebArea",
+            "AXButton", "AXLink", "AXGroup"
+        ]
+        let attributes: [CFString] = [
+            kAXValueAttribute as CFString,
+            kAXTitleAttribute as CFString,
+            kAXDescriptionAttribute as CFString,
+            kAXHelpAttribute as CFString,
+            "AXFilename" as CFString,
+            "AXRoleDescription" as CFString
+        ]
+
+        var lines: [String] = []
+        var stack: [AXUIElement] = [window]
+        var visited = 0
+        while let element = stack.popLast(), visited < 16_000 {
+            visited += 1
+            let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
+            if readableRoles.contains(role) {
+                for attribute in attributes {
+                    if let value = stringLikeAttribute(attribute, from: element) {
+                        let cleanedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if !cleanedValue.isEmpty { lines.append(cleanedValue) }
+                    }
+                }
+            }
+            for child in children(of: element).reversed() { stack.append(child) }
+        }
+
+        let cleaned = cleanup(lines.joined(separator: "\n"))
+        guard cleaned.count > 20 else { return nil }
+        // A bounded fingerprint is enough to detect Outlook rebuilding the Forward
+        // body or adding/removing attachment controls without retaining huge threads.
+        return String(cleaned.prefix(24_000))
+    }
+
+    private func containsForwardAttachmentMarker(in root: AXUIElement) -> Bool {
+        let attachmentWords = [
+            "attachment", "attachments", "anlage", "anlagen", "anhang", "anhange",
+            "adjunto", "adjuntos", "archivo adjunto"
+        ]
+        let attachmentExtensions: Set<String> = [
+            "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "csv", "txt",
+            "rtf", "zip", "rar", "7z", "eml", "msg", "ics", "png", "jpg", "jpeg",
+            "gif", "tif", "tiff", "heic", "webp", "svg", "stl", "step", "stp",
+            "dwg", "dxf", "ai", "psd", "indd", "json", "xml", "pages", "numbers",
+            "key", "md", "log"
+        ]
+        let attributes: [CFString] = [
+            "AXFilename" as CFString,
+            kAXTitleAttribute as CFString,
+            kAXDescriptionAttribute as CFString,
+            kAXHelpAttribute as CFString,
+            kAXValueAttribute as CFString
+        ]
+
+        var stack: [AXUIElement] = [root]
+        var visited = 0
+        while let element = stack.popLast(), visited < 14_000 {
+            visited += 1
+            for attribute in attributes {
+                guard let raw = stringLikeAttribute(attribute, from: element) else { continue }
+                let normalized = raw
+                    .folding(options: [.diacriticInsensitive, .widthInsensitive, .caseInsensitive], locale: .current)
+                    .lowercased()
+                if attachmentWords.contains(where: { normalized.contains($0) }) {
+                    return true
+                }
+                if attachmentExtensions.contains(where: { normalized.contains("." + $0) }) {
+                    return true
+                }
+            }
+            for child in children(of: element).reversed() { stack.append(child) }
+        }
+        return false
+    }
+
     func setComposeBCCValue(_ bcc: String) -> Bool {
         let recipient = bcc.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !recipient.isEmpty, let window = focusedOutlookWindow() else { return false }
