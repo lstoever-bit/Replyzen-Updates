@@ -92,7 +92,7 @@ helpers = '''    func hasVisibleForwardAttachments(from snapshot: Snapshot) -> B
             for child in children(of: element).reversed() { stack.append(child) }
         }
 
-        let cleaned = cleanup(lines.joined(separator: "\n"))
+        let cleaned = cleanup(lines.joined(separator: "\\n"))
         guard cleaned.count > 20 else { return nil }
         // A bounded fingerprint is enough to detect Outlook rebuilding the Forward
         // body or adding/removing attachment controls without retaining huge threads.
