@@ -328,7 +328,7 @@ forward_test = '''    def test_forward_insertion_matches_reply_lifecycle(self):
         self.assertIn("lastStabilityFingerprint", forward)
         self.assertIn("stablePasses", forward)
         self.assertIn("self.keyboard.sendCommandJ()", forward)
-        self.assertIn('let plain = body + "\\n\\n"', forward)
+        self.assertIn(r'let plain = body + "\\n\\n"', forward)
         self.assertIn('html + "<br><br>"', forward)
         self.assertIn("self.keyboard.sendCommandUp()", forward)
         self.assertNotIn("attachmentFileURLs(", forward)
