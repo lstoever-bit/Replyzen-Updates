@@ -1366,10 +1366,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
 
             if self.outlook.focusComposeBodyField() {
-                // The native Forward already contains the original thread. Put the
-                // insertion point at the top and paste only ReplyZen's text plus a
-                // two-line separator, preserving both HTML formatting and line breaks.
-                self.keyboard.sendCommandUp()
+                // The native Forward already contains the original thread. Anchor
+                // the insertion point to character 0 of the actual editable body.
+                // Forward+attachment can expose extra AXWebArea nodes, so Cmd+Up
+                // alone is not reliable enough to identify the final compose body.
+                if !self.outlook.setComposeBodySelectionToStart() {
+                    self.keyboard.sendCommandUp()
+                }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
                     guard let self else { return }
                     let plain = body + "\n\n"
