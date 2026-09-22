@@ -832,6 +832,20 @@ final class OutlookAccessibility {
         return focus(element)
     }
 
+    func setComposeBodySelectionToStart() -> Bool {
+        guard let window = focusedOutlookWindow(),
+              let element = composeBodyElement(in: window),
+              focus(element) else { return false }
+
+        var range = CFRange(location: 0, length: 0)
+        guard let value = AXValueCreate(.cfRange, &range) else { return false }
+        return AXUIElementSetAttributeValue(
+            element,
+            kAXSelectedTextRangeAttribute as CFString,
+            value
+        ) == .success
+    }
+
     private func focusedOutlookWindow() -> AXUIElement? {
         guard let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == "com.microsoft.Outlook" }) else { return nil }
         let appElement = AXUIElementCreateApplication(app.processIdentifier)
@@ -909,26 +923,48 @@ final class OutlookAccessibility {
     private func composeBodyElement(in window: AXUIElement) -> AXUIElement? {
         var stack: [AXUIElement] = [window]
         var visited = 0
-        var best: (AXUIElement, CGFloat)?
+        var editableBest: (AXUIElement, CGFloat)?
+        var fallbackBest: (AXUIElement, CGFloat)?
 
         while let element = stack.popLast(), visited < 14_000 {
             visited += 1
             let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
             if role == "AXTextArea" || role == "AXWebArea" {
                 let meta = composeMetadata(for: element)
-                if meta.contains("message body") || meta.contains("mail body") || meta.contains("nachrichtentext") || meta.contains("compose body") || meta.contains("cuerpo del mensaje") || meta.contains("cuerpo del correo") {
+                let isNamedBody =
+                    meta.contains("message body") ||
+                    meta.contains("mail body") ||
+                    meta.contains("nachrichtentext") ||
+                    meta.contains("compose body") ||
+                    meta.contains("cuerpo del mensaje") ||
+                    meta.contains("cuerpo del correo")
+                let isEditable =
+                    isValueSettable(element) ||
+                    isAttributeSettable(kAXSelectedTextRangeAttribute as CFString, on: element)
+
+                // Forward composers with attachments can expose multiple large
+                // AXWebArea elements. Prefer the actual editable body, not the
+                // read-only forwarded thread or attachment preview.
+                if isNamedBody && isEditable {
                     return element
                 }
 
                 if let size = sizeAttribute(kAXSizeAttribute as CFString, from: element),
                    size.width > 300, size.height > 120 {
                     let area = size.width * size.height
-                    if best == nil || area > best!.1 { best = (element, area) }
+                    if isEditable, editableBest == nil || area > editableBest!.1 {
+                        editableBest = (element, area)
+                    }
+                    if fallbackBest == nil || area > fallbackBest!.1 {
+                        fallbackBest = (element, area)
+                    }
                 }
             }
             for child in children(of: element).reversed() { stack.append(child) }
         }
-        return looksLikeComposeWindow(window) ? best?.0 : nil
+
+        guard looksLikeComposeWindow(window) else { return nil }
+        return editableBest?.0 ?? fallbackBest?.0
     }
 
     private func looksLikeComposeWindow(_ window: AXUIElement) -> Bool {
@@ -963,9 +999,13 @@ final class OutlookAccessibility {
             .lowercased()
     }
 
-    private func isValueSettable(_ element: AXUIElement) -> Bool {
+    private func isAttributeSettable(_ attribute: CFString, on element: AXUIElement) -> Bool {
         var settable = DarwinBoolean(false)
-        return AXUIElementIsAttributeSettable(element, kAXValueAttribute as CFString, &settable) == .success && settable.boolValue
+        return AXUIElementIsAttributeSettable(element, attribute, &settable) == .success && settable.boolValue
+    }
+
+    private func isValueSettable(_ element: AXUIElement) -> Bool {
+        isAttributeSettable(kAXValueAttribute as CFString, on: element)
     }
 
     private func setValue(_ value: String, on element: AXUIElement) -> Bool {
