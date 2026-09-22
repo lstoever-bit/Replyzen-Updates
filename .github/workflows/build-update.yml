@@ -1,7 +1,7 @@
 name: Build ReplyZen Update
 on:
   push:
-    branches: [main, codex/replyzen-1.66-forward-insertion]
+    branches: [main, codex/replyzen-1.67-forward-attachment-body]
     paths:
       - 'source-current/**'
       - 'maintenance/replyzen_1_66_forward_insertion.py'
@@ -20,10 +20,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Apply ReplyZen 1.66 Forward insertion fix
-        run: python3 maintenance/replyzen_1_66_forward_insertion.py source-current
-      - name: Ensure ReplyZen 1.66 Forward localization
-        run: python3 maintenance/replyzen_1_66_forward_localization.py source-current
+      - name: Apply ReplyZen 1.67 Forward attachment/body stability fix
+        run: python3 maintenance/replyzen_1_67_forward_attachment_body.py source-current
       - name: Existing regression, prompt and typography tests
         run: bash tests/run-tests.sh source-current
       - name: Localization and mail language tests
@@ -38,7 +36,7 @@ jobs:
         run: bash source-current/Build-CI.sh
       - name: Verify exact updater archive and manifest
         run: python3 tests/verify_update.py source-current
-      - name: Preserve tested canonical 1.66 source
+      - name: Preserve tested canonical 1.67 source
         shell: bash
         run: |
           set -euo pipefail
@@ -46,7 +44,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A source-current/app source-current/Release-notes.txt source-current/Release-notes.localized.json tests
           if ! git diff --cached --quiet; then
-            git commit -m "Build ReplyZen 1.66 Forward insertion fix"
+            git commit -m "Build ReplyZen 1.67 Forward attachment body fix"
             git push origin "HEAD:${{ github.ref_name }}"
           fi
       - name: Publish verified main update
@@ -63,13 +61,13 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f "$PACKAGE" update.json "update-${VERSION%.0}.json"
           if ! git diff --cached --quiet; then
-            git commit -m "Publish ReplyZen $VERSION Forward insertion fix"
+            git commit -m "Publish ReplyZen $VERSION Forward attachment body fix"
             git push origin HEAD:main
           fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ReplyZen-1.66-build
+          name: ReplyZen-1.67-build
           path: |
             source-current/Replyzen-update-*.zip
             source-current/update.json
