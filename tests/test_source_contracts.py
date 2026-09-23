@@ -11,8 +11,8 @@ class SourceContracts(unittest.TestCase):
         info = plistlib.loads((APP / "Info.plist").read_bytes())
         self.assertEqual(info["CFBundleIdentifier"], "com.lstoever.replyzen")
         self.assertEqual(info["CFBundleDisplayName"], "ReplyZen")
-        self.assertEqual(info["CFBundleShortVersionString"], "1.68.0")
-        self.assertEqual(info["CFBundleVersion"], "69")
+        self.assertEqual(info["CFBundleShortVersionString"], "1.69.0")
+        self.assertEqual(info["CFBundleVersion"], "70")
     def test_payment_is_removed_from_active_code(self):
         self.assertFalse((APP / "AttachmentTextExtractor.swift").exists())
         swift = "\n".join(p.read_text(encoding="utf-8") for p in APP.glob("*.swift"))
@@ -86,7 +86,9 @@ class SourceContracts(unittest.TestCase):
         self.assertIn("self.keyboard.sendCommandUp()", forward)
         self.assertNotIn("attachmentFileURLs(", forward)
         self.assertNotIn("materializeAttachment", forward)
-        self.assertNotIn("setComposeBodyValue", forward)\n        self.assertIn("isAttributeSettable(kAXSelectedTextRangeAttribute", outlook)\n        self.assertIn("editableBest", outlook)
+        self.assertNotIn("setComposeBodyValue", forward)
+        self.assertIn("isAttributeSettable(kAXSelectedTextRangeAttribute", outlook)
+        self.assertIn("editableBest", outlook)
         reply = delegate[delegate.index("private func insertReply()") : delegate.index("private func insertForwardDraft()") ]
         self.assertIn("openReplyComposer(replyAll: replyAll, from: snapshot)", reply)
         self.assertIn("hasOpenedReplyComposer(since: snapshot)", reply)
@@ -124,14 +126,22 @@ class SourceContracts(unittest.TestCase):
         self.assertIn("static let pointSize: CGFloat = 10.5", typography)
         self.assertIn('static let family = "Calibri Light"', typography)
         self.assertIn("MailTypography.font(preserving:", self.read("RichTextMailEditor.swift"))
-    def test_new_mail_subject_uses_native_keyboard_commit(self):
+    def test_new_mail_subject_is_verified_before_body_insertion(self):
         delegate = self.read("AppDelegate.swift")
+        outlook = self.read("OutlookAccessibility.swift")
         keyboard = self.read("KeyboardController.swift")
+        client = self.read("OpenAIClient.swift")
         self.assertIn("func sendCommandA()", keyboard)
         self.assertIn("self.keyboard.sendCommandA()", delegate)
         self.assertIn("self.keyboard.sendCommandV()", delegate)
         self.assertIn("self.keyboard.sendTab()", delegate)
-        self.assertNotIn("setComposeSubjectValue(subject)", delegate)
+        self.assertIn("composeSubjectMatches(subject)", delegate)
+        self.assertIn("setComposeSubjectValue(subject)", delegate)
+        self.assertIn("func composeSubjectMatches(_ subject: String) -> Bool", outlook)
+        self.assertIn("let expected = subject.trimmingCharacters", outlook)
+        self.assertIn("OpenAI hat keinen Betreff für die neue Mail geliefert.", client)
+        new_mail = delegate[delegate.index("private func populateNewMailDraft") : delegate.index("private func finishNewMailInsertion")]
+        self.assertLess(new_mail.index("composeSubjectMatches(subject)"), new_mail.index("self.copyMailToPasteboard(plainText: body, html: html)"))
     def test_window_position_contract(self):
         panel = self.read("FloatingPanelController.swift")
         self.assertIn("panel.isMovable = true", panel)
