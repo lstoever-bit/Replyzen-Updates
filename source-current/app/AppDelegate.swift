@@ -1365,12 +1365,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 _ = self.outlook.setComposeBCCValue(reminder)
             }
 
-            if self.outlook.focusComposeBodyField() {
+            if self.outlook.focusForwardComposeBodyField() {
                 // The native Forward already contains the original thread. Anchor
                 // the insertion point to character 0 of the actual editable body.
                 // Forward+attachment can expose extra AXWebArea nodes, so Cmd+Up
                 // alone is not reliable enough to identify the final compose body.
-                if !self.outlook.setComposeBodySelectionToStart() {
+                if !self.outlook.setForwardComposeBodySelectionToStart() {
                     self.keyboard.sendCommandUp()
                 }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
