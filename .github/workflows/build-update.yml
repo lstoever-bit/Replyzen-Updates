@@ -1,8 +1,8 @@
-# ReplyZen 1.69 New Mail subject verification
+# ReplyZen 1.70 Reply regression fix
 name: Build ReplyZen Update
 on:
   push:
-    branches: [main, codex/replyzen-1.69-new-mail-subject]
+    branches: [main, codex/replyzen-1.70-reply-regression]
     paths:
       - 'source-current/**'
       - 'maintenance/replyzen_1_66_forward_insertion.py'
@@ -35,7 +35,7 @@ jobs:
         run: bash source-current/Build-CI.sh
       - name: Verify exact updater archive and manifest
         run: python3 tests/verify_update.py source-current
-      - name: Preserve tested canonical 1.69 source
+      - name: Preserve tested canonical 1.70 source
         shell: bash
         run: |
           set -euo pipefail
@@ -43,7 +43,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A source-current/app source-current/Release-notes.txt source-current/Release-notes.localized.json tests
           if ! git diff --cached --quiet; then
-            git commit -m "Build ReplyZen 1.69 New Mail subject fix"
+            git commit -m "Build ReplyZen 1.70 Reply regression fix"
             git push origin "HEAD:${{ github.ref_name }}"
           fi
       - name: Publish verified main update
@@ -60,13 +60,13 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f "$PACKAGE" update.json "update-${VERSION%.0}.json"
           if ! git diff --cached --quiet; then
-            git commit -m "Publish ReplyZen $VERSION New Mail subject fix"
+            git commit -m "Publish ReplyZen $VERSION Reply regression fix"
             git push origin HEAD:main
           fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ReplyZen-1.69-build
+          name: ReplyZen-1.70-build
           path: |
             source-current/Replyzen-update-*.zip
             source-current/update.json
