@@ -817,6 +817,17 @@ final class OutlookAccessibility {
         return setValue(subject, on: element)
     }
 
+    func composeSubjectMatches(_ subject: String) -> Bool {
+        let expected = subject.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !expected.isEmpty,
+              let window = focusedOutlookWindow(),
+              let element = composeSubjectElement(in: window),
+              let value = stringLikeAttribute(kAXValueAttribute as CFString, from: element) else {
+            return false
+        }
+        return value.trimmingCharacters(in: .whitespacesAndNewlines) == expected
+    }
+
     func setComposeBodyValue(_ body: String) -> Bool {
         guard let window = focusedOutlookWindow(), let element = composeBodyElement(in: window) else { return false }
         return setValue(body, on: element)
