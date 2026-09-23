@@ -1688,5 +1688,10 @@
     "de": "OpenAI hat keinen Betreff für die neue Mail geliefert.",
     "en-US": "OpenAI did not provide a subject for the new email.",
     "es": "OpenAI no proporcionó un asunto para el nuevo correo."
+  },
+  "Der Betreff wurde von Outlook nicht übernommen. Der Mailtext liegt in der Zwischenablage.": {
+    "de": "Der Betreff wurde von Outlook nicht übernommen. Der Mailtext liegt in der Zwischenablage.",
+    "en-US": "Outlook did not accept the subject. The email body has been copied to the clipboard.",
+    "es": "Outlook no aceptó el asunto. El cuerpo del correo se copió al portapapeles."
   }
 }
