@@ -843,9 +843,14 @@ final class OutlookAccessibility {
         return focus(element)
     }
 
-    func setComposeBodySelectionToStart() -> Bool {
+    func focusForwardComposeBodyField() -> Bool {
+        guard let window = focusedOutlookWindow(), let element = composeForwardBodyElement(in: window) else { return false }
+        return focus(element)
+    }
+
+    func setForwardComposeBodySelectionToStart() -> Bool {
         guard let window = focusedOutlookWindow(),
-              let element = composeBodyElement(in: window),
+              let element = composeForwardBodyElement(in: window),
               focus(element) else { return false }
 
         var range = CFRange(location: 0, length: 0)
@@ -934,6 +939,36 @@ final class OutlookAccessibility {
     private func composeBodyElement(in window: AXUIElement) -> AXUIElement? {
         var stack: [AXUIElement] = [window]
         var visited = 0
+        var best: (AXUIElement, CGFloat)?
+
+        while let element = stack.popLast(), visited < 14_000 {
+            visited += 1
+            let role = stringAttribute(kAXRoleAttribute as CFString, from: element) ?? ""
+            if role == "AXTextArea" || role == "AXWebArea" {
+                let meta = composeMetadata(for: element)
+                if meta.contains("message body") ||
+                    meta.contains("mail body") ||
+                    meta.contains("nachrichtentext") ||
+                    meta.contains("compose body") ||
+                    meta.contains("cuerpo del mensaje") ||
+                    meta.contains("cuerpo del correo") {
+                    return element
+                }
+
+                if let size = sizeAttribute(kAXSizeAttribute as CFString, from: element),
+                   size.width > 300, size.height > 120 {
+                    let area = size.width * size.height
+                    if best == nil || area > best!.1 { best = (element, area) }
+                }
+            }
+            for child in children(of: element).reversed() { stack.append(child) }
+        }
+        return looksLikeComposeWindow(window) ? best?.0 : nil
+    }
+
+    private func composeForwardBodyElement(in window: AXUIElement) -> AXUIElement? {
+        var stack: [AXUIElement] = [window]
+        var visited = 0
         var editableBest: (AXUIElement, CGFloat)?
         var fallbackBest: (AXUIElement, CGFloat)?
 
@@ -953,9 +988,6 @@ final class OutlookAccessibility {
                     isValueSettable(element) ||
                     isAttributeSettable(kAXSelectedTextRangeAttribute as CFString, on: element)
 
-                // Forward composers with attachments can expose multiple large
-                // AXWebArea elements. Prefer the actual editable body, not the
-                // read-only forwarded thread or attachment preview.
                 if isNamedBody && isEditable {
                     return element
                 }
