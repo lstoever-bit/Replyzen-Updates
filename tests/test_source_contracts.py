@@ -87,7 +87,10 @@ class SourceContracts(unittest.TestCase):
         self.assertNotIn("attachmentFileURLs(", forward)
         self.assertNotIn("materializeAttachment", forward)
         self.assertNotIn("setComposeBodyValue", forward)
-        self.assertIn("func focusForwardComposeBodyField() -> Bool", outlook)\n        self.assertIn("func setForwardComposeBodySelectionToStart() -> Bool", outlook)\n        self.assertIn("composeForwardBodyElement(in: window)", outlook)\n        self.assertIn("isAttributeSettable(kAXSelectedTextRangeAttribute", outlook)
+        self.assertIn("func focusForwardComposeBodyField() -> Bool", outlook)
+        self.assertIn("func setForwardComposeBodySelectionToStart() -> Bool", outlook)
+        self.assertIn("composeForwardBodyElement(in: window)", outlook)
+        self.assertIn("isAttributeSettable(kAXSelectedTextRangeAttribute", outlook)
         self.assertIn("editableBest", outlook)
         reply = delegate[delegate.index("private func insertReply()") : delegate.index("private func insertForwardDraft()") ]
         self.assertIn("openReplyComposer(replyAll: replyAll, from: snapshot)", reply)
