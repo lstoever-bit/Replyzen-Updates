@@ -141,7 +141,11 @@ class SourceContracts(unittest.TestCase):
         self.assertIn("let expected = subject.trimmingCharacters", outlook)
         self.assertIn("OpenAI hat keinen Betreff für die neue Mail geliefert.", client)
         new_mail = delegate[delegate.index("private func populateNewMailDraft") : delegate.index("private func finishNewMailInsertion")]
-        self.assertLess(new_mail.index("composeSubjectMatches(subject)"), new_mail.index("self.copyMailToPasteboard(plainText: body, html: html)"))
+        verified = new_mail.index("guard self.outlook.composeSubjectMatches(subject) else")
+        commit = new_mail.index("self.keyboard.sendTab()", verified)
+        body_insert = new_mail.index("self.keyboard.sendCommandV()", commit)
+        self.assertLess(verified, commit)
+        self.assertLess(commit, body_insert)
     def test_window_position_contract(self):
         panel = self.read("FloatingPanelController.swift")
         self.assertIn("panel.isMovable = true", panel)
