@@ -1479,22 +1479,66 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     return
                 }
 
-                // AXValue alone can paint the subject text without committing it to
-                // Outlook's native compose model. Real keyboard editing + leaving
-                // the field makes Outlook register the subject before Send is used.
+                // Populate the native Outlook subject field first, then verify
+                // that Outlook actually exposes the expected value before touching
+                // the message body. Keyboard paste is preferred because it commits
+                // like normal user editing; AXValue is a fallback for Outlook builds
+                // where the focused field ignores synthetic paste.
                 self.copyToPasteboard(subject)
                 self.keyboard.sendCommandA()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
                     guard let self else { return }
                     self.keyboard.sendCommandV()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) { [weak self] in
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) { [weak self] in
                         guard let self else { return }
-                        self.keyboard.sendTab()
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) { [weak self] in
+
+                        if !self.outlook.composeSubjectMatches(subject) {
+                            _ = self.outlook.setComposeSubjectValue(subject)
+                        }
+
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) { [weak self] in
                             guard let self else { return }
-                            self.copyMailToPasteboard(plainText: body, html: html)
-                            self.keyboard.sendCommandV()
-                            self.finishNewMailInsertion()
+
+                            guard self.outlook.composeSubjectMatches(subject) else {
+                                if attempt < 8 {
+                                    self.populateNewMailDraft(
+                                        subject: subject,
+                                        body: body,
+                                        html: html,
+                                        attempt: attempt + 1
+                                    )
+                                } else {
+                                    self.copyMailToPasteboard(plainText: body, html: html)
+                                    self.isRunningFlow = false
+                                    self.showError(L10n.source("Der Betreff konnte nicht zuverlässig in Outlook eingesetzt werden. Der Mailtext liegt in der Zwischenablage."))
+                                }
+                                return
+                            }
+
+                            // Leaving the field commits the verified subject to the
+                            // native compose model. Only then insert the message body.
+                            self.keyboard.sendTab()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.20) { [weak self] in
+                                guard let self else { return }
+                                guard self.outlook.composeSubjectMatches(subject) else {
+                                    if attempt < 8 {
+                                        self.populateNewMailDraft(
+                                            subject: subject,
+                                            body: body,
+                                            html: html,
+                                            attempt: attempt + 1
+                                        )
+                                    } else {
+                                        self.copyMailToPasteboard(plainText: body, html: html)
+                                        self.isRunningFlow = false
+                                        self.showError(L10n.source("Der Betreff wurde von Outlook nicht übernommen. Der Mailtext liegt in der Zwischenablage."))
+                                    }
+                                    return
+                                }
+                                self.copyMailToPasteboard(plainText: body, html: html)
+                                self.keyboard.sendCommandV()
+                                self.finishNewMailInsertion()
+                            }
                         }
                     }
                 }

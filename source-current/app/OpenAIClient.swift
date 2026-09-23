@@ -192,6 +192,9 @@ final class OpenAIClient {
         }
         do {
             let draft = try JSONDecoder().decode(NewMailDraft.self, from: data)
+            guard !draft.subject.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                throw APIError(message: L10n.source("OpenAI hat keinen Betreff für die neue Mail geliefert."))
+            }
             guard !draft.body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
                 throw APIError(message: L10n.source("OpenAI hat keinen Mailtext geliefert."))
             }
