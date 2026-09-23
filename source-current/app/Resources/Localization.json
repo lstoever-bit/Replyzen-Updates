@@ -1683,5 +1683,10 @@
     "de": "„{0}“ wurde am {1} direkt in Google Calendar · „{2}“ angelegt.",
     "en-US": "“{0}” was added for {1} to Google Calendar · “{2}”.",
     "es": "Se ha añadido «{0}» para el {1} a Google Calendar · «{2}»."
+  },
+  "OpenAI hat keinen Betreff für die neue Mail geliefert.": {
+    "de": "OpenAI hat keinen Betreff für die neue Mail geliefert.",
+    "en-US": "OpenAI did not provide a subject for the new email.",
+    "es": "OpenAI no proporcionó un asunto para el nuevo correo."
   }
 }
