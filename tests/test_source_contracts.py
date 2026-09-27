@@ -11,8 +11,8 @@ class SourceContracts(unittest.TestCase):
         info = plistlib.loads((APP / "Info.plist").read_bytes())
         self.assertEqual(info["CFBundleIdentifier"], "com.lstoever.replyzen")
         self.assertEqual(info["CFBundleDisplayName"], "ReplyZen")
-        self.assertEqual(info["CFBundleShortVersionString"], "1.72.0")
-        self.assertEqual(info["CFBundleVersion"], "73")
+        self.assertEqual(info["CFBundleShortVersionString"], "1.73.0")
+        self.assertEqual(info["CFBundleVersion"], "74")
     def test_payment_is_removed_from_active_code(self):
         self.assertFalse((APP / "AttachmentTextExtractor.swift").exists())
         swift = "\n".join(p.read_text(encoding="utf-8") for p in APP.glob("*.swift"))
@@ -146,7 +146,7 @@ class SourceContracts(unittest.TestCase):
         self.assertIn("setComposeSubjectValue(subject)", delegate)
         self.assertIn("func composeSubjectMatches(_ subject: String) -> Bool", outlook)
         self.assertIn("let expected = subject.trimmingCharacters", outlook)
-        self.assertIn("OpenAI hat keinen Betreff für die neue Mail geliefert.", client)
+        self.assertIn("NewMailSubject.resolve", client)
         new_mail = delegate[delegate.index("private func populateNewMailDraft") : delegate.index("private func finishNewMailInsertion")]
         verified = new_mail.index("guard self.outlook.composeSubjectMatches(subject) else")
         commit = new_mail.index("self.keyboard.sendTab()", verified)
@@ -228,7 +228,7 @@ class SourceContracts(unittest.TestCase):
         self.assertIn("let userText = state.instruction", delegate)
         self.assertIn("makeTransferPayload(mailThread: state.mailText)", delegate)
         self.assertIn("makeTransferPayload(mailThread: nil)", delegate)
-        self.assertGreaterEqual(client.count("MailPromptBuilder.make(payload: payload)"), 4)
+        self.assertGreaterEqual(client.count("MailPromptBuilder.make(payload: payload"), 4)
         self.assertNotIn("commonMailRules", client)
         self.assertIn("You are an email writing assistant.", prompt_builder)
         self.assertIn(r"Language: \(payload.language)", prompt_builder)

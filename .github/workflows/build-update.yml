@@ -1,11 +1,11 @@
-# ReplyZen 1.72 Reply editor compatibility
+# ReplyZen 1.73 focus handoff and subject recovery
 name: Build ReplyZen Update
 on:
   push:
-    branches: [main, codex/replyzen-1.72-editor-compat]
+    branches: [main, codex/replyzen-1.73-focus-subject]
     paths:
       - 'source-current/**'
-      - 'maintenance/replyzen_1_72_editor_compat.py'
+      - 'maintenance/replyzen_1_73_focus_subject.py'
       - 'tests/**'
       - '.github/workflows/build-update.yml'
   workflow_dispatch:
@@ -20,14 +20,16 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Integrate Reply editor compatibility
-        run: python3 maintenance/replyzen_1_72_editor_compat.py source-current
-      - name: Reply insertion state-machine and editor compatibility tests
+      - name: Integrate focus and subject corrections
+        run: python3 maintenance/replyzen_1_73_focus_subject.py source-current
+      - name: Focus handoff and missing subject regression tests
         shell: bash
         run: |
           set -euo pipefail
           TMP="$(mktemp -d)"
           trap 'rm -rf "$TMP"' EXIT
+          swiftc -parse-as-library source-current/app/ReplyRecoveryRules.swift source-current/app/NewMailSubject.swift source-current/app/ChatGPTTransferPayload.swift source-current/app/MailPromptBuilder.swift tests/ReplyRecoveryTests.swift -o "$TMP/recovery-tests"
+          "$TMP/recovery-tests"
           swiftc -parse-as-library source-current/app/ReplyInsertionPolicy.swift tests/ReplyInsertionPolicyTests.swift -o "$TMP/reply-tests"
           "$TMP/reply-tests"
           swiftc -parse-as-library source-current/app/ReplyEditorSupport.swift tests/ReplyEditorSupportTests.swift -o "$TMP/editor-tests"
@@ -46,7 +48,7 @@ jobs:
         run: bash source-current/Build-CI.sh
       - name: Verify exact updater archive and manifest
         run: python3 tests/verify_update.py source-current
-      - name: Preserve tested canonical 1.72 source
+      - name: Preserve tested canonical 1.73 source
         shell: bash
         run: |
           set -euo pipefail
@@ -54,7 +56,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A source-current/app source-current/Release-notes.txt source-current/Release-notes.localized.json tests
           if ! git diff --cached --quiet; then
-            git commit -m "Build ReplyZen 1.72 editor compatibility fixes"
+            git commit -m "Build ReplyZen 1.73 focus and subject corrections"
             git push origin "HEAD:${{ github.ref_name }}"
           fi
       - name: Publish verified main update
@@ -71,13 +73,13 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f "$PACKAGE" update.json "update-${VERSION%.0}.json"
           if ! git diff --cached --quiet; then
-            git commit -m "Publish ReplyZen $VERSION editor compatibility fixes"
+            git commit -m "Publish ReplyZen $VERSION focus and subject corrections"
             git push origin HEAD:main
           fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ReplyZen-1.72-build
+          name: ReplyZen-1.73-build
           path: |
             source-current/Replyzen-update-*.zip
             source-current/update.json

@@ -7,6 +7,18 @@ extension OpenAIClient {
         precondition(fenced.body == "Hallo" && fenced.html == nil)
         let newMail = try decodeNewMailDraft("{\"subject\":\"Test\",\"body\":\"Hello\",\"html\":null}")
         precondition(newMail.subject == "Test" && newMail.body == "Hello")
+        // Exercise the actual decoder, not just a source-string contract.
+        let retainedBody = "Hallo Max,\n\nBitte bestaetige den Liefertermin."
+        let retainedHTML = "<p>Hallo Max,</p><p>Bitte bestaetige den Liefertermin.</p>"
+        for subject in [NSNull(), "", " \n\t"] as [Any] {
+            let data = try JSONSerialization.data(withJSONObject: ["subject": subject, "body": retainedBody, "html": retainedHTML])
+            let result = try decodeNewMailDraft(String(decoding: data, as: UTF8.self))
+            precondition(result.subject == "Bitte bestaetige den Liefertermin")
+            precondition(result.body == retainedBody && result.html == retainedHTML)
+        }
+        let missingData = try JSONSerialization.data(withJSONObject: ["body": retainedBody, "html": retainedHTML])
+        let recovered = try decodeNewMailDraft(String(decoding: missingData, as: UTF8.self))
+        precondition(!recovered.subject.isEmpty && recovered.body == retainedBody)
         let event = try decodeCalendarSuggestion("{\"title\":\"Test\",\"description\":\"Description\",\"start\":null,\"end\":null,\"confidence\":\"missing\"}")
         precondition(event.start == nil && event.end == nil && event.title == "Test")
         let invalid: [() throws -> Void] = [

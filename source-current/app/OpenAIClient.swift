@@ -95,7 +95,7 @@ final class OpenAIClient {
         payload: ChatGPTTransferPayload,
         completion: @escaping (Result<NewMailDraft, Error>) -> Void
     ) {
-        let prompt = MailPromptBuilder.make(payload: payload)
+        let prompt = MailPromptBuilder.make(payload: payload, newMail: true)
         performRequest(
             apiKey: apiKey,
             instructions: prompt.system,
@@ -106,7 +106,7 @@ final class OpenAIClient {
         ) { result in
             switch result {
             case .success(let text):
-                do { completion(.success(try Self.decodeNewMailDraft(text))) }
+                do { completion(.success(try Self.decodeNewMailDraft(text, language: payload.language))) }
                 catch { completion(.failure(error)) }
             case .failure(let error): completion(.failure(error))
             }
@@ -146,7 +146,7 @@ final class OpenAIClient {
                 "properties": [
                     "subject": [
                         "type": "string",
-                        "description": "A short useful subject based only on the user's instruction."
+                        "description": "A short, non-empty subject in the requested language, based only on the user's instruction."
                     ],
                     "body": [
                         "type": "string",
@@ -185,20 +185,24 @@ final class OpenAIClient {
         }
     }
 
-    private static func decodeNewMailDraft(_ text: String) throws -> NewMailDraft {
+    private static func decodeNewMailDraft(_ text: String, language: String = "de") throws -> NewMailDraft {
         let cleaned = ResponseJSON.cleanedText(text)
         guard let data = cleaned.data(using: .utf8) else {
             throw APIError(message: L10n.source("OpenAI hat keinen gültigen Mailentwurf geliefert."))
         }
         do {
-            let draft = try JSONDecoder().decode(NewMailDraft.self, from: data)
-            guard !draft.subject.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                throw APIError(message: L10n.source("OpenAI hat keinen Betreff für die neue Mail geliefert."))
+            struct WireDraft: Decodable {
+                let subject: String?
+                let body: String
+                let html: String?
             }
+            let draft = try JSONDecoder().decode(WireDraft.self, from: data)
             guard !draft.body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
                 throw APIError(message: L10n.source("OpenAI hat keinen Mailtext geliefert."))
             }
-            return draft
+            return NewMailDraft(
+                subject: NewMailSubject.resolve(draft.subject, body: draft.body, language: language),
+                body: draft.body, html: draft.html)
         } catch let error as APIError {
             throw error
         } catch {
