@@ -91,7 +91,12 @@ enum MailTypography {
     }
 
     static func write(plainText: String, html: String, to pasteboard: NSPasteboard = .general) {
-        let value = payload(plainText: plainText, html: html)
+        write(payload(plainText: plainText, html: html), to: pasteboard)
+    }
+
+    /// Only publishes already-rendered formats. No HTML import or run-loop work
+    /// belongs between checking Outlook focus and issuing its Paste command.
+    static func write(_ value: Payload, to pasteboard: NSPasteboard = .general) {
         let item = NSPasteboardItem()
         item.setString(value.plainText, forType: .string)
         item.setString(value.html, forType: .html)

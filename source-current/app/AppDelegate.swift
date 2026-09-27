@@ -1170,26 +1170,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let replyAll = state.replyScope == .all
         let html = state.replyHTML
-        copyMailToPasteboard(plainText: reply, html: html)
+        // Finish all AppKit HTML/RTF conversion while ReplyZen still owns focus.
+        let preparedPayload = MailTypography.payload(
+            plainText: reply + "\n\n", html: html.isEmpty ? "" : html + "<br><br>")
+        MailTypography.write(preparedPayload)
         panel.hide()
         OutlookReplyInsertion.activateForReply(pid: snapshot.pid)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
             guard let self, self.isRunningFlow, self.state.stage == .inserting else { return }
-            self.populateReplyDraft(reply: reply, html: html, snapshot: snapshot, replyAll: replyAll)
+            self.populateReplyDraft(reply: reply, html: html, snapshot: snapshot, replyAll: replyAll, preparedPayload: preparedPayload)
         }
     }
 
     private func populateReplyDraft(reply: String, html: String,
-                                    snapshot: OutlookAccessibility.Snapshot, replyAll: Bool) {
+                                    snapshot: OutlookAccessibility.Snapshot, replyAll: Bool, preparedPayload: MailTypography.Payload) {
         activeReplyInsertion = OutlookReplyInsertion(
             outlook: outlook, snapshot: snapshot, replyAll: replyAll,
-            note: reply, html: html, reminder: reminderBCCAddress()
+            note: reply, html: html, reminder: reminderBCCAddress(),
+            preparedPayload: preparedPayload
         ) { [weak self] errorCode in
             guard let self else { return }
             self.activeReplyInsertion = nil
             if let errorCode {
-                self.copyMailToPasteboard(plainText: reply, html: html)
+                MailTypography.write(preparedPayload)
                 self.showError(L10n.source("ReplyZen konnte das Einfuegen der Antwort nicht bestaetigen (Diagnose: {0}). Bitte pruefe den geoeffneten Entwurf. Dein Text bleibt in der Zwischenablage.", errorCode))
             } else {
                 // Only called after the note was read back from the same draft.
