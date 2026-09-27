@@ -46,7 +46,7 @@ import Foundation
         var dropped = prepared(note, before: original)
         obs.text = original
         actions = (0..<30).map { _ in dropped.next(obs) }
-        check(actions.contains(.fail("R71-VERIFY")) && !actions.contains(.complete), "dropped paste is a real failure")
+        check(actions.contains(.fail("R72-VERIFY")) && !actions.contains(.complete), "dropped paste is a real failure")
         check(!actions.contains(.paste), "late paste cannot cause duplicate retry")
 
         var rebuilt = prepared(note, before: original)
@@ -68,20 +68,20 @@ import Foundation
 
         var inactive = ReplyInsertionState(note: note, nativeOpenAccepted: true)
         var away = ReplyInsertionState.Observation(); away.active = false
-        check(inactive.next(away) == .fail("R71-FOCUS"), "switch to another app aborts")
+        check(inactive.next(away) == .fail("R72-FOCUS"), "switch to another app aborts")
         var wrongWindow = ReplyInsertionState(note: note, nativeOpenAccepted: true)
         away.active = true; away.targetChanged = true
-        check(wrongWindow.next(away) == .fail("R71-WINDOW"), "different draft is never modified")
+        check(wrongWindow.next(away) == .fail("R72-WINDOW"), "different draft is never modified")
 
         var falseFocus = ReplyInsertionState(note: note, nativeOpenAccepted: true)
         obs.composer = true; obs.editor = true; obs.focused = false; obs.text = original
         actions = (0..<25).map { _ in falseFocus.next(obs) }
-        check(!actions.contains(.paste) && actions.contains(.fail("R71-FOCUS")), "AX accepting a request does not prove real focus")
+        check(!actions.contains(.paste) && actions.contains(.fail("R72-FOCUS")), "AX accepting a request does not prove real focus")
 
         var unreadable = ReplyInsertionState(note: note, nativeOpenAccepted: true)
         obs.focused = true; obs.caretAtStart = true; obs.text = nil
         actions = (0..<5).map { _ in unreadable.next(obs) }
-        check(!actions.contains(.paste) && actions.contains(.fail("R71-READ")), "unknown baseline never risks duplicate insertion")
+        check(!actions.contains(.paste) && actions.contains(.fail("R72-READ")), "unknown baseline never risks duplicate insertion")
         print("PASS: \(checks) Reply insertion checks (state machine and selector policy; no live Outlook)")
     }
 }

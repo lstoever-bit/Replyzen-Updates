@@ -67,16 +67,16 @@ struct ReplyInsertionState {
         guard phase != .done else { return .wait }
         totalTicks += 1
         phaseTicks += 1
-        if observation.targetChanged { return fail("R71-WINDOW") }
-        if !observation.active { return fail("R71-FOCUS") }
-        if totalTicks > 100 { return fail("R71-TIMEOUT") }
+        if observation.targetChanged { return fail("R72-WINDOW") }
+        if !observation.active { return fail("R72-FOCUS") }
+        if totalTicks > 100 { return fail("R72-TIMEOUT") }
         switch phase {
         case .opening:
             if observation.composer && observation.editor {
                 phase = .focusing; phaseTicks = 0
                 return .focus
             }
-            if phaseTicks > 50 { return fail("R71-EDITOR") }
+            if phaseTicks > 50 { return fail("R72-EDITOR") }
             if !observation.composer && !nativeOpenAccepted && !fallbackUsed && phaseTicks >= 8 {
                 fallbackUsed = true
                 return .keyboardFallback
@@ -84,30 +84,30 @@ struct ReplyInsertionState {
             return .wait
         case .focusing:
             guard observation.composer && observation.editor else {
-                return phaseTicks > 30 ? fail("R71-EDITOR") : .wait
+                return phaseTicks > 30 ? fail("R72-EDITOR") : .wait
             }
             if observation.focused {
                 phase = .positioning; phaseTicks = 0
                 return .position
             }
-            return phaseTicks > 20 ? fail("R71-FOCUS") : .focus
+            return phaseTicks > 20 ? fail("R72-FOCUS") : .focus
         case .positioning:
             guard observation.composer && observation.editor && observation.focused else {
                 phase = .focusing; phaseTicks = 0
                 return .wait
             }
-            if phaseTicks > 10 { return fail("R71-CARET") }
+            if phaseTicks > 10 { return fail("R72-CARET") }
             if observation.caretAtStart == false { return .position }
             // Allow a run-loop turn even after AX accepted the caret change.
             if phaseTicks < 2 { return .wait }
             // Without a readable baseline there is no reliable duplicate-safe verification.
-            guard let baseline = observation.text else { return fail("R71-READ") }
+            guard let baseline = observation.text else { return fail("R72-READ") }
             before = baseline
             phase = .verifying; phaseTicks = 0
             return .paste
         case .verifying:
             // Never re-paste blindly. A delayed paste must not duplicate an answer.
-            guard observation.composer else { return fail("R71-WINDOW") }
+            guard observation.composer else { return fail("R72-WINDOW") }
             if ReplyInsertionPolicy.confirmsInsertion(note: note, before: before, after: observation.text) {
                 confirmations += 1
                 if confirmations >= 3 && phaseTicks >= 5 {
@@ -117,7 +117,7 @@ struct ReplyInsertionState {
             } else {
                 confirmations = 0
             }
-            return phaseTicks > 25 ? fail("R71-VERIFY") : .wait
+            return phaseTicks > 25 ? fail("R72-VERIFY") : .wait
         case .done:
             return .wait
         }
