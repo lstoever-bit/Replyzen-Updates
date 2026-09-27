@@ -1693,5 +1693,10 @@
     "de": "Der Betreff wurde von Outlook nicht übernommen. Der Mailtext liegt in der Zwischenablage.",
     "en-US": "Outlook did not accept the subject. The email body has been copied to the clipboard.",
     "es": "Outlook no aceptó el asunto. El cuerpo del correo se copió al portapapeles."
+  },
+  "ReplyZen konnte das Einfuegen der Antwort nicht bestaetigen (Diagnose: {0}). Bitte pruefe den geoeffneten Entwurf. Dein Text bleibt in der Zwischenablage.": {
+    "de": "ReplyZen konnte das Einfügen der Antwort nicht bestätigen (Diagnose: {0}). Bitte prüfe den geöffneten Entwurf. Dein Text bleibt in der Zwischenablage.",
+    "en-US": "ReplyZen could not confirm insertion of the reply (diagnostic: {0}). Please check the open draft. Your text remains on the clipboard.",
+    "es": "ReplyZen no pudo confirmar la inserción de la respuesta (diagnóstico: {0}). Revisa el borrador abierto. Tu texto sigue en el portapapeles."
   }
 }

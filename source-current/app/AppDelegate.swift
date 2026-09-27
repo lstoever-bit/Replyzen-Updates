@@ -23,6 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var activeSnapshot: OutlookAccessibility.Snapshot?
     private var isRunningFlow = false
+    private var activeReplyInsertion: OutlookReplyInsertion?
     private var isLoadingMail = false
     private var availableUpdate: UpdateManager.AvailableUpdate?
     private var updateMenuItem: NSMenuItem?
@@ -241,6 +242,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func deactivateForOutlook() {
+        activeReplyInsertion?.cancel()
+        activeReplyInsertion = nil
         outlookSessionActive = false
         isRunningFlow = false
         isLoadingMail = false
@@ -1144,6 +1147,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func insertReply() {
+        guard activeReplyInsertion == nil else { return }
         guard let snapshot = activeSnapshot else {
             state.stage = .instruction
             state.mailStatus = .unavailable(L10n.source("Die ursprüngliche Outlook-Mail ist nicht mehr verfügbar. Bitte erneut laden."))
@@ -1165,73 +1169,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         toolbarButton.setSuppressed(true)
 
         let replyAll = state.replyScope == .all
-        copyMailToPasteboard(plainText: reply, html: state.replyHTML)
+        let html = state.replyHTML
+        copyMailToPasteboard(plainText: reply, html: html)
         panel.hide()
         outlook.activateOutlook(pid: snapshot.pid)
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.20) { [weak self] in
-            guard let self else { return }
-            _ = self.outlook.openReplyComposer(replyAll: replyAll, from: snapshot)
-
-            // Legacy Outlook can report a failed AXPress even though it already
-            // opened the reply window. Verify the actual UI state before using the
-            // keyboard fallback so one action never creates duplicate reply windows.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
-                guard let self else { return }
-                if !self.outlook.hasOpenedReplyComposer(since: snapshot) {
-                    if replyAll { self.keyboard.sendCommandShiftR() }
-                    else { self.keyboard.sendCommandR() }
-                }
-                self.populateReplyDraft(reply: reply, html: self.state.replyHTML, attempt: 0)
-            }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+            guard let self, self.isRunningFlow, self.state.stage == .inserting else { return }
+            self.populateReplyDraft(reply: reply, html: html, snapshot: snapshot, replyAll: replyAll)
         }
     }
 
-    private func populateReplyDraft(reply: String, html: String, attempt: Int) {
-        let delay = attempt == 0 ? 0.45 : 0.25
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+    private func populateReplyDraft(reply: String, html: String,
+                                    snapshot: OutlookAccessibility.Snapshot, replyAll: Bool) {
+        activeReplyInsertion = OutlookReplyInsertion(
+            outlook: outlook, snapshot: snapshot, replyAll: replyAll,
+            note: reply, html: html, reminder: reminderBCCAddress()
+        ) { [weak self] errorCode in
             guard let self else { return }
-
-            if let reminder = self.reminderBCCAddress() {
-                _ = self.outlook.setComposeBCCValue(reminder)
-            }
-
-            if self.outlook.focusComposeBodyField() {
+            self.activeReplyInsertion = nil
+            if let errorCode {
                 self.copyMailToPasteboard(plainText: reply, html: html)
-                self.keyboard.sendCommandV()
+                self.showError(L10n.source("ReplyZen konnte das Einfuegen der Antwort nicht bestaetigen (Diagnose: {0}). Bitte pruefe den geoeffneten Entwurf. Dein Text bleibt in der Zwischenablage.", errorCode))
+            } else {
+                // Only called after the note was read back from the same draft.
                 self.finishNewMailInsertion()
-                return
             }
-
-            // Classic Outlook can show a perfectly usable reply body without
-            // exposing it as a focusable AX body element. The editable Subject field
-            // is reliable; one Tab from Subject enters the body. Give normal body
-            // detection two attempts first, then use this deterministic fallback.
-            if attempt >= 2, self.outlook.focusComposeSubjectField() {
-                self.keyboard.sendTab()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) { [weak self] in
-                    guard let self else { return }
-                    self.keyboard.sendCommandUp()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
-                        guard let self else { return }
-                        self.copyMailToPasteboard(plainText: reply, html: html)
-                        self.keyboard.sendCommandV()
-                        self.finishNewMailInsertion()
-                    }
-                }
-                return
-            }
-
-            if attempt < 12 {
-                self.populateReplyDraft(reply: reply, html: html, attempt: attempt + 1)
-                return
-            }
-
-            self.copyMailToPasteboard(plainText: reply, html: html)
-            self.isRunningFlow = false
-            self.toolbarButton.setSuppressed(false)
-            self.showError(L10n.source("Outlook hat den Antworteditor nicht geöffnet. Der Text wurde in die Zwischenablage kopiert."))
         }
+        activeReplyInsertion?.start()
     }
 
     private func insertForwardDraft() {
@@ -1607,6 +1572,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func closePanel() {
+        activeReplyInsertion?.cancel()
+        activeReplyInsertion = nil
         isRunningFlow = false
         state.stage = .idle
         panel.hide()

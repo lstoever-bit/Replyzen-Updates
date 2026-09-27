@@ -11,8 +11,8 @@ class SourceContracts(unittest.TestCase):
         info = plistlib.loads((APP / "Info.plist").read_bytes())
         self.assertEqual(info["CFBundleIdentifier"], "com.lstoever.replyzen")
         self.assertEqual(info["CFBundleDisplayName"], "ReplyZen")
-        self.assertEqual(info["CFBundleShortVersionString"], "1.70.0")
-        self.assertEqual(info["CFBundleVersion"], "71")
+        self.assertEqual(info["CFBundleShortVersionString"], "1.71.0")
+        self.assertEqual(info["CFBundleVersion"], "72")
     def test_payment_is_removed_from_active_code(self):
         self.assertFalse((APP / "AttachmentTextExtractor.swift").exists())
         swift = "\n".join(p.read_text(encoding="utf-8") for p in APP.glob("*.swift"))
@@ -93,9 +93,10 @@ class SourceContracts(unittest.TestCase):
         self.assertIn("isAttributeSettable(kAXSelectedTextRangeAttribute", outlook)
         self.assertIn("editableBest", outlook)
         reply = delegate[delegate.index("private func insertReply()") : delegate.index("private func insertForwardDraft()") ]
-        self.assertIn("openReplyComposer(replyAll: replyAll, from: snapshot)", reply)
-        self.assertIn("hasOpenedReplyComposer(since: snapshot)", reply)
-        self.assertIn("focusComposeBodyField()", reply)
+        self.assertIn("OutlookReplyInsertion(", reply)
+        self.assertIn("openReplyComposer(replyAll: replyAll, from: snapshot)", self.read("OutlookReplyInsertion.swift"))
+        self.assertIn("ReplyInsertionPolicy.isSendControl", self.read("OutlookReplyInsertion.swift"))
+        self.assertIn("activeReplyInsertion?.start()", reply)
         self.assertNotIn("focusForwardComposeBodyField()", reply)
         self.assertIn("focusForwardComposeBodyField()", forward)
 
@@ -265,7 +266,8 @@ class SourceContracts(unittest.TestCase):
         reply_start = delegate.index("private func populateReplyDraft")
         reply_end = delegate.index("private func insertForwardDraft", reply_start)
         reply = delegate[reply_start:reply_end]
-        self.assertLess(reply.index("setComposeBCCValue(reminder)"), reply.index("focusComposeBodyField()"))
+        self.assertIn("reminder: reminderBCCAddress()", reply)
+        self.assertIn("setComposeBCCValue(reminder)", self.read("OutlookReplyInsertion.swift"))
         self.assertIn("setComposeBCCValue(reminder)", delegate[delegate.index("private func populateForwardDraft"):delegate.index("private func insertNewMail")])
         self.assertIn("setComposeBCCValue(reminder)", delegate[delegate.index("private func populateNewMailDraft"):delegate.index("private func finishNewMailInsertion")])
         self.assertIn("private func commitComposeRecipient", outlook)
