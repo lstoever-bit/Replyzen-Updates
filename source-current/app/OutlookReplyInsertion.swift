@@ -16,6 +16,9 @@ final class OutlookReplyInsertion {
     private var initialWindows: [AXUIElement] = []
     private var originalBodies: [AXUIElement] = []
     private var targetWindow: AXUIElement?
+    private var windowFailure: String?
+    private var windowTracker = ReplyWindowTracker<AXUIElement, AXUIElement>(
+        sameWindow: { CFEqual($0, $1) }, sameEditor: { CFEqual($0, $1) })
     private var editor: AXUIElement?
     private var sendControl: AXUIElement?
     private var prepared = false
@@ -72,7 +75,7 @@ final class OutlookReplyInsertion {
             return
         case .request: Self.activateForReply(pid: snapshot.pid)
         case .wait: break
-        case .abort: finish("R73-ACTIVATE"); return
+        case .abort: finish("R74-ACTIVATE"); return
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
             self?.beginWhenActive(attempt: attempt + 1)
@@ -94,9 +97,12 @@ final class OutlookReplyInsertion {
         case .keyboardFallback:
             // Only once, only if the native control did not acknowledge opening,
             // and only while the original source window is still focused.
-            guard let focused = focusedWindow(), let source = snapshot.windows.first,
-                  CFEqual(focused, source) else { finish("R73-WINDOW"); return }
-            if replyAll { keyboard.sendCommandShiftR() } else { keyboard.sendCommandR() }
+            // Focus may move after the observation. Do not dispatch into that
+            // other window or fail immediately; the next observation resolves it.
+            if let focused = focusedWindow(), let source = snapshot.windows.first,
+               CFEqual(focused, source), bool(focused, "AXModal") != true {
+                if replyAll { keyboard.sendCommandShiftR() } else { keyboard.sendCommandR() }
+            }
         case .focus:
             if !prepared {
                 prepared = true
@@ -113,7 +119,11 @@ final class OutlookReplyInsertion {
             keyboard.sendCommandUp()
         case .paste:
             // Check again at the write boundary; AX focus requests alone are not proof.
-            guard !pasted, isOutlookActive(), hasEditorFocus() else { finish("R73-FOCUS"); return }
+            guard !pasted, isOutlookActive(), hasEditorFocus() else { finish("R74-FOCUS"); return }
+            guard let window = focusedWindow(), let editor,
+                  windowTracker.lockForPaste(window: window, editor: editor) else {
+                finish("R74-WINDOW-WRITE"); return
+            }
             pasted = true
             MailTypography.write(plainText: note + "\n\n", html: html.isEmpty ? "" : html + "<br><br>")
             pasteThroughOutlook()
@@ -128,42 +138,66 @@ final class OutlookReplyInsertion {
     private func finish(_ errorCode: String?) {
         guard !cancelled else { return }
         cancelled = true
-        let diagnostic = errorCode == "R73-FOCUS"
-            ? (isOutlookActive() ? "R73-EDITORFOCUS" : "R73-APPFOCUS") : errorCode
-        completion(diagnostic)
+        let diagnostic = errorCode == "R74-FOCUS"
+            ? (isOutlookActive() ? "R74-EDITORFOCUS" : "R74-APPFOCUS") : errorCode
+        completion(diagnostic == "R74-WINDOW" ? (windowFailure ?? diagnostic) : diagnostic)
     }
 
     private func observe() -> ReplyInsertionState.Observation {
         var result = ReplyInsertionState.Observation()
         result.active = isOutlookActive()
-        guard result.active, let window = focusedWindow() else { return result }
-        if let targetWindow, !CFEqual(targetWindow, window) {
-            result.targetChanged = true
+        guard result.active else { return result }
+        guard let window = focusedWindow() else {
+            _ = windowTracker.observe(window: nil, editor: nil, isSource: false,
+                existedBefore: false, hasSend: false, modal: false)
+            result.windowPending = true
             return result
         }
-        if targetWindow == nil,
-           initialWindows.contains(where: { CFEqual($0, window) }),
-           !snapshot.windows.prefix(1).contains(where: { CFEqual($0, window) }) {
-            result.targetChanged = true
-            return result
-        }
-        let cachedIsValid = editor.map { isBodyRole($0) && isDescendant($0, of: window) } == true
+        let isSource = snapshot.windows.first.map { CFEqual($0, window) } ?? false
+        let existed = initialWindows.contains { CFEqual($0, window) }
+        let modal = bool(window, "AXModal") == true
+        let sameTarget = targetWindow.map { CFEqual($0, window) } ?? false
+        let cachedIsValid = sameTarget && !modal
+            && editor.map { isBodyRole($0) && isDescendant($0, of: window) } == true
             && sendControl.map { isDescendant($0, of: window) } == true
-        if cachedIsValid {
-            result.composer = true
+        let controls: [AXUIElement]
+        let resolvedEditor: AXUIElement?
+        if cachedIsValid, let sendControl {
+            controls = [sendControl]
+            resolvedEditor = editor
         } else {
-            let sendControls = walk(window).filter { node in
+            controls = walk(window).filter { node in
                 let role = text(node, "AXRole") ?? ""
                 guard role == "AXButton" || role == "AXMenuButton" else { return false }
                 return ["AXTitle", "AXDescription", "AXHelp"].compactMap { text(node, $0) }
                     .contains(where: ReplyInsertionPolicy.isSendControl)
             }
-            result.composer = !sendControls.isEmpty
-            guard result.composer else { return result }
-            if targetWindow == nil { targetWindow = window }
-            sendControl = sendControls.first
-            editor = resolveEditor(sendControls: sendControls, window: window)
+            resolvedEditor = controls.isEmpty ? nil : resolveEditor(sendControls: controls, window: window)
         }
+        let decision = windowTracker.observe(window: window, editor: resolvedEditor,
+            isSource: isSource, existedBefore: existed, hasSend: !controls.isEmpty, modal: modal)
+        switch decision {
+        case .wait:
+            result.windowPending = true
+            return result
+        case .openingSource:
+            // Preserve the one-time native-open keyboard fallback on the SOURCE
+            // only. Waiting for another window must never dispatch this shortcut.
+            return result
+        case .reject(let code):
+            windowFailure = code
+            result.targetChanged = true
+            return result
+        case .ready(let rebound):
+            // Only now bind a complete, stable composer. A legitimate pre-paste
+            // source-to-detached transition restarts focus/caret preparation.
+            targetWindow = window
+            editor = resolvedEditor
+            sendControl = controls.first
+            if rebound { focusAttempts = 0 }
+            result.editorRebound = rebound
+        }
+        result.composer = true
         result.editor = editor != nil
         result.focused = hasEditorFocus()
         if let editor {
@@ -313,7 +347,7 @@ final class OutlookReplyInsertion {
     private func pasteThroughOutlook() {
         // Prefer Outlook's own standard Paste action over a simulated shortcut.
         // After ANY native dispatch result, verify instead of issuing another paste.
-        guard isOutlookActive(), hasEditorFocus() else { finish("R73-FOCUS"); return }
+        guard isOutlookActive(), hasEditorFocus() else { finish("R74-FOCUS"); return }
         let app = AXUIElementCreateApplication(snapshot.pid)
         if let menuBar = element(app, "AXMenuBar"), let paste = walk(menuBar).first(where: { item in
             guard self.text(item, "AXRole") == "AXMenuItem", self.bool(item, "AXEnabled") == true else { return false }
@@ -322,7 +356,7 @@ final class OutlookReplyInsertion {
                 key: self.text(item, "AXMenuItemCmdChar"),
                 modifiers: (self.raw(item, "AXMenuItemCmdModifiers") as? NSNumber)?.intValue)
         }) {
-            guard isOutlookActive(), hasEditorFocus() else { finish("R73-FOCUS"); return }
+            guard isOutlookActive(), hasEditorFocus() else { finish("R74-FOCUS"); return }
             _ = AXUIElementPerformAction(paste, "AXPress" as CFString)
             return
         }
@@ -332,7 +366,7 @@ final class OutlookReplyInsertion {
               let source = CGEventSource(stateID: .privateState),
               let down = CGEvent(keyboardEventSource: source, virtualKey: 9, keyDown: true),
               let up = CGEvent(keyboardEventSource: source, virtualKey: 9, keyDown: false) else {
-            finish("R73-PASTE"); return
+            finish("R74-PASTE"); return
         }
         down.flags = .maskCommand
         up.flags = .maskCommand
