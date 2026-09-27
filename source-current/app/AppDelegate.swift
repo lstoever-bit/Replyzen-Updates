@@ -767,12 +767,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
     }
 
-    private func sendWithOptionalPreview(_ payload: ChatGPTTransferPayload, send: @escaping () -> Void) {
+    private func sendWithOptionalPreview(_ payload: ChatGPTTransferPayload, newMail: Bool = false, send: @escaping () -> Void) {
         guard state.previewBeforeChatGPT else {
             send()
             return
         }
-        let prompt = MailPromptBuilder.make(payload: payload)
+        let prompt = MailPromptBuilder.make(payload: payload, newMail: newMail)
         transferPreviewWindow.show(prompt: prompt) { accepted in
             if accepted { send() }
         }
@@ -820,7 +820,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         guard let payload = makeTransferPayload(mailThread: nil) else { return }
-        sendWithOptionalPreview(payload) { [weak self] in
+        sendWithOptionalPreview(payload, newMail: true) { [weak self] in
             self?.performNewMail(payload, apiKey: apiKey)
         }
     }
@@ -1172,7 +1172,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let html = state.replyHTML
         copyMailToPasteboard(plainText: reply, html: html)
         panel.hide()
-        outlook.activateOutlook(pid: snapshot.pid)
+        OutlookReplyInsertion.activateForReply(pid: snapshot.pid)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
             guard let self, self.isRunningFlow, self.state.stage == .inserting else { return }

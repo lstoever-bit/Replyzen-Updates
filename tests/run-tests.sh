@@ -12,7 +12,7 @@ swiftc -DLOCALIZATION_TESTS -parse-as-library "$SOURCE/app/LocalizationCore.swif
 "$TMP/json-tests"
 swiftc -parse-as-library "$SOURCE/app/ChatGPTTransferPayload.swift" "$SOURCE/app/MailPromptBuilder.swift" "$ROOT/tests/ChatGPTTransferPayloadTests.swift" -o "$TMP/payload-tests"
 "$TMP/payload-tests"
-cat "$ROOT/tests/ClientStubs.swift" "$SOURCE/app/ChatGPTTransferPayload.swift" "$SOURCE/app/MailPromptBuilder.swift" "$SOURCE/app/OpenAIClient.swift" > "$TMP/ClientChecks.swift"
+cat "$ROOT/tests/ClientStubs.swift" "$SOURCE/app/ChatGPTTransferPayload.swift" "$SOURCE/app/MailPromptBuilder.swift" "$SOURCE/app/NewMailSubject.swift" "$SOURCE/app/OpenAIClient.swift" > "$TMP/ClientChecks.swift"
 printf '\n' >> "$TMP/ClientChecks.swift"
 cat "$ROOT/tests/ClientDecoderChecks.swift" >> "$TMP/ClientChecks.swift"
 swiftc -DLOCALIZATION_TESTS -parse-as-library "$SOURCE/app/LocalizationCore.swift" "$SOURCE/app/ResponseJSON.swift" "$TMP/ClientChecks.swift" -o "$TMP/client-tests"
