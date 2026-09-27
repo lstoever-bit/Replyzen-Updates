@@ -64,7 +64,7 @@ final class OutlookReplyInsertion {
             // Only once, only if the native control did not acknowledge opening,
             // and only while the original source window is still focused.
             guard let focused = focusedWindow(), let source = snapshot.windows.first,
-                  CFEqual(focused, source) else { finish("R71-WINDOW"); return }
+                  CFEqual(focused, source) else { finish("R72-WINDOW"); return }
             if replyAll { keyboard.sendCommandShiftR() } else { keyboard.sendCommandR() }
         case .focus:
             if !prepared {
@@ -82,10 +82,10 @@ final class OutlookReplyInsertion {
             keyboard.sendCommandUp()
         case .paste:
             // Check again at the write boundary; AX focus requests alone are not proof.
-            guard !pasted, isOutlookActive(), hasEditorFocus() else { finish("R71-FOCUS"); return }
+            guard !pasted, isOutlookActive(), hasEditorFocus() else { finish("R72-FOCUS"); return }
             pasted = true
             MailTypography.write(plainText: note + "\n\n", html: html.isEmpty ? "" : html + "<br><br>")
-            keyboard.sendCommandV()
+            pasteThroughOutlook()
         case .complete:
             finish(nil); return
         case .fail(let code):
@@ -158,6 +158,7 @@ final class OutlookReplyInsertion {
                     if ["subject", "betreff", "asunto", "search", "suchen", "recipient", "empfanger", "bcc", "attachment preview"].contains(where: { metadata.contains($0) }) { continue }
                     let named = ["message body", "mail body", "nachrichtentext", "compose body", "cuerpo del mensaje", "cuerpo del correo", "rich text", "html content"].contains(where: { metadata.contains($0) })
                     let editable = bool(candidate, "AXEditable") == true || settable(candidate, "AXValue")
+                        || settable(candidate, "AXSelectedText")
                     let wasReadPane = originalBodies.contains { CFEqual($0, candidate) }
                     let rect = frame(candidate)
                     guard named || (rect.width > 180 && rect.height > 50) else { continue }
@@ -192,9 +193,15 @@ final class OutlookReplyInsertion {
 
     private func hasEditorFocus() -> Bool {
         guard isOutlookActive(), let editor, let targetWindow,
-              let window = focusedWindow(), CFEqual(targetWindow, window),
-              let focused = element(AXUIElementCreateApplication(snapshot.pid), "AXFocusedUIElement") else { return false }
-        return isDescendant(focused, of: editor)
+              let window = focusedWindow(), CFEqual(targetWindow, window) else { return false }
+        let app = AXUIElementCreateApplication(snapshot.pid)
+        let candidates = [element(app, "AXFocusedUIElement"),
+                          element(AXUIElementCreateSystemWide(), "AXFocusedUIElement")]
+        return candidates.compactMap { $0 }.contains { focused in
+            var pid: pid_t = 0
+            return AXUIElementGetPid(focused, &pid) == .success && pid == snapshot.pid
+                && isDescendant(focused, of: editor)
+        }
     }
 
     private func isDescendant(_ child: AXUIElement, of root: AXUIElement) -> Bool {
@@ -208,18 +215,70 @@ final class OutlookReplyInsertion {
     }
 
     private func bodyText(_ node: AXUIElement) -> String? {
-        if let value = text(node, "AXValue"), !value.isEmpty { return value }
-        var pieces: [String] = []
-        for child in walk(node) where !CFEqual(child, node) {
-            let role = text(child, "AXRole") ?? ""
-            if role == "AXStaticText" || role == "AXTextArea" {
-                if let value = text(child, "AXValue"), !value.isEmpty { pieces.append(value) }
-                else if let value = text(child, "AXTitle"), !value.isEmpty { pieces.append(value) }
-            }
+        ReplyEditorSupport.readText(
+            value: { self.text(node, "AXValue") },
+            characterCount: { (self.raw(node, "AXNumberOfCharacters") as? NSNumber)?.intValue },
+            rangeText: { range in
+                var cfRange = CFRange(location: range.location, length: range.length)
+                guard let parameter = AXValueCreate(.cfRange, &cfRange) else { return nil }
+                for attribute in ["AXStringForRange", "AXAttributedStringForRange"] {
+                    var result: CFTypeRef?
+                    if AXUIElementCopyParameterizedAttributeValue(node, attribute as CFString, parameter, &result) == .success {
+                        if let plain = result as? String { return plain }
+                        if let rich = result as? NSAttributedString { return rich.string }
+                    }
+                }
+                return nil
+            },
+            descendants: { self.descendantBodyText(node) }
+        )
+    }
+
+    private func descendantBodyText(_ root: AXUIElement) -> String? {
+        // Prune a readable text subtree so its value is not counted again in children.
+        func leafText(_ node: AXUIElement) -> String? {
+            guard !CFEqual(node, root), self.isBodyRole(node) || self.text(node, "AXRole") == "AXStaticText" else { return nil }
+            if let value = self.text(node, "AXValue"), !value.isEmpty { return value }
+            if self.text(node, "AXRole") == "AXStaticText", let title = self.text(node, "AXTitle"), !title.isEmpty { return title }
+            return nil
         }
-        if !pieces.isEmpty { return pieces.joined(separator: "\n") }
-        // An explicitly readable empty body is distinct from a failed AX read.
-        return text(node, "AXValue")
+        guard let nodes = ReplyEditorSupport.nodes(root: root,
+            children: { leafText($0) == nil ? self.elements($0, "AXChildren") : [] },
+            hash: { UInt(CFHash($0)) }, equal: { CFEqual($0, $1) }) else { return nil }
+        let pieces = nodes.compactMap { leafText($0) }
+        return pieces.isEmpty ? nil : pieces.joined(separator: "\n")
+    }
+
+    private func pasteThroughOutlook() {
+        // Prefer Outlook's own standard Paste action over a simulated shortcut.
+        // After ANY native dispatch result, verify instead of issuing another paste.
+        guard isOutlookActive(), hasEditorFocus() else { finish("R72-FOCUS"); return }
+        let app = AXUIElementCreateApplication(snapshot.pid)
+        if let menuBar = element(app, "AXMenuBar"), let paste = walk(menuBar).first(where: { item in
+            guard self.text(item, "AXRole") == "AXMenuItem", self.bool(item, "AXEnabled") == true else { return false }
+            return ReplyEditorSupport.isStandardPaste(
+                title: self.text(item, "AXTitle") ?? "",
+                key: self.text(item, "AXMenuItemCmdChar"),
+                modifiers: (self.raw(item, "AXMenuItemCmdModifiers") as? NSNumber)?.intValue)
+        }) {
+            guard isOutlookActive(), hasEditorFocus() else { finish("R72-FOCUS"); return }
+            _ = AXUIElementPerformAction(paste, "AXPress" as CFString)
+            return
+        }
+        // Some Outlook builds do not expose their menu. In that case send one
+        // balanced shortcut directly to Outlook, not the global event stream.
+        guard isOutlookActive(), hasEditorFocus(),
+              let source = CGEventSource(stateID: .privateState),
+              let down = CGEvent(keyboardEventSource: source, virtualKey: 9, keyDown: true),
+              let up = CGEvent(keyboardEventSource: source, virtualKey: 9, keyDown: false) else {
+            finish("R72-PASTE"); return
+        }
+        down.flags = .maskCommand
+        up.flags = .maskCommand
+        let pid = snapshot.pid
+        down.postToPid(pid)
+        // Always balance the key-down, even if the user cancels in this interval.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) { up.postToPid(pid) }
     }
 
     private func isOutlookActive() -> Bool {
@@ -246,7 +305,7 @@ final class OutlookReplyInsertion {
     private func bool(_ node: AXUIElement, _ key: String) -> Bool? { raw(node, key) as? Bool }
     private func element(_ node: AXUIElement, _ key: String) -> AXUIElement? {
         guard let value = raw(node, key), CFGetTypeID(value) == AXUIElementGetTypeID() else { return nil }
-        return value as! AXUIElement
+        return (value as! AXUIElement)
     }
     private func elements(_ node: AXUIElement, _ key: String) -> [AXUIElement] { raw(node, key) as? [AXUIElement] ?? [] }
     private func settable(_ node: AXUIElement, _ key: String) -> Bool {
@@ -254,14 +313,9 @@ final class OutlookReplyInsertion {
         return AXUIElementIsAttributeSettable(node, key as CFString, &value) == .success && value.boolValue
     }
     private func walk(_ root: AXUIElement) -> [AXUIElement] {
-        var stack = [root], result: [AXUIElement] = []
-        var seen = Set<CFHashCode>()
-        while let node = stack.popLast(), result.count < 2_000 {
-            guard seen.insert(CFHash(node)).inserted else { continue }
-            result.append(node)
-            stack.append(contentsOf: elements(node, "AXChildren").reversed())
-        }
-        return result
+        ReplyEditorSupport.nodes(root: root,
+            children: { self.elements($0, "AXChildren") },
+            hash: { UInt(CFHash($0)) }, equal: { CFEqual($0, $1) }) ?? []
     }
     private func frame(_ node: AXUIElement) -> CGRect {
         guard let p = raw(node, "AXPosition"), let s = raw(node, "AXSize"),

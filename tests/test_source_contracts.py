@@ -11,8 +11,8 @@ class SourceContracts(unittest.TestCase):
         info = plistlib.loads((APP / "Info.plist").read_bytes())
         self.assertEqual(info["CFBundleIdentifier"], "com.lstoever.replyzen")
         self.assertEqual(info["CFBundleDisplayName"], "ReplyZen")
-        self.assertEqual(info["CFBundleShortVersionString"], "1.71.0")
-        self.assertEqual(info["CFBundleVersion"], "72")
+        self.assertEqual(info["CFBundleShortVersionString"], "1.72.0")
+        self.assertEqual(info["CFBundleVersion"], "73")
     def test_payment_is_removed_from_active_code(self):
         self.assertFalse((APP / "AttachmentTextExtractor.swift").exists())
         swift = "\n".join(p.read_text(encoding="utf-8") for p in APP.glob("*.swift"))
