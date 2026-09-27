@@ -9,6 +9,8 @@ final class OutlookReplyInsertion {
     private let replyAll: Bool
     private let note: String
     private let html: String
+    private let preparedPayload: MailTypography.Payload
+    private var foregroundGuard = ReplyForegroundGuard()
     private let reminder: String?
     private let completion: (String?) -> Void
     private var state: ReplyInsertionState?
@@ -27,12 +29,14 @@ final class OutlookReplyInsertion {
 
     init(outlook: OutlookAccessibility, snapshot: OutlookAccessibility.Snapshot,
          replyAll: Bool, note: String, html: String, reminder: String?,
+         preparedPayload: MailTypography.Payload,
          completion: @escaping (String?) -> Void) {
         self.outlook = outlook
         self.snapshot = snapshot
         self.replyAll = replyAll
         self.note = note
         self.html = html
+        self.preparedPayload = preparedPayload
         self.reminder = reminder
         self.completion = completion
     }
@@ -83,12 +87,23 @@ final class OutlookReplyInsertion {
     }
 
     private func scheduleTick() {
+        guard !cancelled else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in self?.tick() }
     }
 
     private func tick() {
         guard !cancelled else { return }
+        // Pause the SAME draft/state for a bounded internal activation handoff.
+        // A different external app or an intentional ReplyZen window still aborts.
+        guard holdUntilOutlookOwnsForeground() else { scheduleTick(); return }
         let observation = observe()
+        guard observation.active else {
+            // Ownership can change during an AX read. Reclassify instead of
+            // feeding a transient self-activation into the terminal state error.
+            _ = holdUntilOutlookOwnsForeground()
+            scheduleTick()
+            return
+        }
         guard var currentState = state else { return }
         let action = currentState.next(observation)
         state = currentState
@@ -125,7 +140,7 @@ final class OutlookReplyInsertion {
                 finish("R74-WINDOW-WRITE"); return
             }
             pasted = true
-            MailTypography.write(plainText: note + "\n\n", html: html.isEmpty ? "" : html + "<br><br>")
+            MailTypography.write(preparedPayload)
             pasteThroughOutlook()
         case .complete:
             finish(nil); return
@@ -133,6 +148,33 @@ final class OutlookReplyInsertion {
             finish(code); return
         }
         scheduleTick()
+    }
+
+    private func holdUntilOutlookOwnsForeground() -> Bool {
+        let frontmostPID = NSWorkspace.shared.frontmostApplication?.processIdentifier
+        let owner: ReplyForegroundGuard.Owner
+        if frontmostPID == snapshot.pid { owner = .outlook }
+        else if frontmostPID == ProcessInfo.processInfo.processIdentifier { owner = .replyzen }
+        else if frontmostPID == nil { owner = .unavailable }
+        else { owner = .other }
+        let ownInteractiveWindow = NSApp.windows.contains {
+            $0.isVisible && ($0.isKeyWindow || $0.isMainWindow)
+        }
+        let decision = foregroundGuard.next(owner: owner,
+            ownInteractiveWindow: ownInteractiveWindow,
+            now: ProcessInfo.processInfo.systemUptime)
+        switch decision {
+        case .ready: return true
+        case .wait: return false
+        case .handoff:
+            // This method is called only for ReplyZen's own hidden process.
+            // Do not reopen a reply, reset the paste state or touch a different app.
+            Self.activateForReply(pid: snapshot.pid)
+            return false
+        case .abort(let code):
+            finish(code)
+            return false
+        }
     }
 
     private func finish(_ errorCode: String?) {
