@@ -1,0 +1,80 @@
+name: Build ReplyZen Focus Diagnostic Only
+on:
+  push:
+    branches: [codex/replyzen-focus-diagnostic]
+    paths:
+      - 'source-current/**'
+      - 'maintenance/prepare_focus_diagnostic.py'
+      - 'tests/**'
+      - '.github/workflows/focus-diagnostic.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: replyzen-diagnostic-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  diagnostic:
+    runs-on: macos-14
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble diagnostic-only instrumentation
+        run: python3 maintenance/prepare_focus_diagnostic.py source-current
+      - name: Failure metadata tests including real AppKit sampler
+        shell: bash
+        run: |
+          set -euo pipefail
+          TMP="$(mktemp -d)"
+          trap 'rm -rf "$TMP"' EXIT
+          swiftc -parse-as-library -framework AppKit -framework ApplicationServices source-current/app/ReplyFocusDiagnostic.swift tests/ReplyFocusDiagnosticTests.swift -o "$TMP/diagnostic"
+          "$TMP/diagnostic"
+      - name: Existing foreground and payload tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          TMP="$(mktemp -d)"
+          trap 'rm -rf "$TMP"' EXIT
+          swiftc -parse-as-library source-current/app/ReplyForegroundGuard.swift tests/ReplyForegroundGuardTests.swift -o "$TMP/foreground"
+          "$TMP/foreground"
+          swiftc -parse-as-library source-current/app/ReplyForegroundGuard.swift source-current/app/ReplyInsertionPolicy.swift tests/ReplyForegroundIntegrationTests.swift -o "$TMP/integration"
+          "$TMP/integration"
+          swiftc -parse-as-library -framework AppKit -framework CoreText source-current/app/MailFontResolver.swift source-current/app/MailTypography.swift tests/ReplyPreparedPayloadTests.swift -o "$TMP/prepared"
+          "$TMP/prepared"
+          python3 tests/test_reply_foreground_contract.py source-current
+      - name: Existing window and recovery tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          TMP="$(mktemp -d)"
+          trap 'rm -rf "$TMP"' EXIT
+          swiftc -parse-as-library source-current/app/ReplyWindowTracker.swift source-current/app/ReplyInsertionPolicy.swift tests/ReplyWindowTrackerTests.swift -o "$TMP/windows"
+          "$TMP/windows"
+          python3 tests/test_window_binding_contract.py source-current
+          swiftc -parse-as-library source-current/app/ReplyRecoveryRules.swift source-current/app/NewMailSubject.swift source-current/app/ChatGPTTransferPayload.swift source-current/app/MailPromptBuilder.swift tests/ReplyRecoveryTests.swift -o "$TMP/recovery"
+          "$TMP/recovery"
+          swiftc -parse-as-library source-current/app/ReplyInsertionPolicy.swift tests/ReplyInsertionPolicyTests.swift -o "$TMP/reply"
+          "$TMP/reply"
+          swiftc -parse-as-library source-current/app/ReplyEditorSupport.swift tests/ReplyEditorSupportTests.swift -o "$TMP/editor"
+          "$TMP/editor"
+      - name: Existing application regression suites
+        run: |
+          bash tests/run-tests.sh source-current
+          bash tests/run-localization-tests.sh source-current
+          bash tests/run-calendar-invite-tests.sh source-current
+          bash tests/run-window-position-tests.sh source-current
+          python3 tests/overlay_restore_contract.py source-current
+      - name: Build and verify diagnostic app
+        run: |
+          bash source-current/Build-CI.sh
+          python3 tests/verify_update.py source-current
+          git diff -- source-current tests > source-current/diagnostic-source-changes.patch
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ReplyZen-Focus-Diagnostic-1.75.1
+          path: |
+            source-current/Replyzen-update-1.75.1.zip
+            source-current/update.json
+            source-current/diagnostic-source-changes.patch
+          if-no-files-found: error
+          retention-days: 7
