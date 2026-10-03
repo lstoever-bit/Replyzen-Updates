@@ -8,8 +8,10 @@ extension UpdateManager {
         let data = try Data(contentsOf: manifestURL)
         let manifest = try manager.decodeManifest(from: data)
         precondition(manifest.version == "2.0.0" && manifest.build == 200)
+        print("PASS: raw update manifest decoded")
+        // GitHub Contents API uses LF separators, not Foundation default CRLF.
         let wrapped = try JSONSerialization.data(withJSONObject: [
-            "encoding": "base64", "content": data.base64EncodedString(options: .lineLength64Characters)
+            "encoding": "base64", "content": data.base64EncodedString(options: [.lineLength64Characters, .endLineWithLineFeed])
         ])
         let wrappedManifest = try manager.decodeManifest(from: wrapped)
         precondition(wrappedManifest.build == 200)
