@@ -1,0 +1,95 @@
+name: Build Native ReplyZen In-App Update
+on:
+  push:
+    branches: [release/native-2.0, main]
+    paths:
+      - 'rewrite/**'
+      - '.github/workflows/native-update.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: native-update-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  update:
+    runs-on: macos-14
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify native core and real Apple-event bridge
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          TMP="$(mktemp -d)"
+          trap 'rm -rf "$TMP"' EXIT
+          swiftc -parse-as-library rewrite/Core/NativeMail.swift rewrite/Tests/NativeMailTests.swift -o "$TMP/core"
+          "$TMP/core" | tee evidence/core-tests.txt
+          swiftc -parse-as-library -framework AppKit rewrite/Core/NativeMail.swift rewrite/Mac/NativeOutlookBridge.swift rewrite/Tests/NativeBridgeTests.swift -o "$TMP/bridge"
+          "$TMP/bridge" | tee evidence/bridge-tests.txt
+      - name: Compile native script against official Outlook dictionary
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 2 --max-time 300 'https://go.microsoft.com/fwlink/?linkid=525137' -o "$RUNNER_TEMP/outlook.pkg"
+          pkgutil --check-signature "$RUNNER_TEMP/outlook.pkg" > evidence/microsoft-package-signature.txt
+          grep -q 'Microsoft Corporation' evidence/microsoft-package-signature.txt
+          pkgutil --expand-full "$RUNNER_TEMP/outlook.pkg" "$RUNNER_TEMP/outlook-expanded"
+          APP="$(find "$RUNNER_TEMP/outlook-expanded" -name 'Microsoft Outlook.app' -type d -print -quit)"
+          test -n "$APP"
+          /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$APP"
+          osacompile -o "$RUNNER_TEMP/Outlook.scpt" rewrite/Scripts/Outlook.applescript
+          echo 'PASS: compiled against Microsoft Outlook scripting dictionary; not a live mailbox test' > evidence/script-compile.txt
+      - name: Restore production identity and existing update menu
+        run: python3 rewrite/prepare-update.py
+      - name: Build package for existing locally signed installation
+        run: bash .native-build/Build-CI.sh
+      - name: Validate archive and unchanged installer compatibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 rewrite/verify-update.py .native-build | tee evidence/package-tests.txt
+          TMP="$(mktemp -d)"
+          trap 'rm -rf "$TMP"' EXIT
+          cat source-current/app/UpdateManager.swift rewrite/Tests/UpdaterCompatibilityTests.swift > "$TMP/UpdaterChecks.swift"
+          swiftc -parse-as-library -framework AppKit rewrite/Tests/UpdaterLocalizationStub.swift "$TMP/UpdaterChecks.swift" -o "$TMP/updater"
+          "$TMP/updater" "$PWD/.native-build/update.json" | tee evidence/updater-tests.txt
+          codesign --verify --deep --strict .native-build/.build-ci/Replyzen.app
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          Path('evidence/acceptance.json').write_text(json.dumps({
+              'version':'2.0.0', 'build':200, 'distribution':'existing-in-app-local-signing',
+              'updater_source_unchanged':True, 'native_core_tests':True,
+              'apple_event_bridge_tests':True, 'authenticated_mailbox_test':False,
+              'notarized':False, 'standalone_installation_supported':False
+          }, indent=2))
+          PY
+      - name: Publish package and feed atomically on main
+        if: github.ref_name == 'main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED="$(git rev-parse HEAD)"
+          REMOTE="$(git ls-remote origin refs/heads/main | cut -f1)"
+          test "$EXPECTED" = "$REMOTE"
+          cp .native-build/Replyzen-update-2.0.zip Replyzen-update-2.0.zip
+          cp .native-build/update.json update.json
+          cp .native-build/update.json update-2.0.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f Replyzen-update-2.0.zip update.json update-2.0.json
+          git commit -m 'Publish ReplyZen 2.0.0 native core through existing in-app update channel'
+          git push origin HEAD:main
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ReplyZen-2.0-In-App-Update
+          path: |
+            .native-build/Replyzen-update-2.0.zip
+            .native-build/update.json
+            evidence/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
