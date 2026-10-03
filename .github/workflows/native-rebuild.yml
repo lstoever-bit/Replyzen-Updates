@@ -1,0 +1,50 @@
+name: Native Outlook Rebuild (no publication)
+on:
+  push:
+    branches: [rewrite/native-outlook]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: native-rebuild-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: macos-14
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Export canonical text sources for local development
+        shell: bash
+        run: |
+          mkdir -p evidence
+          python3 - <<'PY'
+          import pathlib, zipfile
+          root = pathlib.Path('.')
+          with zipfile.ZipFile('evidence/source-text.zip', 'w', zipfile.ZIP_DEFLATED) as z:
+              for base in ['source-current', 'tests', 'maintenance', '.github']:
+                  for p in (root / base).rglob('*'):
+                      if p.is_file() and p.suffix in {'.swift','.py','.sh','.json','.yml','.plist','.md','.txt'} and not any(part.startswith('.build') for part in p.parts):
+                          z.write(p, str(p))
+          PY
+      - name: Obtain official Outlook scripting dictionary
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 2 --max-time 300 'https://go.microsoft.com/fwlink/?linkid=525137' -o "$RUNNER_TEMP/outlook.pkg"
+          pkgutil --check-signature "$RUNNER_TEMP/outlook.pkg" | tee evidence/microsoft-package-signature.txt
+          grep -q 'Microsoft Corporation' evidence/microsoft-package-signature.txt
+          pkgutil --expand-full "$RUNNER_TEMP/outlook.pkg" "$RUNNER_TEMP/outlook-expanded"
+          DICT="$(find "$RUNNER_TEMP/outlook-expanded" -iname '*.sdef' -path '*Outlook*' -print -quit)"
+          test -n "$DICT"
+          cp "$DICT" evidence/Outlook.sdef
+          shasum -a 256 "$RUNNER_TEMP/outlook.pkg" > evidence/installer-sha256.txt
+      - name: Validate clean rebuild
+        if: hashFiles('rewrite/validate.sh') != ''
+        run: bash rewrite/validate.sh evidence/Outlook.sdef
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-rebuild-evidence
+          path: evidence/
+          retention-days: 7
