@@ -3,10 +3,12 @@
 from pathlib import Path
 import shutil, sys, plistlib, hashlib, json
 root = Path(__file__).resolve().parent.parent
-out = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else root / '.native-build'
+if len(sys.argv) != 1:
+    raise SystemExit('No output override allowed; build target is .native-build only')
+out = root / '.native-build'
 source = root / 'source-current'
-if out == source.resolve() or source.resolve() in out.parents:
-    raise SystemExit('Output must be separate from source-current')
+if out.is_symlink() or out.resolve().parent != root:
+    raise SystemExit('Build output must be an ordinary direct child of this repository')
 expected = '55518f72700ad1cb34700841a7bf44ff0d3e9908'
 raw = (source / 'app/AppDelegate.swift').read_bytes()
 blob = hashlib.sha1(b'blob ' + str(len(raw)).encode() + b'\0' + raw).hexdigest()
